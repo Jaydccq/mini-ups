@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BusinessValidationException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.exception</a> &gt; <span class="el_source">BusinessValidationException.java</span></div><h1>BusinessValidationException.java</h1><pre class="source lang-java linenums">/**
+ * Business Validation Exception
+ * 
+ * 业务验证异常，用于处理业务规则验证失败的情况
+ * 
+ * Common scenarios:
+ * - 订单状态不允许当前操作
+ * - 卡车容量不足
+ * - 配送地址超出服务范围
+ * - 包裹重量超出限制
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.exception;
+
+import com.miniups.model.enums.ExceptionSeverity;
+import java.util.Map;
+
+public class BusinessValidationException extends BaseBusinessException {
+    
+    private final String validationType;
+    private final Map&lt;String, Object&gt; validationDetails;
+    
+    public BusinessValidationException(String validationType, String message) {
+<span class="nc" id="L26">        super(&quot;BUSINESS_VALIDATION_ERROR&quot;, message, ExceptionSeverity.LOW);</span>
+<span class="nc" id="L27">        this.validationType = validationType;</span>
+<span class="nc" id="L28">        this.validationDetails = null;</span>
+<span class="nc" id="L29">    }</span>
+    
+    public BusinessValidationException(String validationType, String message, Map&lt;String, Object&gt; validationDetails) {
+<span class="nc" id="L32">        super(&quot;BUSINESS_VALIDATION_ERROR&quot;, message, ExceptionSeverity.LOW);</span>
+<span class="nc" id="L33">        this.validationType = validationType;</span>
+<span class="nc" id="L34">        this.validationDetails = validationDetails;</span>
+<span class="nc" id="L35">    }</span>
+    
+    public String getValidationType() {
+<span class="nc" id="L38">        return validationType;</span>
+    }
+    
+    public Map&lt;String, Object&gt; getValidationDetails() {
+<span class="nc" id="L42">        return validationDetails;</span>
+    }
+    
+    // 便利方法用于常见业务验证异常
+    public static BusinessValidationException invalidShipmentStatus(String currentStatus, String requiredStatus) {
+<span class="nc" id="L47">        return new BusinessValidationException(&quot;SHIPMENT_STATUS&quot;, </span>
+<span class="nc" id="L48">            String.format(&quot;Invalid shipment status. Current: %s, Required: %s&quot;, currentStatus, requiredStatus));</span>
+    }
+    
+    public static BusinessValidationException insufficientCapacity(String resourceType, double required, double available) {
+<span class="nc" id="L52">        return new BusinessValidationException(&quot;CAPACITY_CHECK&quot;, </span>
+<span class="nc" id="L53">            String.format(&quot;Insufficient %s capacity. Required: %.2f, Available: %.2f&quot;, resourceType, required, available));</span>
+    }
+    
+    public static BusinessValidationException addressOutOfRange(String address) {
+<span class="nc" id="L57">        return new BusinessValidationException(&quot;ADDRESS_VALIDATION&quot;, </span>
+<span class="nc" id="L58">            String.format(&quot;Delivery address is out of service range: %s&quot;, address));</span>
+    }
+    
+    public static BusinessValidationException weightExceedsLimit(double weight, double limit) {
+<span class="nc" id="L62">        return new BusinessValidationException(&quot;WEIGHT_CHECK&quot;, </span>
+<span class="nc" id="L63">            String.format(&quot;Package weight exceeds limit. Weight: %.2f kg, Limit: %.2f kg&quot;, weight, limit));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

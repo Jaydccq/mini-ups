@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.model.dto.user</a> &gt; <span class="el_source">UserDto.java</span></div><h1>UserDto.java</h1><pre class="source lang-java linenums">/**
+ * User Information Data Transfer Object
+ * 
+ * Functionality:
+ * - Provides secure user information view without sensitive data
+ * - Used for user data display in API responses
+ * - Supports user role and permission information transmission
+ * 
+ * Security Features:
+ * - Does not contain sensitive information like passwords
+ * - Only exposes necessary user attributes
+ * - Supports role and permission display
+ * 
+ * Usage Scenarios:
+ * - User information in login responses
+ * - User detail query API responses
+ * - User list display
+ * - Frontend user state management
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.model.dto.user;
+
+import com.miniups.model.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import java.time.LocalDateTime;
+
+public class UserDto {
+    
+    private Long id;
+    private String username;
+    private String email;
+    private String firstName;
+    private String lastName;
+    private String phone;
+    private String address;
+    private UserRole role;
+    private Boolean enabled;
+    
+    @JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)
+    private LocalDateTime createdAt;
+    
+    @JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)
+    private LocalDateTime updatedAt;
+    
+    // Constructors
+<span class="nc" id="L49">    public UserDto() {}</span>
+    
+<span class="nc" id="L51">    public UserDto(Long id, String username, String email, UserRole role) {</span>
+<span class="nc" id="L52">        this.id = id;</span>
+<span class="nc" id="L53">        this.username = username;</span>
+<span class="nc" id="L54">        this.email = email;</span>
+<span class="nc" id="L55">        this.role = role;</span>
+<span class="nc" id="L56">    }</span>
+    
+    // Static factory methods for creating UserDto from User entity
+    public static UserDto fromEntity(com.miniups.model.entity.User user) {
+<span class="nc" id="L60">        UserDto dto = new UserDto();</span>
+<span class="nc" id="L61">        dto.setId(user.getId());</span>
+<span class="nc" id="L62">        dto.setUsername(user.getUsername());</span>
+<span class="nc" id="L63">        dto.setEmail(user.getEmail());</span>
+<span class="nc" id="L64">        dto.setFirstName(user.getFirstName());</span>
+<span class="nc" id="L65">        dto.setLastName(user.getLastName());</span>
+<span class="nc" id="L66">        dto.setPhone(user.getPhone());</span>
+<span class="nc" id="L67">        dto.setAddress(user.getAddress());</span>
+<span class="nc" id="L68">        dto.setRole(user.getRole());</span>
+<span class="nc" id="L69">        dto.setEnabled(user.getEnabled());</span>
+<span class="nc" id="L70">        dto.setCreatedAt(user.getCreatedAt());</span>
+<span class="nc" id="L71">        dto.setUpdatedAt(user.getUpdatedAt());</span>
+<span class="nc" id="L72">        return dto;</span>
+    }
+    
+    public static UserDto publicProfile(com.miniups.model.entity.User user) {
+<span class="nc" id="L76">        UserDto dto = new UserDto();</span>
+<span class="nc" id="L77">        dto.setId(user.getId());</span>
+<span class="nc" id="L78">        dto.setUsername(user.getUsername());</span>
+<span class="nc" id="L79">        dto.setFirstName(user.getFirstName());</span>
+<span class="nc" id="L80">        dto.setLastName(user.getLastName());</span>
+<span class="nc" id="L81">        dto.setRole(user.getRole());</span>
+<span class="nc" id="L82">        dto.setCreatedAt(user.getCreatedAt());</span>
+        // Public profile does not include private information like email, phone, address
+<span class="nc" id="L84">        return dto;</span>
+    }
+    
+    // Getters and Setters
+    public Long getId() {
+<span class="nc" id="L89">        return id;</span>
+    }
+    
+    public void setId(Long id) {
+<span class="nc" id="L93">        this.id = id;</span>
+<span class="nc" id="L94">    }</span>
+    
+    public String getUsername() {
+<span class="nc" id="L97">        return username;</span>
+    }
+    
+    public void setUsername(String username) {
+<span class="nc" id="L101">        this.username = username;</span>
+<span class="nc" id="L102">    }</span>
+    
+    public String getEmail() {
+<span class="nc" id="L105">        return email;</span>
+    }
+    
+    public void setEmail(String email) {
+<span class="nc" id="L109">        this.email = email;</span>
+<span class="nc" id="L110">    }</span>
+    
+    public String getFirstName() {
+<span class="nc" id="L113">        return firstName;</span>
+    }
+    
+    public void setFirstName(String firstName) {
+<span class="nc" id="L117">        this.firstName = firstName;</span>
+<span class="nc" id="L118">    }</span>
+    
+    public String getLastName() {
+<span class="nc" id="L121">        return lastName;</span>
+    }
+    
+    public void setLastName(String lastName) {
+<span class="nc" id="L125">        this.lastName = lastName;</span>
+<span class="nc" id="L126">    }</span>
+    
+    public String getPhone() {
+<span class="nc" id="L129">        return phone;</span>
+    }
+    
+    public void setPhone(String phone) {
+<span class="nc" id="L133">        this.phone = phone;</span>
+<span class="nc" id="L134">    }</span>
+    
+    public String getAddress() {
+<span class="nc" id="L137">        return address;</span>
+    }
+    
+    public void setAddress(String address) {
+<span class="nc" id="L141">        this.address = address;</span>
+<span class="nc" id="L142">    }</span>
+    
+    public UserRole getRole() {
+<span class="nc" id="L145">        return role;</span>
+    }
+    
+    public void setRole(UserRole role) {
+<span class="nc" id="L149">        this.role = role;</span>
+<span class="nc" id="L150">    }</span>
+    
+    public Boolean getEnabled() {
+<span class="nc" id="L153">        return enabled;</span>
+    }
+    
+    public void setEnabled(Boolean enabled) {
+<span class="nc" id="L157">        this.enabled = enabled;</span>
+<span class="nc" id="L158">    }</span>
+    
+    public LocalDateTime getCreatedAt() {
+<span class="nc" id="L161">        return createdAt;</span>
+    }
+    
+    public void setCreatedAt(LocalDateTime createdAt) {
+<span class="nc" id="L165">        this.createdAt = createdAt;</span>
+<span class="nc" id="L166">    }</span>
+    
+    public LocalDateTime getUpdatedAt() {
+<span class="nc" id="L169">        return updatedAt;</span>
+    }
+    
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+<span class="nc" id="L173">        this.updatedAt = updatedAt;</span>
+<span class="nc" id="L174">    }</span>
+    
+    // Helper methods
+    public String getFullName() {
+<span class="nc bnc" id="L178" title="All 4 branches missed.">        if (firstName != null &amp;&amp; lastName != null) {</span>
+<span class="nc" id="L179">            return firstName + &quot; &quot; + lastName;</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        } else if (firstName != null) {</span>
+<span class="nc" id="L181">            return firstName;</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        } else if (lastName != null) {</span>
+<span class="nc" id="L183">            return lastName;</span>
+        }
+<span class="nc" id="L185">        return username;</span>
+    }
+    
+    public String getDisplayName() {
+<span class="nc" id="L189">        String fullName = getFullName();</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        return !fullName.equals(username) ? fullName : username;</span>
+    }
+    
+    public boolean isAdmin() {
+<span class="nc bnc" id="L194" title="All 4 branches missed.">        return role != null &amp;&amp; role.isAdmin();</span>
+    }
+    
+    public boolean isDriver() {
+<span class="nc bnc" id="L198" title="All 4 branches missed.">        return role != null &amp;&amp; role.isDriver();</span>
+    }
+    
+    public boolean isActive() {
+<span class="nc bnc" id="L202" title="All 4 branches missed.">        return enabled != null &amp;&amp; enabled;</span>
+    }
+    
+    public boolean hasCompleteProfile() {
+<span class="nc bnc" id="L206" title="All 6 branches missed.">        return firstName != null &amp;&amp; !firstName.trim().isEmpty() &amp;&amp;</span>
+<span class="nc bnc" id="L207" title="All 4 branches missed.">               lastName != null &amp;&amp; !lastName.trim().isEmpty() &amp;&amp;</span>
+<span class="nc bnc" id="L208" title="All 4 branches missed.">               phone != null &amp;&amp; !phone.trim().isEmpty() &amp;&amp;</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">               address != null &amp;&amp; !address.trim().isEmpty();</span>
+    }
+    
+    // Alias methods for boolean properties to match test expectations
+    public Boolean isEnabled() {
+<span class="nc" id="L214">        return enabled;</span>
+    }
+    
+    public String getPassword() {
+        // UserDto should never contain password for security reasons
+<span class="nc" id="L219">        return null;</span>
+    }
+    
+    @Override
+    public String toString() {
+<span class="nc" id="L224">        return &quot;UserDto{&quot; +</span>
+                &quot;id=&quot; + id +
+                &quot;, username='&quot; + username + '\'' +
+                &quot;, email='&quot; + email + '\'' +
+<span class="nc" id="L228">                &quot;, fullName='&quot; + getFullName() + '\'' +</span>
+                &quot;, role=&quot; + role +
+                &quot;, enabled=&quot; + enabled +
+                &quot;, createdAt=&quot; + createdAt +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

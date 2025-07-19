@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AnalyticsConsumer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.service.consumer</a> &gt; <span class="el_source">AnalyticsConsumer.java</span></div><h1>AnalyticsConsumer.java</h1><pre class="source lang-java linenums">/**
+ * Analytics Consumer Service
+ * 
+ * Purpose:
+ * - Processes audit log events from RabbitMQ for analytics and reporting
+ * - Aggregates system activity data into queryable formats
+ * - Generates business intelligence metrics and trends
+ * - Supports real-time analytics dashboard updates
+ * 
+ * Features:
+ * - Consumes audit log messages from RabbitMQ queue
+ * - Aggregates data into time-series analytics
+ * - Calculates performance metrics and KPIs
+ * - Publishes real-time analytics updates via WebSocket
+ * - Handles data persistence for historical analysis
+ * 
+ * Analytics Metrics:
+ * - Order processing rates and trends
+ * - User activity patterns and engagement
+ * - System performance indicators
+ * - Error rates and system health metrics
+ * - Fleet utilization and efficiency
+ * 
+ * Data Processing:
+ * - Event-driven data aggregation
+ * - Real-time metric calculation
+ * - Historical trend analysis
+ * - Performance monitoring
+ * - Business intelligence generation
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.service.consumer;
+
+import com.miniups.config.RabbitMQConfig;
+import com.miniups.model.entity.AuditLog;
+import com.miniups.repository.AuditLogRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+@Service
+public class AnalyticsConsumer {
+    
+<span class="nc" id="L57">    private static final Logger logger = LoggerFactory.getLogger(AnalyticsConsumer.class);</span>
+    
+    private final AuditLogRepository auditLogRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectMapper objectMapper;
+    private final RedisTemplate&lt;String, Object&gt; redisTemplate;
+    
+    // Redis key prefixes for analytics data
+    private static final String ACTION_COUNTS_KEY = &quot;analytics:actionCounts&quot;;
+    private static final String ENTITY_TYPE_COUNTS_KEY = &quot;analytics:entityTypeCounts&quot;;
+    private static final String USER_ACTIVITY_KEY = &quot;analytics:userActivity&quot;;
+    private static final String HOURLY_ACTIVITY_KEY = &quot;analytics:hourlyActivity&quot;;
+    private static final String ACTIVE_USERS_KEY = &quot;analytics:activeUsers&quot;;
+    
+    public AnalyticsConsumer(AuditLogRepository auditLogRepository,
+                           SimpMessagingTemplate messagingTemplate,
+                           ObjectMapper objectMapper,
+<span class="nc" id="L74">                           RedisTemplate&lt;String, Object&gt; redisTemplate) {</span>
+<span class="nc" id="L75">        this.auditLogRepository = auditLogRepository;</span>
+<span class="nc" id="L76">        this.messagingTemplate = messagingTemplate;</span>
+<span class="nc" id="L77">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L78">        this.redisTemplate = redisTemplate;</span>
+<span class="nc" id="L79">    }</span>
+    
+    /**
+     * Process audit log events for analytics
+     * 
+     * @param message Raw audit log message from RabbitMQ
+     */
+    @RabbitListener(queues = RabbitMQConfig.AUDIT_LOG_QUEUE)
+    @Transactional
+    public void processAuditLogForAnalytics(String message) {
+        try {
+<span class="nc" id="L90">            logger.debug(&quot;Processing audit log message for analytics: {}&quot;, message);</span>
+            
+            // Parse the audit log event
+<span class="nc" id="L93">            AuditLog auditLog = parseAuditLogMessage(message);</span>
+            
+<span class="nc bnc" id="L95" title="All 2 branches missed.">            if (auditLog != null) {</span>
+                // Update analytics metrics
+<span class="nc" id="L97">                updateAnalyticsMetrics(auditLog);</span>
+                
+                // Generate and publish real-time analytics
+<span class="nc" id="L100">                publishAnalyticsUpdate(auditLog);</span>
+                
+                // Store aggregated data (optional - for historical analysis)
+<span class="nc" id="L103">                storeAnalyticsData(auditLog);</span>
+                
+<span class="nc" id="L105">                logger.debug(&quot;Analytics processing completed for audit log: {}&quot;, auditLog.getId());</span>
+            }
+            
+<span class="nc" id="L108">        } catch (Exception e) {</span>
+<span class="nc" id="L109">            logger.error(&quot;Error processing audit log for analytics: {}&quot;, e.getMessage(), e);</span>
+            // Don't rethrow - we don't want to block the queue
+<span class="nc" id="L111">        }</span>
+<span class="nc" id="L112">    }</span>
+    
+    /**
+     * Parse audit log message from JSON
+     * 
+     * @param message Raw JSON message
+     * @return Parsed AuditLog object
+     */
+    private AuditLog parseAuditLogMessage(String message) {
+        try {
+            // Try to parse as AuditLog directly
+<span class="nc" id="L123">            return objectMapper.readValue(message, AuditLog.class);</span>
+<span class="nc" id="L124">        } catch (JsonProcessingException e) {</span>
+<span class="nc" id="L125">            logger.warn(&quot;Failed to parse audit log message: {}&quot;, e.getMessage());</span>
+            
+            // Create a simple audit log from the raw message
+<span class="nc" id="L128">            AuditLog auditLog = new AuditLog();</span>
+<span class="nc" id="L129">            auditLog.setOperationType(&quot;UNKNOWN&quot;);</span>
+<span class="nc" id="L130">            auditLog.setEntityType(&quot;SYSTEM&quot;);</span>
+<span class="nc" id="L131">            auditLog.setOperationDescription(message);</span>
+<span class="nc" id="L132">            auditLog.setCreatedAt(LocalDateTime.now());</span>
+            
+<span class="nc" id="L134">            return auditLog;</span>
+        }
+    }
+    
+    /**
+     * Update persistent analytics metrics in Redis
+     * 
+     * @param auditLog Audit log event
+     */
+    private void updateAnalyticsMetrics(AuditLog auditLog) {
+        try {
+            // Update action counts
+<span class="nc" id="L146">            redisTemplate.opsForHash().increment(ACTION_COUNTS_KEY, auditLog.getOperationType(), 1);</span>
+            
+            // Update entity type counts
+<span class="nc" id="L149">            redisTemplate.opsForHash().increment(ENTITY_TYPE_COUNTS_KEY, auditLog.getEntityType(), 1);</span>
+            
+            // Update user activity counts and active users set
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            if (auditLog.getUserId() != null) {</span>
+<span class="nc" id="L153">                String userId = auditLog.getUserId().toString();</span>
+<span class="nc" id="L154">                redisTemplate.opsForHash().increment(USER_ACTIVITY_KEY, userId, 1);</span>
+                
+                // Add user to active users set with expiration
+<span class="nc" id="L157">                redisTemplate.opsForSet().add(ACTIVE_USERS_KEY, userId);</span>
+<span class="nc" id="L158">                redisTemplate.expire(ACTIVE_USERS_KEY, 24, TimeUnit.HOURS);</span>
+            }
+            
+            // Update hourly activity counts
+<span class="nc" id="L162">            String hourKey = auditLog.getCreatedAt().format(DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd:HH&quot;));</span>
+<span class="nc" id="L163">            redisTemplate.opsForHash().increment(HOURLY_ACTIVITY_KEY, hourKey, 1);</span>
+            
+            // Set expiration for hourly data (keep for 7 days)
+<span class="nc" id="L166">            redisTemplate.expire(HOURLY_ACTIVITY_KEY, 7, TimeUnit.DAYS);</span>
+            
+<span class="nc" id="L168">        } catch (Exception e) {</span>
+<span class="nc" id="L169">            logger.error(&quot;Error updating analytics metrics in Redis: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L170">        }</span>
+<span class="nc" id="L171">    }</span>
+    
+    /**
+     * Publish real-time analytics updates via WebSocket
+     * 
+     * @param auditLog Audit log event
+     */
+    private void publishAnalyticsUpdate(AuditLog auditLog) {
+        try {
+<span class="nc" id="L180">            Map&lt;String, Object&gt; analyticsUpdate = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L181">            analyticsUpdate.put(&quot;timestamp&quot;, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));</span>
+<span class="nc" id="L182">            analyticsUpdate.put(&quot;event&quot;, auditLog.getOperationType());</span>
+<span class="nc" id="L183">            analyticsUpdate.put(&quot;entityType&quot;, auditLog.getEntityType());</span>
+<span class="nc" id="L184">            analyticsUpdate.put(&quot;userId&quot;, auditLog.getUserId());</span>
+            
+            // Add current metrics
+<span class="nc" id="L187">            analyticsUpdate.put(&quot;actionCounts&quot;, getCurrentActionCounts());</span>
+<span class="nc" id="L188">            analyticsUpdate.put(&quot;entityTypeCounts&quot;, getCurrentEntityTypeCounts());</span>
+<span class="nc" id="L189">            analyticsUpdate.put(&quot;totalEvents&quot;, getTotalEventCount());</span>
+<span class="nc" id="L190">            analyticsUpdate.put(&quot;activeUsers&quot;, getActiveUserCount());</span>
+            
+            // Publish to admin dashboard
+<span class="nc" id="L193">            messagingTemplate.convertAndSend(&quot;/topic/admin/analytics&quot;, analyticsUpdate);</span>
+            
+<span class="nc" id="L195">            logger.debug(&quot;Published analytics update for action: {}&quot;, auditLog.getAction());</span>
+            
+<span class="nc" id="L197">        } catch (Exception e) {</span>
+<span class="nc" id="L198">            logger.error(&quot;Error publishing analytics update: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L199">        }</span>
+<span class="nc" id="L200">    }</span>
+    
+    /**
+     * Store aggregated analytics data for historical analysis
+     * 
+     * @param auditLog Audit log event
+     */
+    private void storeAnalyticsData(AuditLog auditLog) {
+        // For now, we'll just ensure the audit log is persisted
+        // In the future, we might want to create separate analytics tables
+        try {
+<span class="nc bnc" id="L211" title="All 2 branches missed.">            if (auditLog.getId() == null) {</span>
+<span class="nc" id="L212">                auditLogRepository.save(auditLog);</span>
+            }
+<span class="nc" id="L214">        } catch (Exception e) {</span>
+<span class="nc" id="L215">            logger.error(&quot;Error storing analytics data: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L216">        }</span>
+<span class="nc" id="L217">    }</span>
+    
+    /**
+     * Get current action counts for analytics from Redis
+     * 
+     * @return Map of action counts
+     */
+    public Map&lt;String, Long&gt; getCurrentActionCounts() {
+        try {
+<span class="nc" id="L226">            Map&lt;Object, Object&gt; rawCounts = redisTemplate.opsForHash().entries(ACTION_COUNTS_KEY);</span>
+<span class="nc" id="L227">            Map&lt;String, Long&gt; counts = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L228">            rawCounts.forEach((key, value) -&gt; </span>
+<span class="nc" id="L229">                counts.put(key.toString(), ((Number) value).longValue()));</span>
+<span class="nc" id="L230">            return counts;</span>
+<span class="nc" id="L231">        } catch (Exception e) {</span>
+<span class="nc" id="L232">            logger.error(&quot;Error fetching action counts from Redis: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L233">            return new HashMap&lt;&gt;();</span>
+        }
+    }
+    
+    /**
+     * Get current entity type counts for analytics from Redis
+     * 
+     * @return Map of entity type counts
+     */
+    public Map&lt;String, Long&gt; getCurrentEntityTypeCounts() {
+        try {
+<span class="nc" id="L244">            Map&lt;Object, Object&gt; rawCounts = redisTemplate.opsForHash().entries(ENTITY_TYPE_COUNTS_KEY);</span>
+<span class="nc" id="L245">            Map&lt;String, Long&gt; counts = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L246">            rawCounts.forEach((key, value) -&gt; </span>
+<span class="nc" id="L247">                counts.put(key.toString(), ((Number) value).longValue()));</span>
+<span class="nc" id="L248">            return counts;</span>
+<span class="nc" id="L249">        } catch (Exception e) {</span>
+<span class="nc" id="L250">            logger.error(&quot;Error fetching entity type counts from Redis: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L251">            return new HashMap&lt;&gt;();</span>
+        }
+    }
+    
+    /**
+     * Get total event count from Redis
+     * 
+     * @return Total number of events processed
+     */
+    public long getTotalEventCount() {
+        try {
+<span class="nc" id="L262">            return getCurrentActionCounts().values().stream()</span>
+<span class="nc" id="L263">                    .mapToLong(Long::longValue)</span>
+<span class="nc" id="L264">                    .sum();</span>
+<span class="nc" id="L265">        } catch (Exception e) {</span>
+<span class="nc" id="L266">            logger.error(&quot;Error calculating total event count: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L267">            return 0;</span>
+        }
+    }
+    
+    /**
+     * Get active user count from Redis
+     * 
+     * @return Number of active users
+     */
+    public long getActiveUserCount() {
+        try {
+<span class="nc" id="L278">            return redisTemplate.opsForSet().size(ACTIVE_USERS_KEY);</span>
+<span class="nc" id="L279">        } catch (Exception e) {</span>
+<span class="nc" id="L280">            logger.error(&quot;Error fetching active user count from Redis: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L281">            return 0;</span>
+        }
+    }
+    
+    /**
+     * Get hourly activity data for charts from Redis
+     * 
+     * @return Map of hourly activity counts
+     */
+    public Map&lt;String, Long&gt; getHourlyActivityData() {
+        try {
+<span class="nc" id="L292">            Map&lt;Object, Object&gt; rawData = redisTemplate.opsForHash().entries(HOURLY_ACTIVITY_KEY);</span>
+<span class="nc" id="L293">            Map&lt;String, Long&gt; data = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L294">            rawData.forEach((key, value) -&gt; </span>
+<span class="nc" id="L295">                data.put(key.toString(), ((Number) value).longValue()));</span>
+<span class="nc" id="L296">            return data;</span>
+<span class="nc" id="L297">        } catch (Exception e) {</span>
+<span class="nc" id="L298">            logger.error(&quot;Error fetching hourly activity data from Redis: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L299">            return new HashMap&lt;&gt;();</span>
+        }
+    }
+    
+    /**
+     * Get analytics summary for admin dashboard
+     * 
+     * @return Analytics summary data
+     */
+    public Map&lt;String, Object&gt; getAnalyticsSummary() {
+<span class="nc" id="L309">        Map&lt;String, Object&gt; summary = new HashMap&lt;&gt;();</span>
+        
+<span class="nc" id="L311">        summary.put(&quot;totalEvents&quot;, getTotalEventCount());</span>
+<span class="nc" id="L312">        summary.put(&quot;activeUsers&quot;, getActiveUserCount());</span>
+<span class="nc" id="L313">        summary.put(&quot;actionCounts&quot;, getCurrentActionCounts());</span>
+<span class="nc" id="L314">        summary.put(&quot;entityTypeCounts&quot;, getCurrentEntityTypeCounts());</span>
+<span class="nc" id="L315">        summary.put(&quot;hourlyActivity&quot;, getHourlyActivityData());</span>
+<span class="nc" id="L316">        summary.put(&quot;lastUpdated&quot;, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));</span>
+        
+<span class="nc" id="L318">        return summary;</span>
+    }
+    
+    /**
+     * Reset analytics data (for testing or maintenance)
+     */
+    public void resetAnalyticsData() {
+        try {
+<span class="nc" id="L326">            redisTemplate.delete(ACTION_COUNTS_KEY);</span>
+<span class="nc" id="L327">            redisTemplate.delete(ENTITY_TYPE_COUNTS_KEY);</span>
+<span class="nc" id="L328">            redisTemplate.delete(USER_ACTIVITY_KEY);</span>
+<span class="nc" id="L329">            redisTemplate.delete(HOURLY_ACTIVITY_KEY);</span>
+<span class="nc" id="L330">            redisTemplate.delete(ACTIVE_USERS_KEY);</span>
+            
+<span class="nc" id="L332">            logger.info(&quot;Analytics data reset completed&quot;);</span>
+<span class="nc" id="L333">        } catch (Exception e) {</span>
+<span class="nc" id="L334">            logger.error(&quot;Error resetting analytics data: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L335">        }</span>
+<span class="nc" id="L336">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

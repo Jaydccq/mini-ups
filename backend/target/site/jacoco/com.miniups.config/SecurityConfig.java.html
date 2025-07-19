@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">/**
+ * Security Configuration Class
+ * 
+ * Purpose:
+ * - Configures comprehensive security settings for the Mini-UPS application
+ * - Implements JWT-based authentication with role-based access control
+ * - Defines security filter chain and authentication mechanisms
+ * - Establishes CORS policies and endpoint protection strategies
+ * 
+ * Core Security Components:
+ * - JWT Authentication: Stateless token-based authentication system
+ * - Role-based Access Control: USER, ADMIN, DRIVER, OPERATOR role hierarchy
+ * - CORS Configuration: Cross-origin resource sharing for frontend integration
+ * - Password Encoding: BCrypt hashing for secure password storage
+ * - Method Security: Annotation-based security for fine-grained access control
+ * 
+ * Authentication Flow:
+ * 1. User provides credentials to /api/auth/login endpoint
+ * 2. CustomUserDetailsService loads user from database
+ * 3. DaoAuthenticationProvider validates credentials with BCrypt
+ * 4. JWT token generated and returned to client
+ * 5. Subsequent requests include JWT in Authorization header
+ * 6. JwtAuthenticationFilter validates token and sets SecurityContext
+ * 
+ * Authorization Hierarchy:
+ * - Public Endpoints: /api/auth/**, /api/public/**, /api/tracking/**
+ * - Admin Endpoints: /api/admin/** (ADMIN role required)
+ * - Driver Endpoints: /api/driver/** (DRIVER or ADMIN roles)
+ * - Protected Endpoints: All other endpoints require authentication
+ * 
+ * Security Features:
+ * - Stateless sessions (SessionCreationPolicy.STATELESS)
+ * - CSRF protection disabled (appropriate for JWT-based APIs)
+ * - BCrypt password encoding with secure salt generation
+ * - JWT token validation on every request
+ * - Comprehensive exception handling for authentication failures
+ * 
+ * CORS Configuration:
+ * - Allows all origins with pattern matching for development flexibility
+ * - Supports GET, POST, PUT, DELETE, OPTIONS HTTP methods
+ * - Permits all headers for maximum compatibility
+ * - Credentials support enabled for authenticated requests
+ * 
+ * Method Security:
+ * - @EnableMethodSecurity(prePostEnabled = true) enables @PreAuthorize/@PostAuthorize
+ * - Supports SpEL expressions for complex authorization logic
+ * - Method-level security complements URL-based security rules
+ * - Enables fine-grained access control in service layers
+ * 
+ * Public Endpoints:
+ * - /api/auth/**: Authentication endpoints (login, register, refresh)
+ * - /api/public/**: Public API endpoints (documentation, health checks)
+ * - /api/tracking/**: Package tracking without authentication
+ * - /api/webhooks/**: Amazon integration webhooks
+ * - /api-docs/**, /swagger-ui/**: API documentation
+ * - /actuator/health: Application health monitoring
+ * 
+ * Protected Endpoints:
+ * - /api/admin/**: Administrative functions (user management, system config)
+ * - /api/driver/**: Driver-specific operations (truck management, deliveries)
+ * - All other /api/** endpoints: General authenticated operations
+ * 
+ * Authentication Provider Configuration:
+ * - DaoAuthenticationProvider: Database-backed authentication
+ * - CustomUserDetailsService: Loads user details from database
+ * - BCryptPasswordEncoder: Secure password hashing and verification
+ * - AuthenticationManager: Coordinates authentication process
+ * 
+ * Filter Chain Order:
+ * 1. CORS filter (built-in)
+ * 2. JwtAuthenticationFilter (custom, before UsernamePasswordAuthenticationFilter)
+ * 3. UsernamePasswordAuthenticationFilter (Spring Security default)
+ * 4. Other Spring Security filters
+ * 
+ * Security Best Practices:
+ * - Stateless authentication prevents session hijacking
+ * - Strong password encoding with BCrypt
+ * - Comprehensive input validation and sanitization
+ * - Proper exception handling without information leakage
+ * - Regular security audits and vulnerability assessments
+ * 
+ * Integration Points:
+ * - Works with CustomUserDetailsService for user loading
+ * - Integrates with JWT components for token handling
+ * - Supports WebSocket security for real-time features
+ * - Compatible with Spring Boot Security auto-configuration
+ * 
+ * Development vs Production:
+ * - CORS configuration should be more restrictive in production
+ * - JWT secret keys must be environment-specific and secure
+ * - HTTPS should be enforced in production environments
+ * - Security headers should be added for production deployment
+ * 
+ * Monitoring and Auditing:
+ * - Authentication events logged for security monitoring
+ * - Failed authentication attempts tracked for intrusion detection
+ * - Security metrics available through Spring Boot Actuator
+ * - Integration with external security monitoring systems
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
+package com.miniups.config;
+
+import com.miniups.security.JwtAuthenticationEntryPoint;
+import com.miniups.security.JwtAuthenticationFilter;
+import com.miniups.security.WebhookAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+<span class="nc" id="L135">public class SecurityConfig {</span>
+    
+    @Autowired
+    private UserDetailsService userDetailsService;
+    
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    
+    @Autowired
+    private WebhookAuthenticationFilter webhookAuthenticationFilter;
+    
+    @Value(&quot;${cors.allowed-origins:http://localhost:3000,http://localhost:3001}&quot;)
+    private String allowedOrigins;
+    
+    @Value(&quot;${cors.allowed-methods:GET,POST,PUT,DELETE,OPTIONS}&quot;)
+    private String allowedMethods;
+    
+    @Value(&quot;${cors.allow-credentials:true}&quot;)
+    private boolean allowCredentials;
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="nc" id="L160">        return new BCryptPasswordEncoder();</span>
+    }
+    
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+<span class="nc" id="L165">        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();</span>
+<span class="nc" id="L166">        authProvider.setUserDetailsService(userDetailsService);</span>
+<span class="nc" id="L167">        authProvider.setPasswordEncoder(passwordEncoder());</span>
+<span class="nc" id="L168">        return authProvider;</span>
+    }
+    
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authConfig) throws Exception {
+<span class="nc" id="L174">        return authConfig.getAuthenticationManager();</span>
+    }
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<span class="nc" id="L179">        http.cors(cors -&gt; cors.configurationSource(corsConfigurationSource()))</span>
+<span class="nc" id="L180">            .csrf(csrf -&gt; csrf.disable())</span>
+<span class="nc" id="L181">            .exceptionHandling(exception -&gt; </span>
+<span class="nc" id="L182">                exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))</span>
+<span class="nc" id="L183">            .sessionManagement(session -&gt; </span>
+<span class="nc" id="L184">                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
+<span class="nc" id="L185">            .authorizeHttpRequests(authz -&gt; authz</span>
+                // Public endpoints
+<span class="nc" id="L187">                .requestMatchers(&quot;/&quot;, &quot;/index.html&quot;, &quot;/favicon.ico&quot;).permitAll()</span>
+<span class="nc" id="L188">                .requestMatchers(&quot;/api/auth/**&quot;).permitAll()</span>
+<span class="nc" id="L189">                .requestMatchers(&quot;/api/public/**&quot;).permitAll()</span>
+<span class="nc" id="L190">                .requestMatchers(&quot;/api/tracking/**&quot;).permitAll() // Allow tracking without auth</span>
+<span class="nc" id="L191">                .requestMatchers(&quot;/api/webhooks/**&quot;).permitAll() // Amazon webhooks</span>
+<span class="nc" id="L192">                .requestMatchers(&quot;/api/shipment&quot;, &quot;/api/shipment_loaded&quot;, &quot;/api/shipment_status&quot;, &quot;/api/address_change&quot;).permitAll() // Amazon integration endpoints</span>
+                
+                // API Documentation
+<span class="nc" id="L195">                .requestMatchers(&quot;/api-docs/**&quot;, &quot;/swagger-ui/**&quot;, &quot;/swagger-ui.html&quot;).permitAll()</span>
+                
+                // Health check
+<span class="nc" id="L198">                .requestMatchers(&quot;/actuator/health&quot;, &quot;/actuator/info&quot;, &quot;/actuator/**&quot;).permitAll()</span>
+                
+                // Admin endpoints
+<span class="nc" id="L201">                .requestMatchers(&quot;/api/admin/**&quot;).hasRole(&quot;ADMIN&quot;)</span>
+                
+                // Driver endpoints
+<span class="nc" id="L204">                .requestMatchers(&quot;/api/driver/**&quot;).hasAnyRole(&quot;DRIVER&quot;, &quot;ADMIN&quot;)</span>
+                
+                // All other endpoints require authentication
+<span class="nc" id="L207">                .anyRequest().authenticated()</span>
+            );
+        
+<span class="nc" id="L210">        http.authenticationProvider(authenticationProvider());</span>
+<span class="nc" id="L211">        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);</span>
+<span class="nc" id="L212">        http.addFilterBefore(webhookAuthenticationFilter, JwtAuthenticationFilter.class);</span>
+        
+<span class="nc" id="L214">        return http.build();</span>
+    }
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+<span class="nc" id="L219">        CorsConfiguration configuration = new CorsConfiguration();</span>
+        
+        // Parse allowed origins from configuration
+<span class="nc" id="L222">        List&lt;String&gt; origins = Arrays.asList(allowedOrigins.split(&quot;,&quot;));</span>
+<span class="nc" id="L223">        configuration.setAllowedOrigins(origins);</span>
+        
+        // Parse allowed methods from configuration
+<span class="nc" id="L226">        List&lt;String&gt; methods = Arrays.asList(allowedMethods.split(&quot;,&quot;));</span>
+<span class="nc" id="L227">        configuration.setAllowedMethods(methods);</span>
+        
+        // Allow common headers but be more restrictive than &quot;*&quot;
+<span class="nc" id="L230">        configuration.setAllowedHeaders(Arrays.asList(</span>
+            &quot;Origin&quot;, &quot;Content-Type&quot;, &quot;Accept&quot;, &quot;Authorization&quot;, 
+            &quot;X-Requested-With&quot;, &quot;X-Amazon-Signature&quot;, &quot;Cache-Control&quot;
+        ));
+        
+        // Expose headers that frontend might need
+<span class="nc" id="L236">        configuration.setExposedHeaders(Arrays.asList(</span>
+            &quot;Authorization&quot;, &quot;X-Total-Count&quot;, &quot;X-Page-Number&quot;, &quot;X-Page-Size&quot;
+        ));
+        
+<span class="nc" id="L240">        configuration.setAllowCredentials(allowCredentials);</span>
+<span class="nc" id="L241">        configuration.setMaxAge(3600L); // Cache preflight requests for 1 hour</span>
+        
+<span class="nc" id="L243">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="nc" id="L244">        source.registerCorsConfiguration(&quot;/**&quot;, configuration);</span>
+<span class="nc" id="L245">        return source;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

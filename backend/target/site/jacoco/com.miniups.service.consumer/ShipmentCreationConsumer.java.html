@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShipmentCreationConsumer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.service.consumer</a> &gt; <span class="el_source">ShipmentCreationConsumer.java</span></div><h1>ShipmentCreationConsumer.java</h1><pre class="source lang-java linenums">package com.miniups.service.consumer;
+
+import com.miniups.config.RabbitMQConfig;
+import com.miniups.model.entity.Shipment;
+import com.miniups.model.entity.Truck;
+import com.miniups.model.entity.User;
+import com.miniups.model.enums.ShipmentStatus;
+import com.miniups.model.event.BusinessEvent;
+import com.miniups.model.event.ShipmentCreationPayload;
+import com.miniups.repository.ShipmentRepository;
+import com.miniups.repository.TruckRepository;
+import com.miniups.repository.UserRepository;
+import com.miniups.service.AsyncAuditService;
+import com.miniups.service.EventPublisherService;
+import com.miniups.service.TrackingService;
+import com.miniups.service.TruckManagementService;
+import com.miniups.service.WorldSimulatorService;
+import com.rabbitmq.client.Channel;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Shipment Creation Consumer
+ * 
+ * Processes shipment creation events asynchronously to handle the heavy
+ * business logic operations like truck assignment, world simulator
+ * integration, and database transactions without blocking the API response.
+ * 
+ * Key Features:
+ * - Asynchronous shipment processing
+ * - Truck assignment and optimization
+ * - World simulator integration
+ * - Comprehensive error handling
+ * - Idempotent message processing
+ * - Automatic retry with dead letter support
+ * 
+ * Processing Flow:
+ * 1. Receive shipment creation event from queue
+ * 2. Validate payload and check for duplicates
+ * 3. Create shipment entity in database
+ * 4. Assign optimal truck for pickup
+ * 5. Integrate with world simulator
+ * 6. Send status notifications
+ * 7. Audit the complete process
+ * 
+ * @author Mini-UPS Development Team
+ * @version 1.0
+ * @since 2024
+ */
+@Service
+public class ShipmentCreationConsumer {
+<span class="nc" id="L62">    private static final Logger log = LoggerFactory.getLogger(ShipmentCreationConsumer.class);</span>
+
+    private final ShipmentRepository shipmentRepository;
+    private final TruckRepository truckRepository;
+    private final UserRepository userRepository;
+    private final TrackingService trackingService;
+    private final TruckManagementService truckManagementService;
+    private final WorldSimulatorService worldSimulatorService;
+    private final EventPublisherService eventPublisher;
+    private final AsyncAuditService asyncAuditService;
+    
+    public ShipmentCreationConsumer(ShipmentRepository shipmentRepository, TruckRepository truckRepository,
+                                    UserRepository userRepository, TrackingService trackingService,
+                                    TruckManagementService truckManagementService, WorldSimulatorService worldSimulatorService,
+<span class="nc" id="L76">                                    EventPublisherService eventPublisher, AsyncAuditService asyncAuditService) {</span>
+<span class="nc" id="L77">        this.shipmentRepository = shipmentRepository;</span>
+<span class="nc" id="L78">        this.truckRepository = truckRepository;</span>
+<span class="nc" id="L79">        this.userRepository = userRepository;</span>
+<span class="nc" id="L80">        this.trackingService = trackingService;</span>
+<span class="nc" id="L81">        this.truckManagementService = truckManagementService;</span>
+<span class="nc" id="L82">        this.worldSimulatorService = worldSimulatorService;</span>
+<span class="nc" id="L83">        this.eventPublisher = eventPublisher;</span>
+<span class="nc" id="L84">        this.asyncAuditService = asyncAuditService;</span>
+<span class="nc" id="L85">    }</span>
+
+    /**
+     * Process shipment creation events from the queue
+     * 
+     * This method handles the complete shipment creation workflow
+     * that was queued for asynchronous processing. It performs all
+     * the heavy operations that would have blocked the API response.
+     * 
+     * @param event The business event containing shipment creation data
+     * @param message The RabbitMQ message for acknowledgment
+     * @param channel The RabbitMQ channel for acknowledgment
+     */
+    @RabbitListener(queues = RabbitMQConfig.SHIPMENT_PROCESSOR_QUEUE)
+    @Transactional
+    public void handleShipmentCreationEvent(BusinessEvent&lt;ShipmentCreationPayload&gt; event,
+                                           Message message,
+                                           Channel channel) throws IOException {
+        
+<span class="nc" id="L104">        long deliveryTag = message.getMessageProperties().getDeliveryTag();</span>
+<span class="nc" id="L105">        long startTime = System.currentTimeMillis();</span>
+<span class="nc" id="L106">        String correlationId = event.getCorrelationId();</span>
+        
+        try {
+<span class="nc" id="L109">            log.info(&quot;Processing shipment creation event: {} for Amazon shipment: {} (correlationId: {})&quot;,</span>
+<span class="nc" id="L110">                    event.getEventId(), event.getPayload().getAmazonShipmentId(), correlationId);</span>
+
+            // Validate the event payload
+<span class="nc" id="L113">            ShipmentCreationPayload payload = event.getPayload();</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">            if (!isValidShipmentPayload(payload)) {</span>
+<span class="nc" id="L115">                log.warn(&quot;Invalid shipment creation payload in event: {}&quot;, event.getEventId());</span>
+                // Acknowledge invalid messages to remove them from queue
+<span class="nc" id="L117">                channel.basicAck(deliveryTag, false);</span>
+<span class="nc" id="L118">                return;</span>
+            }
+
+            // Check for duplicate processing (idempotency)
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            if (isDuplicateShipment(payload.getAmazonShipmentId())) {</span>
+<span class="nc" id="L123">                log.debug(&quot;Skipping duplicate shipment creation for Amazon shipment: {}&quot;, </span>
+<span class="nc" id="L124">                         payload.getAmazonShipmentId());</span>
+<span class="nc" id="L125">                channel.basicAck(deliveryTag, false);</span>
+<span class="nc" id="L126">                return;</span>
+            }
+
+            // Process the shipment creation
+<span class="nc" id="L130">            Shipment createdShipment = processShipmentCreation(payload, correlationId, startTime);</span>
+
+            // Audit successful processing
+<span class="nc" id="L133">            Map&lt;String, Object&gt; auditData = Map.of(</span>
+<span class="nc" id="L134">                &quot;shipmentId&quot;, createdShipment.getShipmentId(),</span>
+<span class="nc" id="L135">                &quot;upsTrackingId&quot;, createdShipment.getUpsTrackingId(),</span>
+<span class="nc" id="L136">                &quot;truckId&quot;, createdShipment.getTruck().getId(),</span>
+                &quot;processingMode&quot;, &quot;async_consumer&quot;,
+<span class="nc" id="L138">                &quot;eventId&quot;, event.getEventId()</span>
+            );
+<span class="nc" id="L140">            asyncAuditService.auditSuccess(&quot;shipment.async_created&quot;, createdShipment.getShipmentId(), </span>
+                                         &quot;Shipment successfully created via async processing&quot;, 
+                                         startTime, auditData);
+
+<span class="nc" id="L144">            log.info(&quot;Successfully processed shipment creation event: {} for shipment: {} with tracking: {} (correlationId: {})&quot;,</span>
+<span class="nc" id="L145">                    event.getEventId(), createdShipment.getShipmentId(), </span>
+<span class="nc" id="L146">                    createdShipment.getUpsTrackingId(), correlationId);</span>
+
+            // Acknowledge successful processing
+<span class="nc" id="L149">            channel.basicAck(deliveryTag, false);</span>
+
+<span class="nc" id="L151">        } catch (Exception e) {</span>
+<span class="nc" id="L152">            log.error(&quot;Failed to process shipment creation event: {} (correlationId: {})&quot;, </span>
+<span class="nc" id="L153">                     event.getEventId(), correlationId, e);</span>
+            
+            // Audit the failure
+<span class="nc" id="L156">            asyncAuditService.auditFailure(&quot;shipment.async_created&quot;, </span>
+<span class="nc" id="L157">                                         event.getPayload().getAmazonShipmentId().toString(), </span>
+                                         &quot;Failed to process shipment creation in async consumer&quot;, 
+                                         startTime, e);
+            
+            // Reject message and send to dead letter queue
+            // false = don't requeue, let it go to DLQ for manual investigation
+<span class="nc" id="L163">            channel.basicNack(deliveryTag, false, false);</span>
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">    }</span>
+
+    /**
+     * Validate the shipment creation payload
+     * Ensures all required fields are present and valid
+     * 
+     * @param payload The shipment creation payload to validate
+     * @return true if the payload is valid for processing
+     */
+    private boolean isValidShipmentPayload(ShipmentCreationPayload payload) {
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        if (payload == null) {</span>
+<span class="nc" id="L176">            return false;</span>
+        }
+
+        // Check required fields using the payload's built-in validation
+<span class="nc" id="L180">        return payload.isValid();</span>
+    }
+
+    /**
+     * Check if this shipment has already been processed
+     * Implements idempotency by checking for existing shipments
+     * 
+     * @param amazonShipmentId The Amazon shipment identifier
+     * @return true if this shipment has already been processed
+     */
+    private boolean isDuplicateShipment(Long amazonShipmentId) {
+<span class="nc" id="L191">        return shipmentRepository.findByShipmentId(amazonShipmentId.toString()).isPresent();</span>
+    }
+
+    /**
+     * Process the complete shipment creation workflow
+     * This is the core business logic that was moved out of the API endpoint
+     * 
+     * @param payload The shipment creation data
+     * @param correlationId The correlation ID for tracking
+     * @param startTime The processing start time
+     * @return The created shipment entity
+     */
+    private Shipment processShipmentCreation(ShipmentCreationPayload payload, String correlationId, long startTime) {
+        try {
+            // Step 1: Validate and get user
+<span class="nc" id="L206">            User user = getUserById(payload.getUserId());</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">            if (user == null) {</span>
+<span class="nc" id="L208">                throw new IllegalStateException(&quot;User not found: &quot; + payload.getUserId());</span>
+            }
+
+            // Step 2: Assign truck for this shipment
+<span class="nc" id="L212">            Truck assignedTruck = assignTruckForShipment(payload);</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">            if (assignedTruck == null) {</span>
+<span class="nc" id="L214">                throw new IllegalStateException(&quot;No available trucks for pickup from warehouse: &quot; + payload.getWarehouseId());</span>
+            }
+
+            // Step 3: Create shipment entity
+<span class="nc" id="L218">            Shipment shipment = createShipmentEntity(payload, user, assignedTruck);</span>
+
+            // Step 4: Save shipment to database
+<span class="nc" id="L221">            shipment = shipmentRepository.save(shipment);</span>
+
+            // Step 5: Integrate with world simulator
+<span class="nc" id="L224">            integrateWithWorldSimulator(shipment, payload, correlationId);</span>
+
+            // Step 6: Publish status update events
+<span class="nc" id="L227">            publishShipmentStatusEvents(shipment, correlationId);</span>
+
+<span class="nc" id="L229">            log.info(&quot;Completed shipment creation for Amazon shipment: {} with UPS tracking: {} (correlationId: {})&quot;,</span>
+<span class="nc" id="L230">                    payload.getAmazonShipmentId(), shipment.getUpsTrackingId(), correlationId);</span>
+
+<span class="nc" id="L232">            return shipment;</span>
+
+<span class="nc" id="L234">        } catch (Exception e) {</span>
+<span class="nc" id="L235">            log.error(&quot;Error in shipment creation process for Amazon shipment: {} (correlationId: {})&quot;, </span>
+<span class="nc" id="L236">                     payload.getAmazonShipmentId(), correlationId, e);</span>
+<span class="nc" id="L237">            throw e;</span>
+        }
+    }
+
+    /**
+     * Get user by ID with validation
+     */
+    private User getUserById(Long userId) {
+<span class="nc" id="L245">        Optional&lt;User&gt; userOpt = userRepository.findById(userId);</span>
+<span class="nc" id="L246">        return userOpt.orElse(null);</span>
+    }
+
+    /**
+     * Assign the best available truck for this shipment
+     * Uses the truck management service to find optimal assignment
+     */
+    private Truck assignTruckForShipment(ShipmentCreationPayload payload) {
+        try {
+            // Use truck management service to find the best truck
+<span class="nc" id="L256">            return truckManagementService.assignOptimalTruck(payload.getWarehouseId(), 0, 1);</span>
+<span class="nc" id="L257">        } catch (Exception e) {</span>
+<span class="nc" id="L258">            log.error(&quot;Failed to assign truck for warehouse: {}&quot;, payload.getWarehouseId(), e);</span>
+<span class="nc" id="L259">            return null;</span>
+        }
+    }
+
+    /**
+     * Create the shipment entity from the payload data
+     */
+    private Shipment createShipmentEntity(ShipmentCreationPayload payload, User user, Truck truck) {
+<span class="nc" id="L267">        Shipment shipment = new Shipment();</span>
+        
+        // Set basic shipment information
+<span class="nc" id="L270">        shipment.setShipmentId(payload.getAmazonShipmentId().toString());</span>
+<span class="nc" id="L271">        shipment.setUpsTrackingId(trackingService.generateTrackingNumber());</span>
+<span class="nc" id="L272">        shipment.setUser(user);</span>
+<span class="nc" id="L273">        shipment.setTruck(truck);</span>
+        
+        // Set warehouse and destination
+<span class="nc" id="L276">        shipment.setOriginX(payload.getWarehouseId());</span>
+<span class="nc" id="L277">        shipment.setOriginY(0);</span>
+<span class="nc" id="L278">        shipment.setDestX(payload.getDestX());</span>
+<span class="nc" id="L279">        shipment.setDestY(payload.getDestY());</span>
+        
+        // Set package information - use amazon order id as description
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        if (payload.getAmazonShipmentId() != null) {</span>
+<span class="nc" id="L283">            shipment.setAmazonOrderId(payload.getAmazonShipmentId().toString());</span>
+        }
+        
+        // Set initial status and timestamps
+<span class="nc" id="L287">        shipment.setStatus(ShipmentStatus.CREATED);</span>
+        // createdTime is inherited from BaseEntity
+<span class="nc" id="L289">        shipment.setEstimatedDelivery(calculateEstimatedDelivery(payload));</span>
+        
+<span class="nc" id="L291">        return shipment;</span>
+    }
+
+    /**
+     * Calculate estimated delivery time based on distance and current conditions
+     */
+    private LocalDateTime calculateEstimatedDelivery(ShipmentCreationPayload payload) {
+        // Simple estimation: assume 1 hour for pickup + travel time
+        // In a real system, this would consider distance, traffic, truck capacity, etc.
+<span class="nc" id="L300">        return LocalDateTime.now().plusHours(2);</span>
+    }
+
+    /**
+     * Integrate with world simulator for truck dispatch
+     */
+    private void integrateWithWorldSimulator(Shipment shipment, ShipmentCreationPayload payload, String correlationId) {
+        try {
+            // Send truck to warehouse for pickup
+<span class="nc" id="L309">            worldSimulatorService.sendTruckToPickup(</span>
+<span class="nc" id="L310">                shipment.getTruck().getTruckId(), </span>
+<span class="nc" id="L311">                payload.getWarehouseId()</span>
+            );
+            
+<span class="nc" id="L314">            log.debug(&quot;Sent truck {} to warehouse {} for shipment {} (correlationId: {})&quot;,</span>
+<span class="nc" id="L315">                     shipment.getTruck().getId(), payload.getWarehouseId(), </span>
+<span class="nc" id="L316">                     shipment.getId(), correlationId);</span>
+                     
+<span class="nc" id="L318">        } catch (Exception e) {</span>
+<span class="nc" id="L319">            log.warn(&quot;Failed to integrate with world simulator for shipment: {} (correlationId: {})&quot;, </span>
+<span class="nc" id="L320">                    shipment.getId(), correlationId, e);</span>
+            // Don't fail the entire process for world simulator issues
+<span class="nc" id="L322">        }</span>
+<span class="nc" id="L323">    }</span>
+
+    /**
+     * Publish events for shipment status updates and notifications
+     */
+    private void publishShipmentStatusEvents(Shipment shipment, String correlationId) {
+        try {
+            // Publish status update for other systems
+<span class="nc" id="L331">            eventPublisher.publishShipmentStatusUpdateEvent(</span>
+<span class="nc" id="L332">                shipment.getId(), </span>
+                null, 
+<span class="nc" id="L334">                shipment.getStatus().toString(), </span>
+                correlationId
+            );
+            
+            // TODO: Publish notification event for user
+            // This would trigger email/SMS notifications to the user
+            
+<span class="nc" id="L341">        } catch (Exception e) {</span>
+<span class="nc" id="L342">            log.warn(&quot;Failed to publish status events for shipment: {} (correlationId: {})&quot;, </span>
+<span class="nc" id="L343">                    shipment.getId(), correlationId, e);</span>
+            // Don't fail the entire process for event publishing issues
+<span class="nc" id="L345">        }</span>
+<span class="nc" id="L346">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

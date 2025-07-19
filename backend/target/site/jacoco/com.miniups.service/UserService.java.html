@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">/**
+ * User Management Service
+ * 
+ * Purpose:
+ * - Provides user information query and management functionality
+ * - Supports user information updates and status management
+ * - Provides user listing and search functionality
+ * 
+ * Core Features:
+ * - User information CRUD operations
+ * - User status management (enable/disable)
+ * - User role and permission management
+ * - User search and filtering
+ * 
+ * Access Control:
+ * - Regular users can only view and modify their own information
+ * - Administrators can manage all users
+ * - Sensitive operations require additional permission verification
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.service;
+
+import com.miniups.exception.*;
+import com.miniups.model.dto.user.CreateUserDto;
+import com.miniups.model.dto.user.UpdateUserDto;
+import com.miniups.model.dto.user.UserDto;
+import com.miniups.model.entity.User;
+import com.miniups.model.enums.UserRole;
+import com.miniups.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class UserService {
+    
+<span class="nc" id="L49">    private static final Logger logger = LoggerFactory.getLogger(UserService.class);</span>
+    
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    
+<span class="nc" id="L54">    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {</span>
+<span class="nc" id="L55">        this.userRepository = userRepository;</span>
+<span class="nc" id="L56">        this.passwordEncoder = passwordEncoder;</span>
+<span class="nc" id="L57">    }</span>
+    
+    /**
+     * Get current user information
+     * 
+     * @param username Username
+     * @return User information DTO
+     * @throws RuntimeException When user not found
+     */
+    @Transactional(readOnly = true)
+    public UserDto getCurrentUserInfo(String username) {
+<span class="nc" id="L68">        logger.debug(&quot;Getting user information: username={}&quot;, username);</span>
+        
+<span class="nc" id="L70">        Optional&lt;User&gt; userOptional = userRepository.findByUsername(username);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (userOptional.isEmpty()) {</span>
+<span class="nc" id="L72">            logger.error(&quot;User not found: username={}&quot;, username);</span>
+<span class="nc" id="L73">            throw new UserNotFoundException(username);</span>
+        }
+        
+<span class="nc" id="L76">        User user = userOptional.get();</span>
+<span class="nc" id="L77">        UserDto userDto = UserDto.fromEntity(user);</span>
+        
+<span class="nc" id="L79">        logger.debug(&quot;Successfully retrieved user information: username={}, id={}&quot;, username, user.getId());</span>
+<span class="nc" id="L80">        return userDto;</span>
+    }
+    
+    /**
+     * Get user information by user ID
+     * 
+     * @param userId User ID
+     * @return User information DTO
+     * @throws RuntimeException When user not found
+     */
+    @Transactional(readOnly = true)
+    public UserDto getUserById(Long userId) {
+<span class="nc" id="L92">        logger.debug(&quot;Get user information by ID: userId={}&quot;, userId);</span>
+        
+<span class="nc" id="L94">        Optional&lt;User&gt; userOptional = userRepository.findById(userId);</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (userOptional.isEmpty()) {</span>
+<span class="nc" id="L96">            logger.error(&quot;User not found: userId={}&quot;, userId);</span>
+<span class="nc" id="L97">            throw new UserNotFoundException(&quot;ID: &quot; + userId);</span>
+        }
+        
+<span class="nc" id="L100">        User user = userOptional.get();</span>
+<span class="nc" id="L101">        UserDto userDto = UserDto.fromEntity(user);</span>
+        
+<span class="nc" id="L103">        logger.debug(&quot;Successfully retrieved user information: userId={}, username={}&quot;, userId, user.getUsername());</span>
+<span class="nc" id="L104">        return userDto;</span>
+    }
+    
+    /**
+     * Get user public profile
+     * 
+     * @param userId User ID
+     * @return Public user information DTO (excluding sensitive information)
+     */
+    @Transactional(readOnly = true)
+    public UserDto getUserPublicProfile(Long userId) {
+<span class="nc" id="L115">        logger.debug(&quot;Getting user public profile: userId={}&quot;, userId);</span>
+        
+<span class="nc" id="L117">        Optional&lt;User&gt; userOptional = userRepository.findById(userId);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        if (userOptional.isEmpty()) {</span>
+<span class="nc" id="L119">            logger.error(&quot;User not found: userId={}&quot;, userId);</span>
+<span class="nc" id="L120">            throw new UserNotFoundException(&quot;ID: &quot; + userId);</span>
+        }
+        
+<span class="nc" id="L123">        User user = userOptional.get();</span>
+<span class="nc" id="L124">        UserDto userDto = UserDto.publicProfile(user);</span>
+        
+<span class="nc" id="L126">        logger.debug(&quot;Successfully retrieved user public profile: userId={}, username={}&quot;, userId, user.getUsername());</span>
+<span class="nc" id="L127">        return userDto;</span>
+    }
+    
+    /**
+     * Update user information
+     * 
+     * @param userId User ID
+     * @param updateRequest Update request data
+     * @return Updated user information
+     * @throws RuntimeException When user not found or email conflict occurs
+     */
+    public UserDto updateUser(Long userId, UpdateUserDto updateRequest) {
+<span class="nc" id="L139">        logger.info(&quot;Update user information: userId={}&quot;, userId);</span>
+        
+<span class="nc" id="L141">        Optional&lt;User&gt; userOptional = userRepository.findById(userId);</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (userOptional.isEmpty()) {</span>
+<span class="nc" id="L143">            logger.error(&quot;User not found: userId={}&quot;, userId);</span>
+<span class="nc" id="L144">            throw new UserNotFoundException(&quot;ID: &quot; + userId);</span>
+        }
+        
+<span class="nc" id="L147">        User user = userOptional.get();</span>
+        
+        try {
+            // Update email (if provided and different)
+<span class="nc bnc" id="L151" title="All 4 branches missed.">            if (updateRequest.getEmail() != null &amp;&amp; !updateRequest.getEmail().equals(user.getEmail())) {</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                if (userRepository.existsByEmail(updateRequest.getEmail())) {</span>
+<span class="nc" id="L153">                    logger.warn(&quot;Email already in use: email={}&quot;, updateRequest.getEmail());</span>
+<span class="nc" id="L154">                    throw new UserAlreadyExistsException(&quot;email&quot;, updateRequest.getEmail());</span>
+                }
+<span class="nc" id="L156">                user.setEmail(updateRequest.getEmail());</span>
+            }
+            
+            // Update basic information
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            if (updateRequest.getFirstName() != null) {</span>
+<span class="nc" id="L161">                user.setFirstName(updateRequest.getFirstName());</span>
+            }
+<span class="nc bnc" id="L163" title="All 2 branches missed.">            if (updateRequest.getLastName() != null) {</span>
+<span class="nc" id="L164">                user.setLastName(updateRequest.getLastName());</span>
+            }
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if (updateRequest.getPhone() != null) {</span>
+<span class="nc" id="L167">                user.setPhone(updateRequest.getPhone());</span>
+            }
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            if (updateRequest.getAddress() != null) {</span>
+<span class="nc" id="L170">                user.setAddress(updateRequest.getAddress());</span>
+            }
+            
+            // Administrator-only field updates
+<span class="nc bnc" id="L174" title="All 2 branches missed.">            if (updateRequest.getRole() != null) {</span>
+<span class="nc" id="L175">                user.setRole(updateRequest.getRole());</span>
+            }
+<span class="nc bnc" id="L177" title="All 2 branches missed.">            if (updateRequest.getEnabled() != null) {</span>
+<span class="nc" id="L178">                user.setEnabled(updateRequest.getEnabled());</span>
+            }
+            
+            // Save updates
+<span class="nc" id="L182">            User updatedUser = userRepository.save(user);</span>
+<span class="nc" id="L183">            UserDto userDto = UserDto.fromEntity(updatedUser);</span>
+            
+<span class="nc" id="L185">            logger.info(&quot;User information updated successfully: userId={}, username={}&quot;, userId, user.getUsername());</span>
+<span class="nc" id="L186">            return userDto;</span>
+            
+<span class="nc" id="L188">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L189">            throw e;</span>
+<span class="nc" id="L190">        } catch (Exception e) {</span>
+<span class="nc" id="L191">            logger.error(&quot;Exception occurred while updating user information: userId={}&quot;, userId, e);</span>
+<span class="nc" id="L192">            throw new RuntimeException(&quot;Failed to update user information, please try again later&quot;);</span>
+        }
+    }
+    
+    /**
+     * Create new user (administrator function)
+     * 
+     * @param createRequest Create user request
+     * @return Created user information
+     * @throws RuntimeException When username or email already exists
+     */
+    public UserDto createUser(CreateUserDto createRequest) {
+<span class="nc" id="L204">        logger.info(&quot;Creating new user: username={}, email={}, role={}&quot;, </span>
+<span class="nc" id="L205">                   createRequest.getUsername(), createRequest.getEmail(), createRequest.getRole());</span>
+        
+        // Check if username already exists
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (userRepository.existsByUsername(createRequest.getUsername())) {</span>
+<span class="nc" id="L209">            logger.warn(&quot;Username already exists: username={}&quot;, createRequest.getUsername());</span>
+<span class="nc" id="L210">            throw new UserAlreadyExistsException(&quot;username&quot;, createRequest.getUsername());</span>
+        }
+        
+        // Check if email already exists
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (userRepository.existsByEmail(createRequest.getEmail())) {</span>
+<span class="nc" id="L215">            logger.warn(&quot;Email already exists: email={}&quot;, createRequest.getEmail());</span>
+<span class="nc" id="L216">            throw new UserAlreadyExistsException(&quot;email&quot;, createRequest.getEmail());</span>
+        }
+        
+        try {
+            // Create user entity
+<span class="nc" id="L221">            User user = createUserFromCreateRequest(createRequest);</span>
+            
+            // Save user
+<span class="nc" id="L224">            User savedUser = userRepository.save(user);</span>
+<span class="nc" id="L225">            UserDto userDto = UserDto.fromEntity(savedUser);</span>
+            
+<span class="nc" id="L227">            logger.info(&quot;User created successfully: id={}, username={}, role={}&quot;, </span>
+<span class="nc" id="L228">                       savedUser.getId(), savedUser.getUsername(), savedUser.getRole());</span>
+<span class="nc" id="L229">            return userDto;</span>
+            
+<span class="nc" id="L231">        } catch (Exception e) {</span>
+<span class="nc" id="L232">            logger.error(&quot;Exception occurred while creating user: username={}&quot;, createRequest.getUsername(), e);</span>
+<span class="nc" id="L233">            throw new RuntimeException(&quot;Failed to create user, please try again later&quot;);</span>
+        }
+    }
+    
+    /**
+     * Delete user (soft delete - disable account)
+     * 
+     * @param userId User ID
+     */
+    public void deleteUser(Long userId) {
+<span class="nc" id="L243">        logger.info(&quot;Deleting user: userId={}&quot;, userId);</span>
+        
+<span class="nc" id="L245">        Optional&lt;User&gt; userOptional = userRepository.findById(userId);</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (userOptional.isEmpty()) {</span>
+<span class="nc" id="L247">            logger.error(&quot;User not found: userId={}&quot;, userId);</span>
+<span class="nc" id="L248">            throw new UserNotFoundException(&quot;ID: &quot; + userId);</span>
+        }
+        
+<span class="nc" id="L251">        User user = userOptional.get();</span>
+        
+        // Soft delete - disable account
+<span class="nc" id="L254">        user.setEnabled(false);</span>
+<span class="nc" id="L255">        userRepository.save(user);</span>
+        
+<span class="nc" id="L257">        logger.info(&quot;User disabled: userId={}, username={}&quot;, userId, user.getUsername());</span>
+<span class="nc" id="L258">    }</span>
+    
+    /**
+     * Enable user account
+     * 
+     * @param userId User ID
+     */
+    public void enableUser(Long userId) {
+<span class="nc" id="L266">        logger.info(&quot;Enabling user: userId={}&quot;, userId);</span>
+        
+<span class="nc" id="L268">        Optional&lt;User&gt; userOptional = userRepository.findById(userId);</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (userOptional.isEmpty()) {</span>
+<span class="nc" id="L270">            logger.error(&quot;User not found: userId={}&quot;, userId);</span>
+<span class="nc" id="L271">            throw new UserNotFoundException(&quot;ID: &quot; + userId);</span>
+        }
+        
+<span class="nc" id="L274">        User user = userOptional.get();</span>
+<span class="nc" id="L275">        user.setEnabled(true);</span>
+<span class="nc" id="L276">        userRepository.save(user);</span>
+        
+<span class="nc" id="L278">        logger.info(&quot;User enabled: userId={}, username={}&quot;, userId, user.getUsername());</span>
+<span class="nc" id="L279">    }</span>
+    
+    /**
+     * Get all users list
+     * 
+     * @return User list
+     */
+    @Transactional(readOnly = true)
+    public List&lt;UserDto&gt; getAllUsers() {
+<span class="nc" id="L288">        logger.debug(&quot;Getting all users list&quot;);</span>
+        
+<span class="nc" id="L290">        List&lt;User&gt; users = userRepository.findAll();</span>
+<span class="nc" id="L291">        List&lt;UserDto&gt; userDtos = users.stream()</span>
+<span class="nc" id="L292">                .map(UserDto::fromEntity)</span>
+<span class="nc" id="L293">                .collect(Collectors.toList());</span>
+        
+<span class="nc" id="L295">        logger.debug(&quot;Successfully retrieved user list, total {} users&quot;, userDtos.size());</span>
+<span class="nc" id="L296">        return userDtos;</span>
+    }
+    
+    /**
+     * Get all users list with pagination
+     * 
+     * @param pageable Pagination parameters
+     * @return User page
+     */
+    @Transactional(readOnly = true)
+    public Page&lt;UserDto&gt; getAllUsers(Pageable pageable) {
+<span class="nc" id="L307">        logger.debug(&quot;Getting all users list with pagination: page={}, size={}&quot;, </span>
+<span class="nc" id="L308">                    pageable.getPageNumber(), pageable.getPageSize());</span>
+        
+<span class="nc" id="L310">        Page&lt;User&gt; userPage = userRepository.findAll(pageable);</span>
+<span class="nc" id="L311">        Page&lt;UserDto&gt; userDtoPage = userPage.map(UserDto::fromEntity);</span>
+        
+<span class="nc" id="L313">        logger.debug(&quot;Successfully retrieved user page, total {} users on page {}/{}&quot;, </span>
+<span class="nc" id="L314">                    userDtoPage.getNumberOfElements(), userDtoPage.getNumber() + 1, userDtoPage.getTotalPages());</span>
+<span class="nc" id="L315">        return userDtoPage;</span>
+    }
+    
+    /**
+     * Get users list by role
+     * 
+     * @param role User role
+     * @return User list of specified role
+     */
+    @Transactional(readOnly = true)
+    public List&lt;UserDto&gt; getUsersByRole(UserRole role) {
+<span class="nc" id="L326">        logger.debug(&quot;Getting users list by role: role={}&quot;, role);</span>
+        
+<span class="nc" id="L328">        List&lt;User&gt; users = userRepository.findAll().stream()</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">                .filter(user -&gt; user.getRole() == role)</span>
+<span class="nc" id="L330">                .collect(Collectors.toList());</span>
+        
+<span class="nc" id="L332">        List&lt;UserDto&gt; userDtos = users.stream()</span>
+<span class="nc" id="L333">                .map(UserDto::fromEntity)</span>
+<span class="nc" id="L334">                .collect(Collectors.toList());</span>
+        
+<span class="nc" id="L336">        logger.debug(&quot;Successfully retrieved role user list: role={}, count={}&quot;, role, userDtos.size());</span>
+<span class="nc" id="L337">        return userDtos;</span>
+    }
+    
+    /**
+     * Get users list by role with pagination
+     * 
+     * @param role User role
+     * @param pageable Pagination parameters
+     * @return User page of specified role
+     */
+    @Transactional(readOnly = true)
+    public Page&lt;UserDto&gt; getUsersByRole(UserRole role, Pageable pageable) {
+<span class="nc" id="L349">        logger.debug(&quot;Getting users list by role with pagination: role={}, page={}, size={}&quot;, </span>
+<span class="nc" id="L350">                    role, pageable.getPageNumber(), pageable.getPageSize());</span>
+        
+<span class="nc" id="L352">        Page&lt;User&gt; userPage = userRepository.findByRole(role, pageable);</span>
+<span class="nc" id="L353">        Page&lt;UserDto&gt; userDtoPage = userPage.map(UserDto::fromEntity);</span>
+        
+<span class="nc" id="L355">        logger.debug(&quot;Successfully retrieved role user page: role={}, total {} users on page {}/{}&quot;, </span>
+<span class="nc" id="L356">                    role, userDtoPage.getNumberOfElements(), userDtoPage.getNumber() + 1, userDtoPage.getTotalPages());</span>
+<span class="nc" id="L357">        return userDtoPage;</span>
+    }
+    
+    /**
+     * Check if username is available
+     * 
+     * @param username Username
+     * @return Whether available
+     */
+    @Transactional(readOnly = true)
+    public boolean isUsernameAvailable(String username) {
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        return !userRepository.existsByUsername(username);</span>
+    }
+    
+    /**
+     * Check if email is available
+     * 
+     * @param email Email
+     * @return Whether available
+     */
+    @Transactional(readOnly = true)
+    public boolean isEmailAvailable(String email) {
+<span class="nc bnc" id="L379" title="All 2 branches missed.">        return !userRepository.existsByEmail(email);</span>
+    }
+    
+    /**
+     * Create user entity from create user request
+     * 
+     * @param createRequest Create user request
+     * @return User entity
+     */
+    private User createUserFromCreateRequest(CreateUserDto createRequest) {
+<span class="nc" id="L389">        User user = new User();</span>
+<span class="nc" id="L390">        user.setUsername(createRequest.getUsername());</span>
+<span class="nc" id="L391">        user.setEmail(createRequest.getEmail());</span>
+<span class="nc" id="L392">        user.setPassword(passwordEncoder.encode(createRequest.getPassword()));</span>
+<span class="nc" id="L393">        user.setFirstName(createRequest.getFirstName());</span>
+<span class="nc" id="L394">        user.setLastName(createRequest.getLastName());</span>
+<span class="nc" id="L395">        user.setPhone(createRequest.getPhone());</span>
+<span class="nc" id="L396">        user.setAddress(createRequest.getAddress());</span>
+<span class="nc" id="L397">        user.setRole(createRequest.getRole());</span>
+<span class="nc" id="L398">        user.setEnabled(createRequest.getEnabled());</span>
+        
+<span class="nc" id="L400">        return user;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

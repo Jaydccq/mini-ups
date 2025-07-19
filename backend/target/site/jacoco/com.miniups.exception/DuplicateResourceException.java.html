@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DuplicateResourceException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.exception</a> &gt; <span class="el_source">DuplicateResourceException.java</span></div><h1>DuplicateResourceException.java</h1><pre class="source lang-java linenums">/**
+ * Duplicate Resource Exception
+ * 
+ * 资源重复异常，用于处理创建重复资源的错误
+ * 
+ * Common scenarios:
+ * - 用户邮箱重复
+ * - 用户名重复
+ * - 订单号重复
+ * - 追踪号重复
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.exception;
+
+import com.miniups.model.enums.ExceptionSeverity;
+
+public class DuplicateResourceException extends BaseBusinessException {
+    
+    private final String resourceType;
+    private final String identifier;
+    
+    public DuplicateResourceException(String resourceType, String identifier) {
+<span class="nc" id="L25">        super(&quot;DUPLICATE_RESOURCE&quot;, String.format(&quot;%s already exists with identifier: %s&quot;, resourceType, identifier), ExceptionSeverity.LOW);</span>
+<span class="nc" id="L26">        this.resourceType = resourceType;</span>
+<span class="nc" id="L27">        this.identifier = identifier;</span>
+<span class="nc" id="L28">    }</span>
+    
+    public DuplicateResourceException(String resourceType, String identifier, String message) {
+<span class="nc" id="L31">        super(&quot;DUPLICATE_RESOURCE&quot;, message, ExceptionSeverity.LOW);</span>
+<span class="nc" id="L32">        this.resourceType = resourceType;</span>
+<span class="nc" id="L33">        this.identifier = identifier;</span>
+<span class="nc" id="L34">    }</span>
+    
+    // 便利方法用于常见重复资源异常
+    public static DuplicateResourceException email(String email) {
+<span class="nc" id="L38">        return new DuplicateResourceException(&quot;User&quot;, email, String.format(&quot;Email address %s is already registered&quot;, email));</span>
+    }
+    
+    public static DuplicateResourceException username(String username) {
+<span class="nc" id="L42">        return new DuplicateResourceException(&quot;User&quot;, username, String.format(&quot;Username %s is already taken&quot;, username));</span>
+    }
+    
+    public static DuplicateResourceException trackingNumber(String trackingNumber) {
+<span class="nc" id="L46">        return new DuplicateResourceException(&quot;Tracking&quot;, trackingNumber, String.format(&quot;Tracking number %s already exists&quot;, trackingNumber));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

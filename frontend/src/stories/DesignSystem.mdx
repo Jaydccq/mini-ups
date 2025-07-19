@@ -1,0 +1,211 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Design System/Overview" />
+
+# Mini-UPS Design System
+
+Welcome to the Mini-UPS design system documentation. This system is built using the **shadcn/ui** approach, combining **Radix UI** primitives with **Tailwind CSS** for styling and **Class Variance Authority (CVA)** for component variants.
+
+## 🎨 Design Philosophy
+
+Our design system follows these core principles:
+
+### 1. **Accessibility First**
+- Built on Radix UI primitives ensuring WCAG 2.1 compliance
+- Keyboard navigation support
+- Screen reader compatibility
+- Proper ARIA attributes
+
+### 2. **Consistency**
+- Unified visual language across the application
+- Standardized spacing, typography, and color usage
+- Predictable component behavior
+
+### 3. **Flexibility**
+- Composable components that can be easily extended
+- Multiple variants for different use cases
+- Customizable through CSS classes and props
+
+### 4. **Performance**
+- Lightweight components with minimal bundle impact
+- Tree-shakeable exports
+- Optimized for production builds
+
+## 🏗️ Architecture
+
+### Component Structure
+```
+src/components/
+├── ui/                 # Base UI components (atoms)
+│   ├── button.tsx
+│   ├── card.tsx
+│   ├── badge.tsx
+│   └── ...
+├── shared/            # Composite components (molecules)
+│   ├── stats-card.tsx
+│   ├── status-indicator.tsx
+│   └── ...
+└── layout/            # Layout components
+    ├── Layout.tsx
+    └── ...
+```
+
+### Technology Stack
+- **React 18** - Component library
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Utility-first styling
+- **Radix UI** - Accessible primitives
+- **Class Variance Authority** - Variant management
+- **Lucide React** - Icon library
+
+## 🌈 Color System
+
+### Primary Colors
+- **Primary**: Deep blue (#1e40af) - Reliable and trustworthy
+- **Accent**: Orange (#f97316) - Energy and action
+- **Success**: Green (#16a34a) - Successful operations
+- **Warning**: Yellow (#eab308) - Caution and attention
+- **Danger**: Red (#dc2626) - Errors and critical states
+
+### Status Colors
+- **Pending**: Gray (#6b7280) - Awaiting action
+- **Transit**: Blue (#3b82f6) - In progress
+- **Delivered**: Green (#16a34a) - Completed successfully
+
+### Neutral Colors
+- **Gray Scale**: 50-900 shades for backgrounds, text, and borders
+- **Semantic Colors**: Background, foreground, muted, accent variations
+
+## 📝 Typography
+
+### Font Stack
+- **Primary**: Inter (headings, UI elements)
+- **Secondary**: System fonts fallback
+- **Monospace**: SF Mono (tracking numbers, code)
+
+### Scale
+- **Heading 1**: 2.25rem (36px)
+- **Heading 2**: 1.875rem (30px)
+- **Heading 3**: 1.5rem (24px)
+- **Body**: 1rem (16px)
+- **Small**: 0.875rem (14px)
+- **Caption**: 0.75rem (12px)
+
+## 📏 Spacing System
+
+Based on 4px (0.25rem) unit:
+- **xs**: 4px (0.25rem)
+- **sm**: 8px (0.5rem)
+- **md**: 16px (1rem)
+- **lg**: 24px (1.5rem)
+- **xl**: 32px (2rem)
+- **2xl**: 48px (3rem)
+- **3xl**: 64px (4rem)
+
+## 🧩 Component Categories
+
+### Atoms (Basic UI Components)
+- **Button**: Primary actions and navigation
+- **Badge**: Status indicators and labels
+- **Card**: Content containers
+- **Input**: Form controls
+- **Avatar**: User representations
+
+### Molecules (Composite Components)
+- **StatsCard**: Dashboard metrics
+- **StatusIndicator**: Shipment status display
+- **DataTable**: Complex data display
+- **FlashOnUpdate**: Real-time update animations
+
+### Organisms (Complex Components)
+- **Navigation**: Application navigation
+- **TrackingTimeline**: Shipment tracking history
+- **NotificationCenter**: System notifications
+
+## 🎯 Usage Guidelines
+
+### Do's ✅
+- Use semantic HTML elements
+- Follow established spacing patterns
+- Implement consistent hover and focus states
+- Use proper color contrast ratios
+- Test with keyboard navigation
+
+### Don'ts ❌
+- Don't override component internals
+- Don't use hardcoded colors outside the design system
+- Don't create one-off components without design system consideration
+- Don't ignore accessibility requirements
+
+## 🔧 Customization
+
+### Extending Components
+Components can be extended using the `className` prop:
+
+```tsx
+<Button className="w-full" variant="outline" size="lg">
+  Extended Button
+</Button>
+```
+
+### Creating New Variants
+Use CVA to add new variants:
+
+```tsx
+const buttonVariants = cva(
+  "base-styles",
+  {
+    variants: {
+      variant: {
+        // Add new variant
+        special: "bg-special text-special-foreground"
+      }
+    }
+  }
+)
+```
+
+## 📱 Responsive Design
+
+### Breakpoints
+- **Mobile**: < 640px
+- **Tablet**: 640px - 1024px
+- **Desktop**: > 1024px
+
+### Responsive Patterns
+- Mobile-first approach
+- Fluid typography and spacing
+- Adaptive component layouts
+- Touch-friendly interaction areas
+
+## 🧪 Testing
+
+### Accessibility Testing
+- Screen reader testing
+- Keyboard navigation testing
+- Color contrast validation
+- WCAG compliance checks
+
+### Visual Testing
+- Storybook visual regression testing
+- Cross-browser compatibility
+- Responsive design validation
+
+## 📚 Resources
+
+- [Radix UI Documentation](https://www.radix-ui.com/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/)
+- [Class Variance Authority](https://cva.style/)
+- [shadcn/ui](https://ui.shadcn.com/)
+
+## 🚀 Getting Started
+
+1. **Install dependencies** (already done in this project)
+2. **Import components** from `@/components/ui`
+3. **Use Tailwind classes** for styling
+4. **Follow accessibility guidelines**
+5. **Test thoroughly** across devices and browsers
+
+---
+
+*This design system is continuously evolving. Please contribute improvements and report issues through our development process.*

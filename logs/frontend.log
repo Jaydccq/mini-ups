@@ -1,0 +1,11 @@
+
+> mini-ups-frontend@1.0.0 dev
+> vite
+
+
+  VITE v5.4.19  ready in 135 ms
+
+  ➜  Local:   http://localhost:3001/
+  ➜  Network: http://192.168.137.207:3001/
+8:41:59 PM [vite] page reload src/pages/admin/AdminDashboardPage.tsx
+8:42:11 PM [vite] page reload src/pages/admin/AdminDashboardPage.tsx

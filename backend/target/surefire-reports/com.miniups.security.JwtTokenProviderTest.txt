@@ -1,0 +1,11 @@
+-------------------------------------------------------------------------------
+Test set: com.miniups.security.JwtTokenProviderTest
+-------------------------------------------------------------------------------
+Tests run: 16, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.968 s <<< FAILURE! -- in com.miniups.security.JwtTokenProviderTest
+com.miniups.security.JwtTokenProviderTest.testGenerateToken_DifferentTimes -- Time elapsed: 0.008 s <<< ERROR!
+org.mockito.exceptions.base.MockitoException: It is not possible to mock static methods of java.lang.System to avoid interfering with class loading what leads to infinite loops
+	at com.miniups.security.JwtTokenProviderTest.testGenerateToken_DifferentTimes(JwtTokenProviderTest.java:193)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

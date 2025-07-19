@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AmazonIntegrationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.service</a> &gt; <span class="el_source">AmazonIntegrationService.java</span></div><h1>AmazonIntegrationService.java</h1><pre class="source lang-java linenums">/**
+ * Amazon Integration Service
+ * 
+ * Functionality:
+ * - Handles all interaction logic with Amazon system
+ * - Manages shipment creation, status updates, and address changes
+ * - Provides functionality to send notifications to Amazon
+ * 
+ * Main Features:
+ * - Process Amazon's ShipmentCreated messages
+ * - Handle ShipmentLoaded notifications
+ * - Process shipment status query requests
+ * - Handle address change requests
+ * - Send status update notifications to Amazon
+ * 
+ * Integration Pattern:
+ * - Receive Amazon's HTTP REST requests
+ * - Send HTTP notifications to Amazon system
+ * - Maintain data consistency between both systems
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.service;
+
+import com.miniups.model.dto.AmazonMessageDto;
+import com.miniups.model.dto.ShipmentCreatedDto;
+import com.miniups.model.dto.UpsResponseDto;
+import com.miniups.model.event.ShipmentCreationPayload;
+import com.miniups.model.entity.Shipment;
+import com.miniups.model.entity.Truck;
+import com.miniups.model.entity.User;
+import com.miniups.model.enums.ShipmentStatus;
+import com.miniups.model.enums.TruckStatus;
+import com.miniups.repository.ShipmentRepository;
+import com.miniups.repository.TruckRepository;
+import com.miniups.repository.UserRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+@Transactional
+<span class="nc" id="L56">public class AmazonIntegrationService {</span>
+    
+<span class="nc" id="L58">    private static final Logger logger = LoggerFactory.getLogger(AmazonIntegrationService.class);</span>
+    
+    @Autowired
+    private ShipmentRepository shipmentRepository;
+    
+    @Autowired
+    private TruckRepository truckRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private TrackingService trackingService;
+    
+    @Autowired
+    private WorldSimulatorService worldSimulatorService;
+    
+    @Autowired
+    private TruckManagementService truckManagementService;
+    
+    @Autowired
+    private RestTemplate restTemplate;
+    
+    @Autowired
+    private EventPublisherService eventPublisher;
+    
+    @Autowired
+    private AsyncAuditService asyncAuditService;
+    
+    @Value(&quot;${amazon.base-url:http://host.docker.internal:8080}&quot;)
+    private String amazonBaseUrl;
+    
+    /**
+     * Handle Amazon's ShipmentCreated message
+     * 
+     * Business Process:
+     * 1. Validate user information (find by email or create)
+     * 2. Create shipment record
+     * 3. Assign available truck
+     * 4. Generate UPS tracking number
+     * 5. Send truck to warehouse for pickup
+     * 6. Return success confirmation
+     */
+    public UpsResponseDto handleShipmentCreated(AmazonMessageDto message) {
+        try {
+<span class="nc" id="L103">            logger.info(&quot;Processing ShipmentCreated message: {}&quot;, message.getPayload());</span>
+            
+            // Extract payload data
+<span class="nc" id="L106">            Map&lt;String, Object&gt; payload = message.getPayload();</span>
+<span class="nc" id="L107">            ShipmentCreatedDto dto = extractShipmentCreatedDto(payload);</span>
+            
+            // Validate required fields
+<span class="nc bnc" id="L110" title="All 4 branches missed.">            if (dto.getShipmentId() == null || dto.getEmail() == null) {</span>
+<span class="nc" id="L111">                return UpsResponseDto.error(1001, &quot;Missing required fields: shipment_id or email&quot;);</span>
+            }
+            
+            // Check if shipment already exists
+<span class="nc" id="L115">            Optional&lt;Shipment&gt; existingShipment = shipmentRepository.findByShipmentId(dto.getShipmentId());</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">            if (existingShipment.isPresent()) {</span>
+<span class="nc" id="L117">                return UpsResponseDto.error(1002, &quot;Shipment already exists: &quot; + dto.getShipmentId());</span>
+            }
+            
+            // Find or create user
+<span class="nc" id="L121">            User user = findOrCreateUser(dto);</span>
+            
+            // Create shipment
+<span class="nc" id="L124">            Shipment shipment = createShipment(dto, user);</span>
+            
+            // Assign truck
+<span class="nc" id="L127">            Truck assignedTruck = assignTruck(dto.getWarehouseId());</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            if (assignedTruck == null) {</span>
+<span class="nc" id="L129">                return UpsResponseDto.error(2001, &quot;No available trucks for pickup&quot;);</span>
+            }
+            
+<span class="nc" id="L132">            shipment.setTruck(assignedTruck);</span>
+<span class="nc" id="L133">            shipment.setUpsTrackingId(trackingService.generateTrackingNumber());</span>
+<span class="nc" id="L134">            shipment = shipmentRepository.save(shipment);</span>
+            
+<span class="nc" id="L136">            logger.info(&quot;Created shipment {} with tracking number {}&quot;, </span>
+<span class="nc" id="L137">                       shipment.getShipmentId(), shipment.getUpsTrackingId());</span>
+            
+            // Send truck to warehouse (this would integrate with World Simulator)
+<span class="nc" id="L140">            sendTruckToWarehouse(assignedTruck, dto.getWarehouseId(), shipment);</span>
+            
+<span class="nc" id="L142">            return UpsResponseDto.success(&quot;Shipment created successfully&quot;);</span>
+            
+<span class="nc" id="L144">        } catch (Exception e) {</span>
+<span class="nc" id="L145">            logger.error(&quot;Error processing ShipmentCreated message&quot;, e);</span>
+<span class="nc" id="L146">            return UpsResponseDto.error(3000, &quot;Internal server error: &quot; + e.getMessage());</span>
+        }
+    }
+    
+    /**
+     * Handle Amazon's ShipmentCreated message asynchronously
+     * 
+     * This method provides improved performance by:
+     * 1. Quick validation and response to Amazon
+     * 2. Asynchronous processing of heavy business logic
+     * 3. Webhook notification when processing completes
+     * 
+     * Process Flow:
+     * 1. Validate message format and required fields
+     * 2. Generate preliminary tracking number
+     * 3. Queue shipment creation event for async processing
+     * 4. Return immediate response to Amazon with tracking info
+     * 5. Background consumer handles actual shipment creation
+     * 6. Webhook notification sent to Amazon when complete
+     */
+    public UpsResponseDto handleShipmentCreatedAsync(AmazonMessageDto message) {
+<span class="nc" id="L167">        long startTime = System.currentTimeMillis();</span>
+<span class="nc" id="L168">        String correlationId = UUID.randomUUID().toString();</span>
+        
+        try {
+<span class="nc" id="L171">            logger.info(&quot;Processing ShipmentCreated message asynchronously: {} (correlationId: {})&quot;, </span>
+<span class="nc" id="L172">                       message.getPayload(), correlationId);</span>
+            
+            // Extract payload data
+<span class="nc" id="L175">            Map&lt;String, Object&gt; payload = message.getPayload();</span>
+<span class="nc" id="L176">            ShipmentCreatedDto dto = extractShipmentCreatedDto(payload);</span>
+            
+            // Quick validation of required fields
+<span class="nc bnc" id="L179" title="All 4 branches missed.">            if (dto.getShipmentId() == null || dto.getEmail() == null) {</span>
+<span class="nc" id="L180">                asyncAuditService.auditFailure(&quot;shipment.async_create&quot;, dto.getShipmentId(), </span>
+                                             &quot;Missing required fields in async shipment creation&quot;, 
+                                             startTime, new IllegalArgumentException(&quot;Missing required fields&quot;));
+<span class="nc" id="L183">                return UpsResponseDto.error(1001, &quot;Missing required fields: shipment_id or email&quot;);</span>
+            }
+            
+            // Check if shipment already exists (quick database check)
+<span class="nc" id="L187">            Optional&lt;Shipment&gt; existingShipment = shipmentRepository.findByShipmentId(dto.getShipmentId());</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            if (existingShipment.isPresent()) {</span>
+<span class="nc" id="L189">                asyncAuditService.auditFailure(&quot;shipment.async_create&quot;, dto.getShipmentId(), </span>
+                                             &quot;Attempted to create duplicate shipment&quot;, 
+                                             startTime, new IllegalStateException(&quot;Shipment already exists&quot;));
+<span class="nc" id="L192">                return UpsResponseDto.error(1002, &quot;Shipment already exists: &quot; + dto.getShipmentId());</span>
+            }
+            
+            // Quick user lookup or creation (lightweight operation)
+<span class="nc" id="L196">            User user = findOrCreateUser(dto);</span>
+            
+            // Generate tracking number immediately for response
+<span class="nc" id="L199">            String trackingNumber = trackingService.generateTrackingNumber();</span>
+            
+            // Create shipment creation payload for async processing
+<span class="nc" id="L202">            ShipmentCreationPayload creationPayload = new ShipmentCreationPayload();</span>
+<span class="nc" id="L203">            creationPayload.setAmazonShipmentId(Long.valueOf(dto.getShipmentId()));</span>
+<span class="nc" id="L204">            creationPayload.setWarehouseId(dto.getWarehouseId().intValue());</span>
+<span class="nc" id="L205">            creationPayload.setDestX(dto.getDestinationX());</span>
+<span class="nc" id="L206">            creationPayload.setDestY(dto.getDestinationY());</span>
+<span class="nc" id="L207">            creationPayload.setUserId(user.getId());</span>
+<span class="nc" id="L208">            creationPayload.setPackageDescription(&quot;&quot;);</span>
+            // Add other relevant fields as needed
+            
+            // Publish event for asynchronous processing
+<span class="nc" id="L212">            eventPublisher.publishShipmentCreationEvent(creationPayload, correlationId);</span>
+            
+            // Audit the successful queuing
+<span class="nc" id="L215">            Map&lt;String, Object&gt; auditData = Map.of(</span>
+<span class="nc" id="L216">                &quot;shipmentId&quot;, dto.getShipmentId(),</span>
+                &quot;trackingNumber&quot;, trackingNumber,
+<span class="nc" id="L218">                &quot;warehouseId&quot;, dto.getWarehouseId(),</span>
+<span class="nc" id="L219">                &quot;userId&quot;, user.getId(),</span>
+                &quot;processingMode&quot;, &quot;async&quot;
+            );
+<span class="nc" id="L222">            asyncAuditService.auditSuccess(&quot;shipment.async_queued&quot;, dto.getShipmentId(), </span>
+                                         &quot;Shipment creation queued for async processing&quot;, 
+                                         startTime, auditData);
+            
+<span class="nc" id="L226">            logger.info(&quot;Queued shipment {} for async processing with tracking number {} (correlationId: {})&quot;, </span>
+<span class="nc" id="L227">                       dto.getShipmentId(), trackingNumber, correlationId);</span>
+            
+            // Return immediate response with tracking information
+<span class="nc" id="L230">            Map&lt;String, Object&gt; responsePayload = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L231">            responsePayload.put(&quot;shipment_id&quot;, dto.getShipmentId());</span>
+<span class="nc" id="L232">            responsePayload.put(&quot;tracking_number&quot;, trackingNumber);</span>
+<span class="nc" id="L233">            responsePayload.put(&quot;status&quot;, &quot;QUEUED_FOR_PROCESSING&quot;);</span>
+<span class="nc" id="L234">            responsePayload.put(&quot;estimated_processing_time&quot;, &quot;2-5 minutes&quot;);</span>
+<span class="nc" id="L235">            responsePayload.put(&quot;correlation_id&quot;, correlationId);</span>
+            
+<span class="nc" id="L237">            UpsResponseDto response = new UpsResponseDto(&quot;ShipmentQueued&quot;, responsePayload);</span>
+<span class="nc" id="L238">            return response;</span>
+            
+<span class="nc" id="L240">        } catch (Exception e) {</span>
+<span class="nc" id="L241">            asyncAuditService.auditFailure(&quot;shipment.async_create&quot;, null, </span>
+                                         &quot;Error in async shipment creation&quot;, 
+                                         startTime, e);
+<span class="nc" id="L244">            logger.error(&quot;Error processing ShipmentCreated message asynchronously (correlationId: {})&quot;, </span>
+                        correlationId, e);
+<span class="nc" id="L246">            return UpsResponseDto.error(3000, &quot;Internal server error: &quot; + e.getMessage());</span>
+        }
+    }
+    
+    /**
+     * Handle Amazon's ShipmentLoaded message
+     */
+    public UpsResponseDto handleShipmentLoaded(AmazonMessageDto message) {
+        try {
+<span class="nc" id="L255">            String shipmentId = message.getPayloadString(&quot;shipment_id&quot;);</span>
+            
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            if (shipmentId == null) {</span>
+<span class="nc" id="L258">                return UpsResponseDto.error(1001, &quot;Missing shipment_id&quot;);</span>
+            }
+            
+<span class="nc" id="L261">            Optional&lt;Shipment&gt; shipmentOpt = shipmentRepository.findByShipmentId(shipmentId);</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">            if (shipmentOpt.isEmpty()) {</span>
+<span class="nc" id="L263">                return UpsResponseDto.error(2000, &quot;Shipment not found: &quot; + shipmentId);</span>
+            }
+            
+<span class="nc" id="L266">            Shipment shipment = shipmentOpt.get();</span>
+<span class="nc" id="L267">            shipment.updateStatus(ShipmentStatus.PICKED_UP);</span>
+<span class="nc" id="L268">            shipment.setPickupTime(LocalDateTime.now());</span>
+<span class="nc" id="L269">            shipmentRepository.save(shipment);</span>
+            
+            // Start delivery process
+<span class="nc" id="L272">            startDelivery(shipment);</span>
+            
+<span class="nc" id="L274">            logger.info(&quot;Shipment {} marked as loaded and delivery started&quot;, shipmentId);</span>
+            
+<span class="nc" id="L276">            return UpsResponseDto.success(&quot;Shipment loaded successfully&quot;);</span>
+            
+<span class="nc" id="L278">        } catch (Exception e) {</span>
+<span class="nc" id="L279">            logger.error(&quot;Error processing ShipmentLoaded message&quot;, e);</span>
+<span class="nc" id="L280">            return UpsResponseDto.error(3000, &quot;Internal server error: &quot; + e.getMessage());</span>
+        }
+    }
+    
+    /**
+     * Handle Amazon's ShipmentStatusRequest message
+     */
+    public UpsResponseDto handleShipmentStatusRequest(AmazonMessageDto message) {
+        try {
+<span class="nc" id="L289">            String shipmentId = message.getPayloadString(&quot;shipment_id&quot;);</span>
+            
+<span class="nc bnc" id="L291" title="All 2 branches missed.">            if (shipmentId == null) {</span>
+<span class="nc" id="L292">                return UpsResponseDto.error(1001, &quot;Missing shipment_id&quot;);</span>
+            }
+            
+<span class="nc" id="L295">            Optional&lt;Shipment&gt; shipmentOpt = shipmentRepository.findByShipmentId(shipmentId);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">            if (shipmentOpt.isEmpty()) {</span>
+<span class="nc" id="L297">                return UpsResponseDto.error(2000, &quot;Shipment not found: &quot; + shipmentId);</span>
+            }
+            
+<span class="nc" id="L300">            Shipment shipment = shipmentOpt.get();</span>
+            
+<span class="nc" id="L302">            Map&lt;String, Object&gt; statusPayload = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L303">            statusPayload.put(&quot;shipment_id&quot;, shipment.getShipmentId());</span>
+<span class="nc" id="L304">            statusPayload.put(&quot;tracking_number&quot;, shipment.getUpsTrackingId());</span>
+<span class="nc" id="L305">            statusPayload.put(&quot;status&quot;, shipment.getStatus().toString());</span>
+<span class="nc" id="L306">            statusPayload.put(&quot;estimated_delivery&quot;, shipment.getEstimatedDelivery());</span>
+<span class="nc" id="L307">            statusPayload.put(&quot;actual_delivery&quot;, shipment.getActualDelivery());</span>
+            
+<span class="nc bnc" id="L309" title="All 2 branches missed.">            if (shipment.getTruck() != null) {</span>
+<span class="nc" id="L310">                statusPayload.put(&quot;truck_id&quot;, shipment.getTruck().getId());</span>
+<span class="nc" id="L311">                statusPayload.put(&quot;truck_status&quot;, shipment.getTruck().getStatus().toString());</span>
+            }
+            
+<span class="nc" id="L314">            UpsResponseDto response = new UpsResponseDto(&quot;ShipmentStatusResponse&quot;, statusPayload);</span>
+            
+<span class="nc" id="L316">            logger.info(&quot;Provided status for shipment {}: {}&quot;, shipmentId, shipment.getStatus());</span>
+            
+<span class="nc" id="L318">            return response;</span>
+            
+<span class="nc" id="L320">        } catch (Exception e) {</span>
+<span class="nc" id="L321">            logger.error(&quot;Error processing ShipmentStatusRequest message&quot;, e);</span>
+<span class="nc" id="L322">            return UpsResponseDto.error(3000, &quot;Internal server error: &quot; + e.getMessage());</span>
+        }
+    }
+    
+    /**
+     * Handle Amazon's AddressChange message
+     */
+    public UpsResponseDto handleAddressChange(AmazonMessageDto message) {
+        try {
+<span class="nc" id="L331">            String shipmentId = message.getPayloadString(&quot;shipment_id&quot;);</span>
+<span class="nc" id="L332">            Integer newDestX = message.getPayloadInteger(&quot;destination_x&quot;);</span>
+<span class="nc" id="L333">            Integer newDestY = message.getPayloadInteger(&quot;destination_y&quot;);</span>
+            
+<span class="nc bnc" id="L335" title="All 6 branches missed.">            if (shipmentId == null || newDestX == null || newDestY == null) {</span>
+<span class="nc" id="L336">                return UpsResponseDto.error(1001, &quot;Missing required fields&quot;);</span>
+            }
+            
+<span class="nc" id="L339">            Optional&lt;Shipment&gt; shipmentOpt = shipmentRepository.findByShipmentId(shipmentId);</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">            if (shipmentOpt.isEmpty()) {</span>
+<span class="nc" id="L341">                return UpsResponseDto.error(2000, &quot;Shipment not found: &quot; + shipmentId);</span>
+            }
+            
+<span class="nc" id="L344">            Shipment shipment = shipmentOpt.get();</span>
+            
+            // Check if address can be changed
+<span class="nc bnc" id="L347" title="All 2 branches missed.">            if (!shipment.canChangeAddress()) {</span>
+<span class="nc" id="L348">                return UpsResponseDto.error(2002, &quot;Address cannot be changed for shipment in status: &quot; + shipment.getStatus());</span>
+            }
+            
+            // Update destination
+<span class="nc" id="L352">            shipment.setDestX(newDestX);</span>
+<span class="nc" id="L353">            shipment.setDestY(newDestY);</span>
+<span class="nc" id="L354">            shipmentRepository.save(shipment);</span>
+            
+            // If truck is already en route, update delivery destination
+<span class="nc bnc" id="L357" title="All 4 branches missed.">            if (shipment.getTruck() != null &amp;&amp; shipment.getStatus() == ShipmentStatus.IN_TRANSIT) {</span>
+<span class="nc" id="L358">                updateTruckDestination(shipment.getTruck(), newDestX, newDestY);</span>
+            }
+            
+<span class="nc" id="L361">            logger.info(&quot;Updated destination for shipment {} to ({}, {})&quot;, </span>
+                       shipmentId, newDestX, newDestY);
+            
+<span class="nc" id="L364">            return UpsResponseDto.success(&quot;Address updated successfully&quot;);</span>
+            
+<span class="nc" id="L366">        } catch (Exception e) {</span>
+<span class="nc" id="L367">            logger.error(&quot;Error processing AddressChange message&quot;, e);</span>
+<span class="nc" id="L368">            return UpsResponseDto.error(3000, &quot;Internal server error: &quot; + e.getMessage());</span>
+        }
+    }
+    
+    /**
+     * Send truck dispatch notification to Amazon
+     */
+    public void notifyTruckDispatched(String truckId, String shipmentId) {
+        try {
+<span class="nc" id="L377">            UpsResponseDto notification = UpsResponseDto.truckDispatched(truckId, shipmentId);</span>
+<span class="nc" id="L378">            sendNotificationToAmazon(&quot;/api/webhooks/truck-dispatched&quot;, notification);</span>
+            
+<span class="nc" id="L380">            logger.info(&quot;Notified Amazon: truck {} dispatched for shipment {}&quot;, truckId, shipmentId);</span>
+            
+<span class="nc" id="L382">        } catch (Exception e) {</span>
+<span class="nc" id="L383">            logger.error(&quot;Error notifying Amazon of truck dispatch&quot;, e);</span>
+<span class="nc" id="L384">        }</span>
+<span class="nc" id="L385">    }</span>
+    
+    /**
+     * Send truck arrived at warehouse notification to Amazon
+     */
+    public void notifyTruckArrived(String truckId, String warehouseId, String shipmentId) {
+        try {
+<span class="nc" id="L392">            UpsResponseDto notification = UpsResponseDto.truckArrived(truckId, warehouseId, shipmentId);</span>
+<span class="nc" id="L393">            sendNotificationToAmazon(&quot;/api/webhooks/truck-arrived&quot;, notification);</span>
+            
+<span class="nc" id="L395">            logger.info(&quot;Notified Amazon: truck {} arrived at warehouse {} for shipment {}&quot;, </span>
+                       truckId, warehouseId, shipmentId);
+            
+<span class="nc" id="L398">        } catch (Exception e) {</span>
+<span class="nc" id="L399">            logger.error(&quot;Error notifying Amazon of truck arrival&quot;, e);</span>
+<span class="nc" id="L400">        }</span>
+<span class="nc" id="L401">    }</span>
+    
+    /**
+     * Send package delivered notification to Amazon
+     */
+    public void notifyShipmentDelivered(String shipmentId) {
+        try {
+<span class="nc" id="L408">            UpsResponseDto notification = UpsResponseDto.shipmentDelivered(shipmentId);</span>
+<span class="nc" id="L409">            sendNotificationToAmazon(&quot;/api/webhooks/shipment-delivered&quot;, notification);</span>
+            
+<span class="nc" id="L411">            logger.info(&quot;Notified Amazon: shipment {} delivered&quot;, shipmentId);</span>
+            
+<span class="nc" id="L413">        } catch (Exception e) {</span>
+<span class="nc" id="L414">            logger.error(&quot;Error notifying Amazon of shipment delivery&quot;, e);</span>
+<span class="nc" id="L415">        }</span>
+<span class="nc" id="L416">    }</span>
+    
+    // Private helper methods
+    
+    private ShipmentCreatedDto extractShipmentCreatedDto(Map&lt;String, Object&gt; payload) {
+<span class="nc" id="L421">        ShipmentCreatedDto dto = new ShipmentCreatedDto();</span>
+        
+        // Handle user_id which might come as different types
+<span class="nc" id="L424">        Object userIdObj = payload.get(&quot;user_id&quot;);</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">        if (userIdObj instanceof Number) {</span>
+<span class="nc" id="L426">            dto.setUserId(((Number) userIdObj).longValue());</span>
+        }
+        
+<span class="nc" id="L429">        dto.setEmail((String) payload.get(&quot;email&quot;));</span>
+<span class="nc" id="L430">        dto.setShipmentId((String) payload.get(&quot;shipment_id&quot;));</span>
+        
+        // Handle warehouse_id
+<span class="nc" id="L433">        Object warehouseIdObj = payload.get(&quot;warehouse_id&quot;);</span>
+<span class="nc bnc" id="L434" title="All 2 branches missed.">        if (warehouseIdObj instanceof Number) {</span>
+<span class="nc" id="L435">            dto.setWarehouseId(((Number) warehouseIdObj).longValue());</span>
+        }
+        
+        // Handle coordinates
+<span class="nc" id="L439">        Object destXObj = payload.get(&quot;destination_x&quot;);</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">        if (destXObj instanceof Number) {</span>
+<span class="nc" id="L441">            dto.setDestinationX(((Number) destXObj).intValue());</span>
+        }
+        
+<span class="nc" id="L444">        Object destYObj = payload.get(&quot;destination_y&quot;);</span>
+<span class="nc bnc" id="L445" title="All 2 branches missed.">        if (destYObj instanceof Number) {</span>
+<span class="nc" id="L446">            dto.setDestinationY(((Number) destYObj).intValue());</span>
+        }
+        
+<span class="nc" id="L449">        dto.setUpsAccount((String) payload.get(&quot;ups_account&quot;));</span>
+        
+<span class="nc" id="L451">        return dto;</span>
+    }
+    
+    private User findOrCreateUser(ShipmentCreatedDto dto) {
+        // Try to find existing user by email
+<span class="nc" id="L456">        Optional&lt;User&gt; existingUser = userRepository.findByEmail(dto.getEmail());</span>
+<span class="nc bnc" id="L457" title="All 2 branches missed.">        if (existingUser.isPresent()) {</span>
+<span class="nc" id="L458">            return existingUser.get();</span>
+        }
+        
+        // Create new user if not found
+<span class="nc" id="L462">        User newUser = new User();</span>
+<span class="nc" id="L463">        newUser.setEmail(dto.getEmail());</span>
+<span class="nc" id="L464">        newUser.setPassword(&quot;temp_password&quot;); // This should be handled properly in a real system</span>
+<span class="nc" id="L465">        newUser.setFirstName(&quot;Amazon User&quot;);</span>
+<span class="nc" id="L466">        newUser.setLastName(&quot;Customer&quot;);</span>
+        
+<span class="nc" id="L468">        return userRepository.save(newUser);</span>
+    }
+    
+    private Shipment createShipment(ShipmentCreatedDto dto, User user) {
+<span class="nc" id="L472">        Shipment shipment = new Shipment();</span>
+<span class="nc" id="L473">        shipment.setShipmentId(dto.getShipmentId());</span>
+<span class="nc" id="L474">        shipment.setUser(user);</span>
+<span class="nc" id="L475">        shipment.setOriginX(dto.getWarehouseId().intValue()); // Simplified: using warehouse_id as origin coordinates</span>
+<span class="nc" id="L476">        shipment.setOriginY(dto.getWarehouseId().intValue());</span>
+<span class="nc" id="L477">        shipment.setDestX(dto.getDestinationX());</span>
+<span class="nc" id="L478">        shipment.setDestY(dto.getDestinationY());</span>
+<span class="nc" id="L479">        shipment.setStatus(ShipmentStatus.CREATED);</span>
+        
+<span class="nc" id="L481">        return shipment;</span>
+    }
+    
+    private Truck assignTruck(Long warehouseId) {
+        // Use intelligent truck assignment from TruckManagementService
+        // Assume warehouse coordinates - in real system this would come from warehouse data
+<span class="nc" id="L487">        Integer warehouseX = warehouseId.intValue(); // Simplified mapping</span>
+<span class="nc" id="L488">        Integer warehouseY = warehouseId.intValue(); // Simplified mapping</span>
+        
+<span class="nc" id="L490">        return truckManagementService.assignOptimalTruck(warehouseX, warehouseY, 3); // Normal priority</span>
+    }
+    
+    private void sendTruckToWarehouse(Truck truck, Long warehouseId, Shipment shipment) {
+        // Send truck to warehouse via World Simulator
+<span class="nc bnc" id="L495" title="All 2 branches missed.">        if (worldSimulatorService.isConnected()) {</span>
+            try {
+                // Send pickup command to World Simulator
+<span class="nc" id="L498">                worldSimulatorService.sendTruckToPickup(truck.getTruckId(), warehouseId.intValue())</span>
+<span class="nc" id="L499">                    .thenAccept(success -&gt; {</span>
+<span class="nc bnc" id="L500" title="All 2 branches missed.">                        if (success) {</span>
+<span class="nc" id="L501">                            logger.info(&quot;Successfully sent truck {} to warehouse {}&quot;, truck.getTruckId(), warehouseId);</span>
+                            // Notify Amazon that truck has been dispatched
+<span class="nc" id="L503">                            notifyTruckDispatched(truck.getId().toString(), shipment.getShipmentId());</span>
+                        } else {
+<span class="nc" id="L505">                            logger.error(&quot;Failed to send truck {} to warehouse {}&quot;, truck.getTruckId(), warehouseId);</span>
+                        }
+<span class="nc" id="L507">                    })</span>
+<span class="nc" id="L508">                    .exceptionally(throwable -&gt; {</span>
+<span class="nc" id="L509">                        logger.error(&quot;Error sending truck to warehouse&quot;, throwable);</span>
+<span class="nc" id="L510">                        return null;</span>
+                    });
+<span class="nc" id="L512">            } catch (Exception e) {</span>
+<span class="nc" id="L513">                logger.error(&quot;Error calling World Simulator service&quot;, e);</span>
+                // Fallback: just notify Amazon
+<span class="nc" id="L515">                notifyTruckDispatched(truck.getId().toString(), shipment.getShipmentId());</span>
+<span class="nc" id="L516">            }</span>
+        } else {
+<span class="nc" id="L518">            logger.warn(&quot;World Simulator not connected, cannot send truck to warehouse&quot;);</span>
+            // Fallback: just notify Amazon
+<span class="nc" id="L520">            notifyTruckDispatched(truck.getId().toString(), shipment.getShipmentId());</span>
+        }
+<span class="nc" id="L522">    }</span>
+    
+    private void startDelivery(Shipment shipment) {
+        // Update shipment status to in transit
+<span class="nc" id="L526">        shipment.updateStatus(ShipmentStatus.IN_TRANSIT);</span>
+        
+        // Send delivery command to World Simulator
+<span class="nc bnc" id="L529" title="All 4 branches missed.">        if (shipment.getTruck() != null &amp;&amp; worldSimulatorService.isConnected()) {</span>
+            try {
+                // Prepare delivery locations
+<span class="nc" id="L532">                Map&lt;Long, int[]&gt; deliveries = new HashMap&lt;&gt;();</span>
+                // Use shipment ID as package ID for World Simulator
+<span class="nc" id="L534">                Long packageId = Long.valueOf(shipment.getShipmentId().hashCode() &amp; 0x7FFFFFFF);</span>
+<span class="nc" id="L535">                deliveries.put(packageId, new int[]{shipment.getDestX(), shipment.getDestY()});</span>
+                
+                // Send delivery command
+<span class="nc" id="L538">                worldSimulatorService.sendTruckToDeliver(shipment.getTruck().getTruckId(), deliveries)</span>
+<span class="nc" id="L539">                    .thenAccept(success -&gt; {</span>
+<span class="nc bnc" id="L540" title="All 2 branches missed.">                        if (success) {</span>
+<span class="nc" id="L541">                            logger.info(&quot;Successfully started delivery for shipment {}&quot;, shipment.getShipmentId());</span>
+                        } else {
+<span class="nc" id="L543">                            logger.error(&quot;Failed to start delivery for shipment {}&quot;, shipment.getShipmentId());</span>
+                        }
+<span class="nc" id="L545">                    })</span>
+<span class="nc" id="L546">                    .exceptionally(throwable -&gt; {</span>
+<span class="nc" id="L547">                        logger.error(&quot;Error starting delivery via World Simulator&quot;, throwable);</span>
+<span class="nc" id="L548">                        return null;</span>
+                    });
+                
+<span class="nc" id="L551">                shipment.getTruck().setStatus(TruckStatus.DELIVERING);</span>
+<span class="nc" id="L552">                truckRepository.save(shipment.getTruck());</span>
+                
+<span class="nc" id="L554">            } catch (Exception e) {</span>
+<span class="nc" id="L555">                logger.error(&quot;Error calling World Simulator for delivery&quot;, e);</span>
+<span class="nc" id="L556">            }</span>
+        } else {
+<span class="nc" id="L558">            logger.warn(&quot;Cannot start delivery: truck not assigned or World Simulator not connected&quot;);</span>
+        }
+<span class="nc" id="L560">    }</span>
+    
+    private void updateTruckDestination(Truck truck, Integer newDestX, Integer newDestY) {
+        // Update truck destination via World Simulator
+<span class="nc bnc" id="L564" title="All 2 branches missed.">        if (worldSimulatorService.isConnected()) {</span>
+            try {
+                // Cancel current delivery and send new delivery command
+<span class="nc" id="L567">                Map&lt;Long, int[]&gt; newDeliveries = new HashMap&lt;&gt;();</span>
+                // Find the shipment being delivered
+<span class="nc" id="L569">                Optional&lt;Shipment&gt; currentShipment = shipmentRepository.findByTruck(truck);</span>
+<span class="nc bnc" id="L570" title="All 2 branches missed.">                if (currentShipment.isPresent()) {</span>
+<span class="nc" id="L571">                    Long packageId = Long.valueOf(currentShipment.get().getShipmentId().hashCode() &amp; 0x7FFFFFFF);</span>
+<span class="nc" id="L572">                    newDeliveries.put(packageId, new int[]{newDestX, newDestY});</span>
+                    
+<span class="nc" id="L574">                    worldSimulatorService.sendTruckToDeliver(truck.getTruckId(), newDeliveries)</span>
+<span class="nc" id="L575">                        .thenAccept(success -&gt; {</span>
+<span class="nc bnc" id="L576" title="All 2 branches missed.">                            if (success) {</span>
+<span class="nc" id="L577">                                logger.info(&quot;Successfully updated truck {} destination to ({}, {})&quot;, truck.getTruckId(), newDestX, newDestY);</span>
+                            } else {
+<span class="nc" id="L579">                                logger.error(&quot;Failed to update truck {} destination&quot;, truck.getTruckId());</span>
+                            }
+<span class="nc" id="L581">                        })</span>
+<span class="nc" id="L582">                        .exceptionally(throwable -&gt; {</span>
+<span class="nc" id="L583">                            logger.error(&quot;Error updating truck destination via World Simulator&quot;, throwable);</span>
+<span class="nc" id="L584">                            return null;</span>
+                        });
+<span class="nc" id="L586">                } else {</span>
+<span class="nc" id="L587">                    logger.warn(&quot;No current shipment found for truck {}, cannot update destination&quot;, truck.getTruckId());</span>
+                }
+<span class="nc" id="L589">            } catch (Exception e) {</span>
+<span class="nc" id="L590">                logger.error(&quot;Error calling World Simulator to update destination&quot;, e);</span>
+<span class="nc" id="L591">            }</span>
+        } else {
+<span class="nc" id="L593">            logger.warn(&quot;World Simulator not connected, cannot update truck destination&quot;);</span>
+        }
+<span class="nc" id="L595">    }</span>
+    
+    private void sendNotificationToAmazon(String endpoint, UpsResponseDto notification) {
+        try {
+<span class="nc" id="L599">            String url = amazonBaseUrl + endpoint;</span>
+            
+<span class="nc" id="L601">            HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L602">            headers.setContentType(MediaType.APPLICATION_JSON);</span>
+            
+<span class="nc" id="L604">            HttpEntity&lt;UpsResponseDto&gt; request = new HttpEntity&lt;&gt;(notification, headers);</span>
+            
+<span class="nc" id="L606">            ResponseEntity&lt;String&gt; response = restTemplate.postForEntity(url, request, String.class);</span>
+            
+<span class="nc bnc" id="L608" title="All 2 branches missed.">            if (response.getStatusCode().is2xxSuccessful()) {</span>
+<span class="nc" id="L609">                logger.debug(&quot;Successfully sent notification to Amazon: {}&quot;, endpoint);</span>
+            } else {
+<span class="nc" id="L611">                logger.warn(&quot;Amazon responded with status {}: {}&quot;, </span>
+<span class="nc" id="L612">                           response.getStatusCode(), response.getBody());</span>
+            }
+            
+<span class="nc" id="L615">        } catch (Exception e) {</span>
+<span class="nc" id="L616">            logger.error(&quot;Failed to send notification to Amazon at {}: {}&quot;, endpoint, e.getMessage());</span>
+<span class="nc" id="L617">        }</span>
+<span class="nc" id="L618">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

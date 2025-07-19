@@ -1,0 +1,428 @@
+## 1 Project Advice (high level thoughts)
+
+Implementing everything on your side (amazon or ups) and then linking up to test with other groups is NOT the best way to go about it.  It can make testing at the end pretty painful.
+
+The best way to go about it will be to get a feature working, then test with others in your IG (and you can start small with this).  Then add the next feature, and test again.  Keep repeating this process to build up.  This strategy will help with your code development, organization, and debugging.  And you'll have confidence that existing feature are working and solid as you continue adding new functions to the code.
+
+I hope this helps, and I'd strongly encourage this way of going about it.
+
+## 2 Google protocol buffer
+
+### 2.1 API
+
+FYI, all of the API details for google protocol buffers can be found here:
+
+https://developers.google.com/protocol-buffers/docs/reference/overview
+
+There are sub-sections for each different programming language.
+
+### 2.2 (Python) Sending and Receiving protobuf mesages
+
+If you're having trouble interacting with the world using Python...
+
+The solution should be similar in the case when you recv/send msg using sockets in hw2/hw4. But the tricky part is how to get the length of message. Only when you have the correct length can you receive/send a whole photobuf message. And only when you have the correct whole photobuf message can you parse it.
+
+Python really lacks useful references on how to solve this. There are some workaround solutions discussed on this [page](https://groups.google.com/forum/#!topic/protobuf/4RydUI1HkSM). In short, a varint32 is encoded before writing the message itself in a photobuf message.  One solution is the following.
+
+1. Import these encoding/decoding packages:
+    
+    ```python
+    from google.protobuf.internal.decoder import _DecodeVarint32
+    from google.protobuf.internal.encoder import _EncodeVarint
+    ```
+    
+2. Sending a message is straightforward, just use socket to send it. But right before you send it, encode the length info:
+    
+    ```python
+    _EncodeVarint(WORLD_SOCKET.send, len(ENCODED_MESSAGE), None)
+    ```
+    
+3. Receiving is trickier, you need to extract the length first. My dummy but workable solution is to use a while loop to get the length until I know I'm at the beginning of the real message.
+    
+    ```python
+    var_int_buff = []
+    while True:
+        buf = world_socket.recv(1)
+        var_int_buff += buf
+        msg_len, new_pos = _DecodeVarint32(var_int_buff, 0)
+        if new_pos != 0:
+            break
+    whole_message = world_socket.recv(msg_len)
+    ```
+    
+4. You can wrap the recv/send part to a standalone function that returns a whole Protobuf object. Just to improve the abstraction and reduce code duplication.
+5. As we know the communication between you and the world is asynchronous(it should also be async between amazon and ups), you should open a socket and then while_loop listen to this socket. TIP3 is very helpful here(Waiting for a response, parse and check what this response is).
+
+## 3 FAQs
+
+### **Can I combine front-end and back-end?**
+
+- Technically, yes. You can use socket in Django which means there're multiple ways to implement it based on your design. I think you can do it in this way from a syntax perspective but probably **not easy because everything is mixed together**.
+- The way I did before is to use a single Python file for the backend server and Django for the frontend. And based on whatever you need these servers will send information between each other and to the UPS and world.
+
+### **Can I separate front-end and back-end?**
+
+Yes, having a split front-end and back-end that communicate via another socket is a reasonable way to approach it.
+
+### **How to handle potentially the database between the front-end and back-end?**
+
+- How to maintain model/date consistence between front end and backend depends on your design
+- On one hand, you can set up database at backend (as you're describing through another app possibly in C++).  Then whenever the frontend (Django) want anything, it sends a query (possibly as a request through a tcp socket) to the backend so that the backend can do the query and send results back. In this way, only one side needs to manage the database.
+- On the other hand, you can allow access to a single database both from backend and frontend. You only have to set up tables for once. As for something similar to ORM, if you are using C++, you can check out libpqxx. In this way, both the frontend and backend has the responsibility to maintain the database.
+
+### **Which side will create package id - Amazon or UPS? What is the difference between the package id and shipment id?**
+
+- shipid in APack is just packageid in AQuery. They are just names for identifier for a unique package.
+- Shipid is created by Amazon side. World receives the shipid that amazon wants it to create and tries to create a new package for amazon with the specified id. Since the world should also be robust, if world receives any illegal id number, for example, the shipid already exists, it will send back with A/UErr with a descriptive string that you can read to debug.
+- Shipid and packageid are the same, but not necessarily the same with tracking number on UPS side, depending on your design. It's amazon's responsibility to create it and communicate it with both world and UPS.
+
+### **Seq num and ACK implementation: When we want to acknowledge a certain message with a sequence number like 101, we send back the same number 101 as ACK?**
+
+- Let's say amazon send an ACommands with only one APurchaseMore request, and the seqnum contained in APurchaseMore request is 13 (this seqnum is the unique identifier of requests sent from amazon side, so amazon should keep incrementing it. it may start from 0). Once world receive ACommands and handle the APurchaseMore request, it will first send an ack = 13 notifying amazon that the world has received your request No.13. Then whenever APurchaseMore actions is done, it will send amazon one APurchaseMore response corresponding to the one amazon sent, but inside this APurchaseMore response, the seqnum is the unique identifier of world responses, in this case, maybe 50 (world keeps track of its own message sent sequence number).
+- World has its own mechanism of gathering responses and send them back together, so these 2 responses may be sent together or separately.
+
+### **Is there a limit to how many packages one truck can carry?**
+
+You can assume a truck can handle any load assigned to it. These are very flexible, magic trucks. :)
+
+### **(Python) Database and multithreading: cursor is not thread-safe. How to avoid race conditions?**
+
+- I think this has some good info on cursors, related to your questions:
+    
+    https://www.psycopg.org/docs/usage.html#thread-safety
+    
+- Connection objects are thread safe, so you can share one connection across multiple threads.  But, cursors themselves are not thread safe. So you would need at least a separate cursor object for each thread.
+
+### **Do we need shopping cart feature?**
+
+- You don't necessarily need to have a feature equivalent to a shopping cart, since that's not covered by the "bare minimum" or "actually useful" categories.
+- A shopping cart would be a nice "produce differentiation" feature.  But there are almost endless other feature ideas you can probably come up with as well.  So with enough other interesting produce differentiation features, you can still have a very good project.
+
+
+
+ERSS: Project
+Mini-Amazon / Mini-UPS
+For this project, you will either be doing “mini-Amazon” (an online store) or “mini-UPS” (a shipping
+website). If you are doing Amazon, you will have to make your system work with the UPS systems in
+your interoperability group (IG)—2 groups doing Amazon and 2 groups doing UPS.
+1 The “World”
+Since you won’t have access to real warehouses and trucks, your code will interact with a simulated
+world provided for you. You will connect to the simulation server (port 12345 for UPS, port 23456 for
+Amazon), and send commands and receive notifications.
+The messages you can send and receive are in the .proto files (amazon.proto and ups.proto) that
+will be provided. Notice that all messages either start with A or U to indicate which part they belong
+to.
+The server supports different worlds (identified by a 64-bit number). You may create as many worlds
+as you want. There is presently no authentication on the worlds, so please only use your own. To
+create a new world for a pair of Amazon and UPS, UPS should send a Uconnect request without
+specifying a worldid number, so that the World Simulator would create one and return its ID in
+UConnected response. Both Amazon and UPS can create a new world and only when you want to
+create a new world do you leave the worldid blank.
+Each world is comprised of a Cartesian coordinate grid where “addresses” are integer co- ordinates
+(so you will deliver a package to e.g., (2, 4)). The world contains trucks (controlled by UPS) and
+warehouses (controlled by Amazon). These have to work together to deliver packages.
+The basic flow is that you send an A/UConnect message with the worldid that you want and receive
+an A/UConnected response. Note only ONE Amazon and ONE UPS is allowed to connect to a world at
+the same. Upon successful connection, the result string in A/UConnected will be “connected!” ,
+otherwise it will be an error message starting with “error:”. Make sure your result string is
+“connected!” before proceeding to any further actions. Once you have received this response, you
+may send A/UCommands and receive A/Responses. You should not send any other message, nor
+expect to receive any – all of the details are embedded in the A/UCommands/Responses.
+A/UCommands include two common options: simspeed and disconnect. You can adjust the simulation
+speed (higher numbers make things happen more quickly in the world). Simulation speed has a
+default value of 100 and it’s consistent once you specify it until you change it into another value.
+Note that the simulation speed only affects future events. If you set disconnect to true in a
+command, the server will finish processing whatever it is currently working on (your current
+A/UCommands), then send a response with finished = true, and close the connection.
+A/UCommands and A/UResponses also implement ack numbers to avoid losing an in-flight
+message. The ack mechanism works as follows. For each request inside A/UCommands, there’s a
+seqnum (you should keep track of the incrementing of seqnum coming from your side). When World
+Simulator receives commands from your side, it will check the seqnum of each request. Then it will
+process the request and return responses with acks of those seqnums. The same thing happens
+when World Simulator send you responses, which means if you don’t return ack, World Simulator
+will send the same responses for multiple times. Don’t assume World Simulator receives all of the
+requests in your A/UCommands until you receive those acks.
+Note: simspeed is only for testing/debugging. You MUST NOT rely on a particular simspeed for the
+correctness of your program. When testing/debugging, if you want to try a large number of actions
+quickly, you might set it high. Likewise, if you wish to exercise particular timing-related conditions, you
+might set it slow. Your program MUST work correctly at ANY simspeed when the TAs use. They will
+have a version of the world server which ignores simspeed commands that you send and allows them
+to set the speed directly.
+Amazon Commands details: (note all commands include a sequence number for acknowledgement
+as described above)
+buy You can ask for more of some products to be delivered to a warehouse. Specify item id,
+description (any text) and the quantity you want. If this product has never been seen before, it
+will be created. If the product has been seen before, you SHOULD provide the same description
+(if you use different descriptions for the same product id, the behavior is undefined). NOTE:
+buying new stock does not involve UPS.
+topack Pack a shipment for delivery. You will be notified when it is ready. The ware- house that you
+request to pack the shipment MUST have sufficient inventory (and the inventory will be reduced
+accordingly).
+load Load a shipment on to a truck. In order for this to succeed, the shipment MUST be packed (and
+you must have received a ready notification) AND the truck MUST be at the warehouse, ready to
+receive the shipment (the shipper must have sent them to pickup and they must have received
+notification of completion).
+queries ask the status of a package by specifying the packageid. Note you can do query at any time.
+Amazon Response details:
+arrived When you buy, you will later get a notification that your orders have arrived. At this time, you
+should update your records of what is in stock and may use the goods described in this message
+to fulfill orders.
+ready Notification that packing is complete
+loaded Notification that you have finished loading a shipment onto a truck
+packagestatus tells the current status of one package that you queried. Possible package status:
+packing, packed, loading, loaded, delivering, delivered.
+error indicates that you failed to meet any of the MUST requirements specified at “Amazon
+Commands details” above. Read the err string carefully for more information.
+UPS Command details:
+deliveries Once a package has been loaded, you can issue this command to send the truck to deliver it
+to a particular location. Note that you MAY pickup other packages before making deliveries. You
+MAY send more deliveries requests while the truck is delivering other packages. You MAY even
+change the destination of a package by sending a delivery request again before it arrives its
+destination. World Simulator allows idle truck carrying undelivered packages. If you specify
+multiple deliveries at once, they will be performed in the order you list them in the command.
+pickups Send a truck to a warehouse to pick up a package. The truck need not have an “idle” status; it
+can also have an “arrive warehouse” or “delivering” status. If a truck receives pickups requests in
+the middle of a delivering, it will immediately quit the current delivery and turn to the specified
+warehouse. Later whenever the truck has a “delivering” status again, it always starts from where
+it quits. The package need not be ready to issue this command. While the truck is in route, it is
+busy and cannot be given other commands.
+queries ask the status of a truck by specifying truckid. Note you can do query at any time.
+UPS Response details:
+completions You will receive this notification when either (a) a truck reaches the warehouse you sent
+it to (with a pickup command) and is ready to load a package or (b) a truck has finished all of its
+deliveries (that you sent it to make with a deliveries command).
+At this point the truck may be given other instructions. Note that the completion tells you the
+current location of the truck.
+delivered You will receive this notification when each package is delivered. Note that when each
+package is delivered, a delivered response will be sent. When all deliveries are finished, you
+will receive a completions response.
+truckstatus tell the current status of a truck that you queried. Possible truck status: idle, traveling
+(when receives pickups requests and is on its way to warehouse), arrive warehouse, loading
+(loading package, after loading package finish, go back to “arrive warehouse” status), delivering
+(when finished all deliver job, go to status “idle”).
+error indicates that you failed to meet any of the MUST requirements specified at “UPS Commands
+details” above. Read the err string carefully for more information.
+Note World Simulator has a time-out value set to be 10 mins, if you find that you lose the connection,
+don’t panic, just connect again. Also note that the world server’s replies are asynchronous. You may
+send several requests and receive the replies many minutes later . You should use appropriate
+identifiers in the responses to figure out what request a message is in response to. You also MUST
+NOT wait for the response to return a web page – if the response takes a few minutes, the browser
+will time out.
+You MAY wish to separate the handling of world server communication from the handling of the web
+front end (hint: good idea). You could even go so far as placing the web server in a different Docker
+container from the daemon which interacts with the world server . In such a design, both programs
+can communicate through a common postgres database. You might even write these pieces of
+software in different languages.
+1.1 Google Protocol Buffer Message Format
+Because of some oddities of how GPB works, each message is preceded by a Varint32 specifying its
+size in bytes. In C++ you would want to include:
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+Then you could send a message with code like this:
+//this is adpated from code that a Google engineer posted online
+template<typename T>
+bool sendMesgTo(const T & message,
+google::protobuf::io::FileOutputStream *out) {
+{
+//extra scope: make output go away before out->Flush()
+// We create a new coded stream for each message.
+// Don’t worry, this is fast.
+google::protobuf::io::CodedOutputStream output(out);
+// Write the size.
+const int size = message.ByteSize();
+output.WriteVarint32(size);
+uint8
+t* buffer = output.GetDirectBufferForNBytesAndAdvance(size);
+_
+if (buffer != NULL) {
+// Optimization: The message fits in one buffer, so use the faster
+// direct-to-array serialization path.
+message.SerializeWithCachedSizesToArray(buffer);
+} else {
+// Slightly-slower path when the message is multiple buffers.
+message.SerializeWithCachedSizes(&output);
+if (output.HadError()) {
+return false;
+}
+}
+}
+out->Flush();
+return true;
+}
+And receive a message with code like this:
+//this is adapted from code that a Google engineer posted online
+template<typename T>
+bool recvMesgFrom(T & message,
+google::protobuf::io::FileInputStream * in ){
+google::protobuf::io::CodedInputStream input(in);
+uint32
+t size;
+_
+if (!input.ReadVarint32(&size)) {
+return false;
+}
+// Tell the stream not to read beyond that size.
+google::protobuf::io::CodedInputStream::Limit limit = input.PushLimit(size);
+// Parse the message.
+if (!message.MergeFromCodedStream(&input)) {
+return false;
+}
+if (!input.ConsumedEntireMessage()) {
+return false;
+}
+// Release the limit.
+input.PopLimit(limit);
+return true;
+}
+2 Protocol Specification (10 pts)
+Your IG MUST craft a protocol specification for how your servers will communicate with each other .
+This document MUST be submitted by 11:59 PM on Thursday, April 11. Your IG may use any
+reasonable communication protocol and data format you see fit. You SHOULD think carefully in
+designing this and use RFC terminology (MUST/MAY/SHOULD) to be as exact as possible in
+constraining the behavior of the participants in this system.
+Your IG MAY revise the protocol specification in the submission of your final project. If any revisions
+are required, you MUST leave deleted text in the document but color it red, and color any added text
+blue. If you replace one diagram with another, note the replacement in blue in the caption of the new
+diagram, and include the old diagram in an Appendix at the end.
+The protocol specification will be graded on the following criteria:
+● Clarity and precision: could your TAs or I implement a conforming server just by reading the
+specification?
+● Conformance: does your code actually do what the (revised) specification says? (or did you
+just write some things and hack together a completely different piece of code)
+● Completeness: did your initial document actually cover the behaviors you needed? (or did you
+find that you needed to heavily revise it)
+We note that it is preferable (i.e., you will receive a higher grade) if you find that your original
+document was not sufficient to accurately revise it, than to claim your original document was fine, but
+implement something different.
+3 Bare Minimum Functionality (30 pts)
+The first piece of functionality you should aim for is to be able to purchase an item, and have it go all
+the way through to delivery. Figure 1 illustrates.
+Figure 1: Bare Minimum Functionality Diagram. Note that Amazon-UPS communication protocols are governed by the protocol
+document you write.
+For Amazon, this means that you need a web interface on which someone can buy a product (you
+don’t need a catalog of products yet – you can start with just one “Buy” button and a fixed ‘address’
+to deliver to). You then need to go through all the steps to get the package delivered (tell your
+warehouse to pack it, then when it is ready and a truck has arrived, load it).
+For UPS, this means that you need a web interface which will display the shipments that exist, and
+their status (e.g., created, truck en route to warehouse, truck waiting for package, out for delivery).
+Note that you will need to create a packageid (aka Tracking Number). These MUST be unique for
+the world. If you reuse a packageid in the same world, things will go wrong. You need to go
+through all the steps to deliver the package (send truck to warehouse, wait for Amazon to say it’s
+loaded, send it for delivery).
+4 Actually Useful (40 pts)
+Now that you have the basic functionality, it’s time to make it useful.
+For Amazon, you should add the following features:
+● A searchable catalog of products (you don’t need a large quantity, nor real products).
+● The ability to check the status of an order .
+● The ability to specify an address (i.e., (x,y) coordinates) for delivery.
+● The ability to specify a UPS account name to associate the order with (optional).
+● Provide the Tracking Number for the shipment.
+Note: there is no “payment” system – so you can just take a “credit card number” and pretend it is ok,
+or just pretend that everything is free.
+For UPS, you should add the following features:
+● The ability to enter a tracking number and see the status of the shipment.
+● User accounts (with user ids and passwords). If you are logged in, you should be able to do the
+following to packages you own (your user id was supplied to Amazon when the purchase was
+made):
+o See a list of all packages that belong to them.
+o See the details of the package (e.g., items inside it)
+o If the package is not yet out for delivery, redirect it to a different address. (Note: if the
+user loses a race and the package goes out for delivery before you can update it, that is
+OK, but you need to tell them this).
+5 Product Differentiation (20+)
+At this point, everyone in the class has basically the same functionality. Now you need to differentiate
+your product (“store” or “shipping company”) from the all the others out there – make yours the best
+in the class!
+The last 20 points are flexible – you decide what features to add. Document them and justify them to
+the TA in a short writeup. It is possible to exceed 100 points by having a rich set of well-executed
+features. (However, it becomes exponentially more difficult to earn points the further above 100 you
+are).
+You might consider features that require coordination between Amazon and UPS when deciding what
+to do here.
+6 Other Notes
+A few other notes:
+● As usual, the TAs should be able to run your project with docker-compose up. You should make
+separate docker stacks for Amazon and UPS. The TAs will run docker-compose up for
+Amazon and separately for UPS. You MAY specify one place that a hostname needs to be
+changed in your docker-compose.yml files for this. In this setup, only one docker-compose.yml
+should run the world server, and the other should connect use the specified hostname to
+connect to it.
+● You are not graded on UI/UX, however, we it must be at least usable. We recommend making
+it nice so you can show off your project (but save that for some final polishing). Make this
+project something you would be PROUD to show to potential employers, family, and/or
+friends.
+● Communication between Amazon and UPS is entirely up to everyone in your IG. We make no
+requirements on the technologies/protocols/specifics used.
+● You may use any language or combination of languages you want. However, you will probably
+want to use C, C++, Python, or Java (or Scala) to deal with the world server interaction, as
+those are the languages supported by Google Protocol Buffers.
+● You should have at most ONE Amazon connection and at most ONE UPS connection to a given
+world at a time.
+● You will be given a Dockerfile which will build an image that runs the world simulation. As
+noted earlier, it listens on port 12345 and 23456. You will need to set this up in your Docker
+Compose setup to have persistent storage for the database, and anything else you might want.
+If you just want to setup a simple world in it, you can use the provided init-world
+program, which will setup a simple world and give you its world id.
+● For debugging only you could inspect the state of the world sim by entering the Docker
+container and examining the various tables in the worldSim database:
+List of relations
+Schema | Name | Type | Owner
+--------+----------------------------+-------+----------
+public | apm
+res
+helper | table | postgres_
+_
+public | apurchasemore
+response | table | postgres
+_
+public | completion
+response | table | postgres
+_
+public | error
+response | table | postgres
+_
+public | finish
+response | table | postgres
+_
+public | incoming
+msg | table | postgres
+_
+public | outgoing
+msg | table | postgres
+_
+public | package | table | postgres
+public | package
+delivered
+response | table | postgres
+_
+_
+public | package
+product | table | postgres
+_
+public | pending
+query | table | postgres
+_
+public | product | table | postgres
+public | rl
+response | table | postgres
+_
+public | truck | table | postgres
+public | warehouse | table | postgres
+public | world | table | postgres
+Your programs MUST NOT directly examine or manipulate these database tables— they must
+interact with the world server through its GPB API.
+● Also, for debugging only when you connect to the world's database you may clean the tables
+or make other queries / modifications.
+● The worldsim may not be fully friendly when you do things wrong. It will give you an error
+message, but no emphasis was placed on error message friendliness. This has some basic
+testing, but bugs are entirely possible – please let us know (and give a test case to reproduce
+it) if you find one. We’ll work to fix things and release new versions.
+7 Deliverables
+● Protocol document (Thurs Apr 11).
+● Code for your server (Amazon or UPS) (At the project due date).
+● A docker-compose setup which runs your software, as specified above (At the project due
+date).
+● A revised protocol document, showing any changes from your original (as described above) (At
+the project due date).
+● A writeup discussing your “product differentiation” features, and anything else that your
+group feels like needs to be discussed (At the project due date).

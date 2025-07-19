@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtAuthenticationEntryPoint.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.security</a> &gt; <span class="el_source">JwtAuthenticationEntryPoint.java</span></div><h1>JwtAuthenticationEntryPoint.java</h1><pre class="source lang-java linenums">/**
+ * JWT Authentication Entry Point
+ * 
+ * Purpose:
+ * - Handles unauthorized access attempts in JWT-based authentication
+ * - Provides standardized error responses for authentication failures
+ * - Implements Spring Security's AuthenticationEntryPoint interface
+ * - Ensures consistent error handling across all protected endpoints
+ * 
+ * Core Functionality:
+ * - commence(): Invoked when an unauthenticated user tries to access a secured resource
+ * - Returns HTTP 401 Unauthorized status with structured JSON error response
+ * - Captures request URI and exception details for debugging purposes
+ * - Sets appropriate content type and character encoding for JSON responses
+ * 
+ * Security Considerations:
+ * - Prevents detailed error information leakage to potential attackers
+ * - Provides standardized error format for consistent client-side handling
+ * - Logs authentication failures for security monitoring and audit trails
+ * - Maintains security best practices by not exposing sensitive system details
+ * 
+ * Integration Points:
+ * - Configured in SecurityConfig as the authentication entry point
+ * - Works with JwtAuthenticationFilter to handle JWT validation failures
+ * - Integrates with Spring Security's exception handling mechanism
+ * - Supports both API and web-based authentication flows
+ * 
+ * Response Format:
+ * {
+ *   &quot;error&quot;: &quot;Unauthorized&quot;,
+ *   &quot;message&quot;: &quot;Authentication failure reason&quot;,
+ *   &quot;path&quot;: &quot;/api/requested/endpoint&quot;
+ * }
+ * 
+ * Usage Patterns:
+ * - Automatically triggered when JWT token is missing, invalid, or expired
+ * - Handles both API endpoints and WebSocket authentication failures
+ * - Provides clear feedback for client applications to handle authentication errors
+ * - Supports frontend routing for login redirects based on error responses
+ * 
+ * Best Practices:
+ * - Returns consistent error format across all authentication failures
+ * - Includes request path for client-side debugging and analytics
+ * - Uses appropriate HTTP status codes (401 for authentication failures)
+ * - Maintains security by not exposing internal system details
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
+package com.miniups.security;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+@Component
+<span class="nc" id="L63">public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {</span>
+    
+    @Override
+    public void commence(HttpServletRequest request, 
+                        HttpServletResponse response,
+                        AuthenticationException authException) throws IOException, ServletException {
+        
+<span class="nc" id="L70">        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="nc" id="L71">        response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L72">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+        
+<span class="nc" id="L74">        String jsonResponse = String.format(</span>
+            &quot;{\&quot;error\&quot;: \&quot;Unauthorized\&quot;, \&quot;message\&quot;: \&quot;%s\&quot;, \&quot;path\&quot;: \&quot;%s\&quot;}&quot;, 
+<span class="nc" id="L76">            authException.getMessage(), </span>
+<span class="nc" id="L77">            request.getRequestURI()</span>
+        );
+        
+<span class="nc" id="L80">        response.getWriter().write(jsonResponse);</span>
+<span class="nc" id="L81">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

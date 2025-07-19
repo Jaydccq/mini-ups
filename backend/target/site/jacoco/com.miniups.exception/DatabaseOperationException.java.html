@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseOperationException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.exception</a> &gt; <span class="el_source">DatabaseOperationException.java</span></div><h1>DatabaseOperationException.java</h1><pre class="source lang-java linenums">/**
+ * Database Operation Exception
+ * 
+ * 数据库操作异常，用于处理数据访问层的错误
+ * 
+ * Common scenarios:
+ * - 数据库连接失败
+ * - SQL执行超时
+ * - 数据完整性约束违反
+ * - 事务回滚异常
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.exception;
+
+import com.miniups.model.enums.ExceptionSeverity;
+
+public class DatabaseOperationException extends BaseBusinessException {
+    
+    private final String operation;
+    private final String entity;
+    
+    public DatabaseOperationException(String operation, String message) {
+<span class="nc" id="L25">        super(&quot;DATABASE_OPERATION_ERROR&quot;, String.format(&quot;Database operation [%s] failed: %s&quot;, operation, message), ExceptionSeverity.HIGH);</span>
+<span class="nc" id="L26">        this.operation = operation;</span>
+<span class="nc" id="L27">        this.entity = null;</span>
+<span class="nc" id="L28">    }</span>
+    
+    public DatabaseOperationException(String operation, String message, Throwable cause) {
+<span class="nc" id="L31">        super(&quot;DATABASE_OPERATION_ERROR&quot;, String.format(&quot;Database operation [%s] failed: %s&quot;, operation, message), ExceptionSeverity.HIGH, cause);</span>
+<span class="nc" id="L32">        this.operation = operation;</span>
+<span class="nc" id="L33">        this.entity = null;</span>
+<span class="nc" id="L34">    }</span>
+    
+    public DatabaseOperationException(String operation, String entity, String message) {
+<span class="nc" id="L37">        super(&quot;DATABASE_OPERATION_ERROR&quot;, String.format(&quot;Database operation [%s] on entity [%s] failed: %s&quot;, operation, entity, message), ExceptionSeverity.HIGH);</span>
+<span class="nc" id="L38">        this.operation = operation;</span>
+<span class="nc" id="L39">        this.entity = entity;</span>
+<span class="nc" id="L40">    }</span>
+    
+    public DatabaseOperationException(String operation, String entity, String message, Throwable cause) {
+<span class="nc" id="L43">        super(&quot;DATABASE_OPERATION_ERROR&quot;, String.format(&quot;Database operation [%s] on entity [%s] failed: %s&quot;, operation, entity, message), ExceptionSeverity.HIGH, cause);</span>
+<span class="nc" id="L44">        this.operation = operation;</span>
+<span class="nc" id="L45">        this.entity = entity;</span>
+<span class="nc" id="L46">    }</span>
+    
+    public String getOperation() {
+<span class="nc" id="L49">        return operation;</span>
+    }
+    
+    public String getEntity() {
+<span class="nc" id="L53">        return entity;</span>
+    }
+    
+    // 便利方法用于常见数据库操作异常
+    public static DatabaseOperationException save(String entity, Throwable cause) {
+<span class="nc" id="L58">        return new DatabaseOperationException(&quot;SAVE&quot;, entity, &quot;Failed to save entity&quot;, cause);</span>
+    }
+    
+    public static DatabaseOperationException update(String entity, Throwable cause) {
+<span class="nc" id="L62">        return new DatabaseOperationException(&quot;UPDATE&quot;, entity, &quot;Failed to update entity&quot;, cause);</span>
+    }
+    
+    public static DatabaseOperationException delete(String entity, Throwable cause) {
+<span class="nc" id="L66">        return new DatabaseOperationException(&quot;DELETE&quot;, entity, &quot;Failed to delete entity&quot;, cause);</span>
+    }
+    
+    public static DatabaseOperationException find(String entity, String identifier) {
+<span class="nc" id="L70">        return new DatabaseOperationException(&quot;FIND&quot;, entity, String.format(&quot;Entity not found with identifier: %s&quot;, identifier));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

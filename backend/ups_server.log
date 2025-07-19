@@ -1,0 +1,165 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/opt/homebrew/Cellar/maven/3.9.9/libexec/lib/jansi-2.4.1.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/opt/homebrew/Cellar/maven/3.9.9/libexec/lib/guava-33.2.1-jre.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: osx
+[INFO] os.detected.arch: aarch_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 15.2
+[INFO] os.detected.version.major: 15
+[INFO] os.detected.version.minor: 2
+[INFO] os.detected.classifier: osx-aarch_64
+[INFO] 
+[INFO] --------------------< com.miniups:mini-ups-backend >--------------------
+[INFO] Building Mini UPS Backend 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.3.0:run (default-cli) > test-compile @ mini-ups-backend >>>
+[INFO] 
+[INFO] --- jacoco:0.8.11:prepare-agent (default) @ mini-ups-backend ---
+[INFO] argLine set to -javaagent:/Users/hongxichen/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/Users/hongxichen/Desktop/mini-ups/backend/target/jacoco.exec
+[INFO] 
+[INFO] --- protobuf:0.6.1:compile (default) @ mini-ups-backend ---
+[INFO] Compiling 1 proto file(s) to /Users/hongxichen/Desktop/mini-ups/backend/target/generated-sources/protobuf/java
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ mini-ups-backend ---
+[INFO] Copying 6 resources from src/main/resources to target/classes
+[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] Copying 1 resource from src/main/proto to target/classes
+[INFO] 
+[INFO] --- compiler:3.12.1:compile (default-compile) @ mini-ups-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 89 source files with javac [debug parameters release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ mini-ups-backend ---
+[INFO] Not copying test resources
+[INFO] 
+[INFO] --- compiler:3.12.1:testCompile (default-testCompile) @ mini-ups-backend ---
+[INFO] Not compiling test sources
+[INFO] 
+[INFO] <<< spring-boot:3.3.0:run (default-cli) < test-compile @ mini-ups-backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.3.0:run (default-cli) @ mini-ups-backend ---
+[INFO] Attaching agents: []
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.0)
+
+03:00:22.582 [main] INFO  com.miniups.MiniUpsApplication - Starting MiniUpsApplication using Java 24.0.1 with PID 66766 (/Users/hongxichen/Desktop/mini-ups/backend/target/classes started by hongxichen in /Users/hongxichen/Desktop/mini-ups/backend)
+03:00:22.582 [main] DEBUG com.miniups.MiniUpsApplication - Running with Spring Boot v3.3.0, Spring v6.1.8
+03:00:22.582 [main] INFO  com.miniups.MiniUpsApplication - The following 1 profile is active: "local"
+03:00:22.852 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+03:00:22.852 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+03:00:22.904 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 49 ms. Found 5 JPA repository interfaces.
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.apache.tomcat.jni.Library in an unnamed module (file:/Users/hongxichen/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.24/tomcat-embed-core-10.1.24.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+03:00:23.373 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8081 (http)
+03:00:23.377 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+03:00:23.377 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.24]
+03:00:23.397 [main] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
+03:00:23.397 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 797 ms
+03:00:23.480 [main] WARN  c.miniups.security.JwtTokenProvider - JWT secret contains common words that may be insecure. Consider using a randomly generated secret key.
+03:00:23.480 [main] INFO  c.miniups.security.JwtTokenProvider - JWT configuration validated successfully. Secret key length: 68 characters
+03:00:23.544 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+03:00:23.573 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.2.Final
+03:00:23.590 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+03:00:23.706 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+03:00:23.715 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+03:00:23.769 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@58b5d5fc
+03:00:23.769 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+03:00:23.789 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+03:00:24.223 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+03:00:24.265 [main] DEBUG org.hibernate.SQL - 
+    alter table if exists audit_logs 
+       alter column additional_data set data type TEXT
+Hibernate: 
+    alter table if exists audit_logs 
+       alter column additional_data set data type TEXT
+03:00:24.268 [main] DEBUG org.hibernate.SQL - 
+    alter table if exists shipments 
+       add column delivery_address varchar(255)
+Hibernate: 
+    alter table if exists shipments 
+       add column delivery_address varchar(255)
+03:00:24.275 [main] DEBUG org.hibernate.SQL - 
+    alter table if exists shipments 
+       add column delivery_city varchar(255)
+Hibernate: 
+    alter table if exists shipments 
+       add column delivery_city varchar(255)
+03:00:24.275 [main] DEBUG org.hibernate.SQL - 
+    alter table if exists shipments 
+       add column delivery_zip_code varchar(255)
+Hibernate: 
+    alter table if exists shipments 
+       add column delivery_zip_code varchar(255)
+03:00:24.276 [main] DEBUG org.hibernate.SQL - 
+    alter table if exists trucks 
+       add column current_load float(53)
+Hibernate: 
+    alter table if exists trucks 
+       add column current_load float(53)
+03:00:24.276 [main] DEBUG org.hibernate.SQL - 
+    alter table if exists trucks 
+       add column license_plate varchar(255)
+Hibernate: 
+    alter table if exists trucks 
+       add column license_plate varchar(255)
+03:00:24.277 [main] DEBUG org.hibernate.SQL - 
+    alter table if exists users 
+       alter column address set data type TEXT
+Hibernate: 
+    alter table if exists users 
+       alter column address set data type TEXT
+03:00:24.372 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+03:00:24.520 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by io.netty.util.internal.PlatformDependent0$4 (file:/Users/hongxichen/.m2/repository/io/netty/netty-common/4.1.110.Final/netty-common-4.1.110.Final.jar)
+WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$4
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+03:00:24.836 [main] DEBUG c.m.security.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+03:00:24.837 [main] DEBUG c.m.s.WebhookAuthenticationFilter - Filter 'webhookAuthenticationFilter' configured for use
+03:00:24.864 [main] INFO  o.s.d.p.DefaultProjectionInformation$PropertyDescriptorSource - Couldn't read class metadata for interface java.util.Map. Input property calculation might fail
+03:00:25.073 [main] INFO  c.m.service.WorldSimulatorService - WorldSimulatorService initialized
+03:00:25.291 [main] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+03:00:25.292 [main] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+03:00:25.663 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoints beneath base path '/actuator'
+03:00:25.719 [main] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@2c1ee7be, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@5a32a00a, org.springframework.security.web.context.SecurityContextHolderFilter@45a2d27c, org.springframework.security.web.header.HeaderWriterFilter@d5ec8e7, org.springframework.web.filter.CorsFilter@3bd35bd0, org.springframework.security.web.authentication.logout.LogoutFilter@712d42ed, com.miniups.security.WebhookAuthenticationFilter@70385eb1, com.miniups.security.JwtAuthenticationFilter@22ab40c1, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@2d3c799e, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@19eb658, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@37a20de7, org.springframework.security.web.session.SessionManagementFilter@692cea53, org.springframework.security.web.access.ExceptionTranslationFilter@5fed604d, org.springframework.security.web.access.intercept.AuthorizationFilter@313c05b9]
+03:00:25.999 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8081 (http) with context path '/api'
+03:00:25.999 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+03:00:26.000 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@2abbc8ae]]
+03:00:26.000 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+03:00:26.001 [main] INFO  o.s.a.r.c.CachingConnectionFactory - Attempting to connect to: [localhost:5672]
+03:00:26.034 [main] INFO  o.s.a.r.c.CachingConnectionFactory - Created new connection: rabbitConnectionFactory#447a3df7:0/SimpleConnection@1d8669e9 [delegate=amqp://guest@127.0.0.1:5672/, localPort=60904]
+03:00:26.081 [main] INFO  com.miniups.MiniUpsApplication - Started MiniUpsApplication in 3.668 seconds (process running for 3.79)
+03:00:39.307 [http-nio-8081-exec-1] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+03:00:39.308 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+03:00:39.311 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 3 ms
+03:00:39.324 [http-nio-8081-exec-1] DEBUG o.s.security.web.FilterChainProxy - Securing GET /health
+03:00:39.330 [http-nio-8081-exec-1] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+03:00:56.576 [http-nio-8081-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing POST /world/connect
+03:00:56.577 [http-nio-8081-exec-3] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+03:01:12.134 [http-nio-8081-exec-5] DEBUG o.s.security.web.FilterChainProxy - Securing POST /auth/login
+03:01:12.136 [http-nio-8081-exec-5] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+03:01:25.989 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 1, active threads = 1, queued tasks = 0, completed tasks = 0]
+03:01:44.891 [http-nio-8081-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing POST /shipment
+03:01:44.893 [http-nio-8081-exec-7] WARN  c.m.s.WebhookAuthenticationFilter - Missing signature header for webhook request to /api/shipment

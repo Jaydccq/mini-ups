@@ -1,0 +1,298 @@
+package com.miniups.controller;
+
+import com.miniups.model.event.AuditLogPayload;
+import com.miniups.model.event.NotificationPayload;
+import com.miniups.model.event.ShipmentCreationPayload;
+import com.miniups.service.AsyncAuditService;
+import com.miniups.service.EventPublisherService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * RabbitMQ Test Controller
+ * 
+ * This controller provides test endpoints to verify RabbitMQ integration
+ * and message flow. It's only enabled in development and test environments.
+ * 
+ * Test Endpoints:
+ * - Test audit log events
+ * - Test notification events  
+ * - Test shipment creation events
+ * - Test event publishing and consumption
+ * 
+ * Usage:
+ * - Start the application with RabbitMQ running
+ * - Call test endpoints to verify message processing
+ * - Check logs to see consumer processing
+ * - Verify database records for audit logs
+ * 
+ * @author Mini-UPS Development Team
+ * @version 1.0
+ * @since 2024
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/test/rabbitmq")
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.rabbitmq.test.enabled", havingValue = "true", matchIfMissing = false)
+public class RabbitMQTestController {
+
+    private final EventPublisherService eventPublisher;
+    private final AsyncAuditService asyncAuditService;
+
+    /**
+     * Test audit log event publishing and consumption
+     */
+    @PostMapping("/test-audit")
+    public ResponseEntity<Map<String, Object>> testAuditLog(@RequestParam(defaultValue = "test_operation") String operationType) {
+        try {
+            long startTime = System.currentTimeMillis();
+            String correlationId = UUID.randomUUID().toString();
+            
+            // Use the AsyncAuditService to test the complete audit flow
+            asyncAuditService.auditSuccess(operationType, "test_entity_123", 
+                                         "Test audit log event from RabbitMQ test controller", 
+                                         startTime);
+            
+            Map<String, Object> response = Map.of(
+                "status", "success",
+                "message", "Audit log event published successfully",
+                "operationType", operationType,
+                "correlationId", correlationId,
+                "timestamp", Instant.now()
+            );
+            
+            log.info("Published test audit log event: {} (correlationId: {})", operationType, correlationId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Failed to publish test audit log event", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Failed to publish audit log event: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Test notification event publishing and consumption
+     */
+    @PostMapping("/test-notification")
+    public ResponseEntity<Map<String, Object>> testNotification(
+            @RequestParam(defaultValue = "1") Long userId,
+            @RequestParam(defaultValue = "test@example.com") String email,
+            @RequestParam(defaultValue = "Test Notification") String subject,
+            @RequestParam(defaultValue = "This is a test notification from RabbitMQ integration") String message) {
+        
+        try {
+            String correlationId = UUID.randomUUID().toString();
+            
+            // Create test notification payload
+            NotificationPayload payload = new NotificationPayload();
+            payload.setNotificationId(UUID.randomUUID().toString());
+            payload.setRecipientUserId(userId);
+            payload.setRecipientEmail(email);
+            payload.setNotificationTypes(List.of(
+                NotificationPayload.NotificationType.EMAIL,
+                NotificationPayload.NotificationType.IN_APP_NOTIFICATION
+            ));
+            payload.setSubject(subject);
+            payload.setMessage(message);
+            payload.setPriority(NotificationPayload.Priority.NORMAL);
+            payload.setCategory("test");
+            payload.setMaxRetryAttempts(3);
+            payload.setCurrentAttempt(0);
+            
+            // Publish notification event
+            eventPublisher.publishNotificationEvent(payload, correlationId);
+            
+            Map<String, Object> response = Map.of(
+                "status", "success",
+                "message", "Notification event published successfully",
+                "notificationId", payload.getNotificationId(),
+                "recipientUserId", userId,
+                "correlationId", correlationId,
+                "timestamp", Instant.now()
+            );
+            
+            log.info("Published test notification event: {} for user: {} (correlationId: {})", 
+                    payload.getNotificationId(), userId, correlationId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Failed to publish test notification event", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Failed to publish notification event: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Test shipment creation event publishing and consumption
+     */
+    @PostMapping("/test-shipment")
+    public ResponseEntity<Map<String, Object>> testShipmentCreation(
+            @RequestParam(defaultValue = "12345") Long amazonShipmentId,
+            @RequestParam(defaultValue = "1") Integer warehouseId,
+            @RequestParam(defaultValue = "100") Integer destX,
+            @RequestParam(defaultValue = "200") Integer destY,
+            @RequestParam(defaultValue = "1") Long userId) {
+        
+        try {
+            String correlationId = UUID.randomUUID().toString();
+            
+            // Create test shipment creation payload
+            ShipmentCreationPayload payload = new ShipmentCreationPayload();
+            payload.setAmazonShipmentId(amazonShipmentId);
+            payload.setWarehouseId(warehouseId);
+            payload.setDestX(destX);
+            payload.setDestY(destY);
+            payload.setUserId(userId);
+            payload.setPackageDescription("Test package for RabbitMQ integration");
+            payload.setPackageWeight(2.5);
+            payload.setPackageLength(10.0);
+            payload.setPackageWidth(8.0);
+            payload.setPackageHeight(6.0);
+            payload.setPriority("normal");
+            payload.setDeliveryTimeframe("standard");
+            
+            // Publish shipment creation event
+            eventPublisher.publishShipmentCreationEvent(payload, correlationId);
+            
+            Map<String, Object> response = Map.of(
+                "status", "success",
+                "message", "Shipment creation event published successfully",
+                "amazonShipmentId", amazonShipmentId,
+                "warehouseId", warehouseId,
+                "destination", Map.of("x", destX, "y", destY),
+                "correlationId", correlationId,
+                "timestamp", Instant.now()
+            );
+            
+            log.info("Published test shipment creation event: {} for warehouse: {} (correlationId: {})", 
+                    amazonShipmentId, warehouseId, correlationId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Failed to publish test shipment creation event", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Failed to publish shipment creation event: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Test multiple event types in sequence
+     */
+    @PostMapping("/test-all")
+    public ResponseEntity<Map<String, Object>> testAllEvents() {
+        try {
+            String correlationId = UUID.randomUUID().toString();
+            
+            // Test audit log
+            long startTime = System.currentTimeMillis();
+            asyncAuditService.auditSuccess("test.all_events", "test_batch", 
+                                         "Testing all RabbitMQ event types", startTime);
+            
+            // Test notification
+            NotificationPayload notificationPayload = new NotificationPayload();
+            notificationPayload.setNotificationId(UUID.randomUUID().toString());
+            notificationPayload.setRecipientUserId(1L);
+            notificationPayload.setRecipientEmail("test@example.com");
+            notificationPayload.setNotificationTypes(List.of(NotificationPayload.NotificationType.EMAIL));
+            notificationPayload.setSubject("RabbitMQ Integration Test");
+            notificationPayload.setMessage("All event types are being tested successfully!");
+            notificationPayload.setPriority(NotificationPayload.Priority.NORMAL);
+            notificationPayload.setMaxRetryAttempts(3);
+            notificationPayload.setCurrentAttempt(0);
+            
+            eventPublisher.publishNotificationEvent(notificationPayload, correlationId);
+            
+            // Test shipment creation
+            ShipmentCreationPayload shipmentPayload = new ShipmentCreationPayload();
+            shipmentPayload.setAmazonShipmentId(99999L);
+            shipmentPayload.setWarehouseId(1);
+            shipmentPayload.setDestX(150);
+            shipmentPayload.setDestY(250);
+            shipmentPayload.setUserId(1L);
+            shipmentPayload.setPackageDescription("Test package for complete RabbitMQ integration test");
+            
+            eventPublisher.publishShipmentCreationEvent(shipmentPayload, correlationId);
+            
+            // Test status update
+            eventPublisher.publishShipmentStatusUpdateEvent(12345L, "CREATED", "PROCESSING", correlationId);
+            
+            // Test user registration
+            eventPublisher.publishUserRegisteredEvent(1L, "test@example.com", correlationId);
+            
+            Map<String, Object> response = Map.of(
+                "status", "success",
+                "message", "All event types published successfully",
+                "eventsPublished", List.of(
+                    "audit_log",
+                    "notification", 
+                    "shipment_creation",
+                    "shipment_status_update",
+                    "user_registration"
+                ),
+                "correlationId", correlationId,
+                "timestamp", Instant.now()
+            );
+            
+            log.info("Published all test events with correlationId: {}", correlationId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Failed to publish all test events", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Failed to publish all events: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Get RabbitMQ integration status
+     */
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> getStatus() {
+        try {
+            Map<String, Object> status = Map.of(
+                "status", "operational",
+                "message", "RabbitMQ integration is ready for testing",
+                "availableEndpoints", List.of(
+                    "POST /api/test/rabbitmq/test-audit",
+                    "POST /api/test/rabbitmq/test-notification", 
+                    "POST /api/test/rabbitmq/test-shipment",
+                    "POST /api/test/rabbitmq/test-all",
+                    "GET /api/test/rabbitmq/status"
+                ),
+                "note", "This controller is only available when app.rabbitmq.test.enabled=true",
+                "timestamp", Instant.now()
+            );
+            
+            return ResponseEntity.ok(status);
+            
+        } catch (Exception e) {
+            log.error("Failed to get RabbitMQ status", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Failed to get status: " + e.getMessage()
+            ));
+        }
+    }
+}

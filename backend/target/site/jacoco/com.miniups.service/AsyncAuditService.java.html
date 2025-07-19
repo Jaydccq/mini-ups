@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AsyncAuditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.service</a> &gt; <span class="el_source">AsyncAuditService.java</span></div><h1>AsyncAuditService.java</h1><pre class="source lang-java linenums">package com.miniups.service;
+
+import com.miniups.model.event.AuditLogPayload;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.util.Map;
+
+/**
+ * Asynchronous Audit Service
+ * 
+ * Provides high-level methods for auditing system operations without
+ * blocking the main business flow. This service creates audit events
+ * that are processed asynchronously by the audit log consumer.
+ * 
+ * Key Features:
+ * - Non-blocking audit logging
+ * - Automatic request context extraction
+ * - Flexible metadata support
+ * - Operation timing utilities
+ * - Error-safe execution (won't break main flow)
+ * 
+ * Usage Example:
+ * ```java
+ * @Autowired
+ * private AsyncAuditService auditService;
+ * 
+ * public void createShipment(ShipmentDto dto) {
+ *     long startTime = System.currentTimeMillis();
+ *     try {
+ *         // ... business logic ...
+ *         auditService.auditSuccess(&quot;shipment.created&quot;, shipmentId, 
+ *                                 &quot;Created shipment for user&quot;, startTime);
+ *     } catch (Exception e) {
+ *         auditService.auditFailure(&quot;shipment.created&quot;, null, 
+ *                                 &quot;Failed to create shipment&quot;, startTime, e);
+ *         throw e;
+ *     }
+ * }
+ * ```
+ * 
+ * @author Mini-UPS Development Team
+ * @version 1.0
+ * @since 2024
+ */
+@Slf4j
+@Service
+public class AsyncAuditService {
+<span class="nc" id="L56">    private static final Logger log = LoggerFactory.getLogger(AsyncAuditService.class);</span>
+    private final EventPublisherService eventPublisher;
+    
+<span class="nc" id="L59">    public AsyncAuditService(EventPublisherService eventPublisher) {</span>
+<span class="nc" id="L60">        this.eventPublisher = eventPublisher;</span>
+<span class="nc" id="L61">    }</span>
+
+    /**
+     * Audit a successful operation
+     * 
+     * @param operationType The type of operation (e.g., &quot;user.login&quot;, &quot;shipment.created&quot;)
+     * @param entityId The ID of the primary entity affected
+     * @param description Human-readable description of what was done
+     * @param startTimeMs Operation start time in milliseconds (for duration calculation)
+     */
+    public void auditSuccess(String operationType, Object entityId, String description, long startTimeMs) {
+<span class="nc" id="L72">        auditOperation(operationType, entityId, description, &quot;SUCCESS&quot;, null, null, startTimeMs, null);</span>
+<span class="nc" id="L73">    }</span>
+
+    /**
+     * Audit a successful operation with additional metadata
+     * 
+     * @param operationType The type of operation
+     * @param entityId The ID of the primary entity affected
+     * @param description Human-readable description of what was done
+     * @param startTimeMs Operation start time in milliseconds
+     * @param additionalData Extra context data for this operation
+     */
+    public void auditSuccess(String operationType, Object entityId, String description, 
+                           long startTimeMs, Map&lt;String, Object&gt; additionalData) {
+<span class="nc" id="L86">        auditOperation(operationType, entityId, description, &quot;SUCCESS&quot;, null, null, startTimeMs, additionalData);</span>
+<span class="nc" id="L87">    }</span>
+
+    /**
+     * Audit a failed operation
+     * 
+     * @param operationType The type of operation
+     * @param entityId The ID of the primary entity affected (may be null for failures)
+     * @param description Human-readable description of what was attempted
+     * @param startTimeMs Operation start time in milliseconds
+     * @param error The exception that caused the failure
+     */
+    public void auditFailure(String operationType, Object entityId, String description, 
+                           long startTimeMs, Throwable error) {
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        String errorMessage = error != null ? error.getMessage() : &quot;Unknown error&quot;;</span>
+<span class="nc" id="L101">        auditOperation(operationType, entityId, description, &quot;FAILED&quot;, errorMessage, null, startTimeMs, null);</span>
+<span class="nc" id="L102">    }</span>
+
+    /**
+     * Audit a failed operation with additional context
+     * 
+     * @param operationType The type of operation
+     * @param entityId The ID of the primary entity affected (may be null for failures)
+     * @param description Human-readable description of what was attempted
+     * @param startTimeMs Operation start time in milliseconds
+     * @param error The exception that caused the failure
+     * @param additionalData Extra context data for this operation
+     */
+    public void auditFailure(String operationType, Object entityId, String description, 
+                           long startTimeMs, Throwable error, Map&lt;String, Object&gt; additionalData) {
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        String errorMessage = error != null ? error.getMessage() : &quot;Unknown error&quot;;</span>
+<span class="nc" id="L117">        auditOperation(operationType, entityId, description, &quot;FAILED&quot;, errorMessage, null, startTimeMs, additionalData);</span>
+<span class="nc" id="L118">    }</span>
+
+    /**
+     * Audit an operation with custom result
+     * 
+     * @param operationType The type of operation
+     * @param entityId The ID of the primary entity affected
+     * @param description Human-readable description of what was done
+     * @param result The result of the operation (SUCCESS, FAILED, PARTIAL, etc.)
+     * @param startTimeMs Operation start time in milliseconds
+     */
+    public void auditWithResult(String operationType, Object entityId, String description, 
+                              String result, long startTimeMs) {
+<span class="nc" id="L131">        auditOperation(operationType, entityId, description, result, null, null, startTimeMs, null);</span>
+<span class="nc" id="L132">    }</span>
+
+    /**
+     * Audit a login attempt
+     * 
+     * @param userId The user ID (null for failed logins)
+     * @param username The username or email attempted
+     * @param success Whether the login was successful
+     * @param startTimeMs Operation start time in milliseconds
+     * @param failureReason Reason for failure (if applicable)
+     */
+    public void auditLogin(Long userId, String username, boolean success, long startTimeMs, String failureReason) {
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        String result = success ? &quot;SUCCESS&quot; : &quot;FAILED&quot;;</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        String description = success ? &quot;User logged in successfully&quot; : &quot;Failed login attempt&quot;;</span>
+        
+<span class="nc" id="L147">        Map&lt;String, Object&gt; additionalData = Map.of(</span>
+<span class="nc" id="L148">            &quot;loginSuccess&quot;, success,</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">            &quot;attemptedUsername&quot;, username != null ? username : &quot;unknown&quot;</span>
+        );
+        
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (!success &amp;&amp; failureReason != null) {</span>
+<span class="nc" id="L153">            additionalData = new java.util.HashMap&lt;&gt;(additionalData);</span>
+<span class="nc" id="L154">            additionalData.put(&quot;failureReason&quot;, failureReason);</span>
+        }
+        
+<span class="nc" id="L157">        auditOperation(&quot;user.login&quot;, userId, description, result, failureReason, null, startTimeMs, additionalData);</span>
+<span class="nc" id="L158">    }</span>
+
+    /**
+     * Audit a logout operation
+     * 
+     * @param userId The user ID
+     * @param username The username
+     * @param startTimeMs Operation start time in milliseconds
+     */
+    public void auditLogout(Long userId, String username, long startTimeMs) {
+<span class="nc" id="L168">        Map&lt;String, Object&gt; additionalData = Map.of(</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            &quot;username&quot;, username != null ? username : &quot;unknown&quot;</span>
+        );
+        
+<span class="nc" id="L172">        auditOperation(&quot;user.logout&quot;, userId, &quot;User logged out&quot;, &quot;SUCCESS&quot;, null, null, startTimeMs, additionalData);</span>
+<span class="nc" id="L173">    }</span>
+
+    /**
+     * Audit a data access operation
+     * 
+     * @param entityType The type of entity being accessed
+     * @param entityId The ID of the entity
+     * @param operation The operation performed (read, update, delete)
+     * @param success Whether the operation was successful
+     * @param startTimeMs Operation start time in milliseconds
+     */
+    public void auditDataAccess(String entityType, Object entityId, String operation, 
+                              boolean success, long startTimeMs) {
+<span class="nc" id="L186">        String operationType = entityType.toLowerCase() + &quot;.&quot; + operation.toLowerCase();</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        String result = success ? &quot;SUCCESS&quot; : &quot;FAILED&quot;;</span>
+<span class="nc" id="L188">        String description = String.format(&quot;%s %s on %s&quot;, </span>
+<span class="nc" id="L189">            operation.substring(0, 1).toUpperCase() + operation.substring(1), </span>
+            entityType, entityId);
+        
+<span class="nc" id="L192">        auditOperation(operationType, entityId, description, result, null, entityType, startTimeMs, null);</span>
+<span class="nc" id="L193">    }</span>
+
+    /**
+     * Core audit operation method
+     * Creates and publishes an audit log event with all available context
+     */
+    private void auditOperation(String operationType, Object entityId, String description, 
+                              String result, String errorMessage, String entityType, 
+                              long startTimeMs, Map&lt;String, Object&gt; additionalData) {
+        try {
+            // Calculate operation duration
+<span class="nc" id="L204">            long durationMs = System.currentTimeMillis() - startTimeMs;</span>
+            
+            // Extract request context (if available)
+<span class="nc" id="L207">            RequestContext requestContext = extractRequestContext();</span>
+            
+            // Create audit log payload
+<span class="nc" id="L210">            AuditLogPayload payload = new AuditLogPayload();</span>
+<span class="nc" id="L211">            payload.setOperationType(operationType);</span>
+<span class="nc" id="L212">            payload.setOperationDescription(description);</span>
+<span class="nc" id="L213">            payload.setOperationResult(result);</span>
+<span class="nc" id="L214">            payload.setOperationTimestamp(Instant.now());</span>
+<span class="nc" id="L215">            payload.setOperationDurationMs(durationMs);</span>
+            
+            // Set entity information
+<span class="nc bnc" id="L218" title="All 2 branches missed.">            if (entityId != null) {</span>
+<span class="nc" id="L219">                payload.setEntityId(entityId.toString());</span>
+            }
+<span class="nc bnc" id="L221" title="All 2 branches missed.">            if (entityType != null) {</span>
+<span class="nc" id="L222">                payload.setEntityType(entityType);</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">            } else if (operationType.contains(&quot;.&quot;)) {</span>
+                // Extract entity type from operation type (e.g., &quot;user.login&quot; -&gt; &quot;User&quot;)
+<span class="nc" id="L225">                String extractedType = operationType.split(&quot;\\.&quot;)[0];</span>
+<span class="nc" id="L226">                payload.setEntityType(extractedType.substring(0, 1).toUpperCase() + extractedType.substring(1));</span>
+            }
+            
+            // Set request context
+<span class="nc bnc" id="L230" title="All 2 branches missed.">            if (requestContext != null) {</span>
+<span class="nc" id="L231">                payload.setUserId(requestContext.userId);</span>
+<span class="nc" id="L232">                payload.setUsername(requestContext.username);</span>
+<span class="nc" id="L233">                payload.setSessionId(requestContext.sessionId);</span>
+<span class="nc" id="L234">                payload.setIpAddress(requestContext.ipAddress);</span>
+<span class="nc" id="L235">                payload.setUserAgent(requestContext.userAgent);</span>
+<span class="nc" id="L236">                payload.setEndpoint(requestContext.endpoint);</span>
+<span class="nc" id="L237">                payload.setHttpMethod(requestContext.httpMethod);</span>
+<span class="nc" id="L238">                payload.setResultCode(requestContext.statusCode);</span>
+            }
+            
+            // Set error information
+<span class="nc bnc" id="L242" title="All 2 branches missed.">            if (errorMessage != null) {</span>
+<span class="nc" id="L243">                payload.setErrorMessage(errorMessage);</span>
+            }
+            
+            // Set additional data
+<span class="nc bnc" id="L247" title="All 2 branches missed.">            if (additionalData != null) {</span>
+<span class="nc" id="L248">                payload.setAdditionalData(additionalData);</span>
+            }
+            
+            // Publish the event asynchronously
+<span class="nc bnc" id="L252" title="All 2 branches missed.">            eventPublisher.publishAuditLogEvent(payload, requestContext != null ? requestContext.correlationId : null);</span>
+            
+<span class="nc" id="L254">        } catch (Exception e) {</span>
+            // Don't let audit failures break the main business flow
+<span class="nc" id="L256">            log.warn(&quot;Failed to publish audit event for operation: {} (entityId: {})&quot;, operationType, entityId, e);</span>
+<span class="nc" id="L257">        }</span>
+<span class="nc" id="L258">    }</span>
+
+    /**
+     * Extract request context from the current HTTP request (if available)
+     */
+    private RequestContext extractRequestContext() {
+        try {
+<span class="nc" id="L265">            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">            if (attributes == null) {</span>
+<span class="nc" id="L267">                return null;</span>
+            }
+            
+<span class="nc" id="L270">            HttpServletRequest request = attributes.getRequest();</span>
+<span class="nc" id="L271">            RequestContext context = new RequestContext();</span>
+            
+            // Extract basic request information
+<span class="nc" id="L274">            context.ipAddress = getClientIpAddress(request);</span>
+<span class="nc" id="L275">            context.userAgent = request.getHeader(&quot;User-Agent&quot;);</span>
+<span class="nc" id="L276">            context.endpoint = request.getRequestURI();</span>
+<span class="nc" id="L277">            context.httpMethod = request.getMethod();</span>
+            
+            // Extract user information from security context (if available)
+            try {
+<span class="nc" id="L281">                var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc bnc" id="L282" title="All 4 branches missed.">                if (authentication != null &amp;&amp; authentication.isAuthenticated() &amp;&amp; </span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">                    !&quot;anonymousUser&quot;.equals(authentication.getPrincipal())) {</span>
+                    
+                    // Try to extract user details from the authentication
+<span class="nc" id="L286">                    Object principal = authentication.getPrincipal();</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">                    if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {</span>
+<span class="nc" id="L288">                        context.username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();</span>
+<span class="nc bnc" id="L289" title="All 2 branches missed.">                    } else if (principal instanceof String) {</span>
+<span class="nc" id="L290">                        context.username = (String) principal;</span>
+                    }
+                }
+<span class="nc" id="L293">            } catch (Exception e) {</span>
+<span class="nc" id="L294">                log.debug(&quot;Could not extract user information from security context&quot;, e);</span>
+<span class="nc" id="L295">            }</span>
+            
+            // Extract correlation ID from request headers
+<span class="nc" id="L298">            context.correlationId = request.getHeader(&quot;X-Correlation-ID&quot;);</span>
+            
+            // Extract session ID
+<span class="nc bnc" id="L301" title="All 2 branches missed.">            if (request.getSession(false) != null) {</span>
+<span class="nc" id="L302">                context.sessionId = request.getSession().getId();</span>
+            }
+            
+<span class="nc" id="L305">            return context;</span>
+            
+<span class="nc" id="L307">        } catch (Exception e) {</span>
+<span class="nc" id="L308">            log.debug(&quot;Could not extract request context for audit&quot;, e);</span>
+<span class="nc" id="L309">            return null;</span>
+        }
+    }
+
+    /**
+     * Extract client IP address from request, handling proxies and load balancers
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+<span class="nc" id="L317">        String[] headerCandidates = {</span>
+            &quot;X-Forwarded-For&quot;,
+            &quot;X-Real-IP&quot;,
+            &quot;Proxy-Client-IP&quot;,
+            &quot;WL-Proxy-Client-IP&quot;,
+            &quot;HTTP_X_FORWARDED_FOR&quot;,
+            &quot;HTTP_X_FORWARDED&quot;,
+            &quot;HTTP_X_CLUSTER_CLIENT_IP&quot;,
+            &quot;HTTP_CLIENT_IP&quot;,
+            &quot;HTTP_FORWARDED_FOR&quot;,
+            &quot;HTTP_FORWARDED&quot;,
+            &quot;HTTP_VIA&quot;,
+            &quot;REMOTE_ADDR&quot;
+        };
+
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        for (String header : headerCandidates) {</span>
+<span class="nc" id="L333">            String ip = request.getHeader(header);</span>
+<span class="nc bnc" id="L334" title="All 6 branches missed.">            if (ip != null &amp;&amp; !ip.isEmpty() &amp;&amp; !&quot;unknown&quot;.equalsIgnoreCase(ip)) {</span>
+                // Take the first IP if there are multiple (comma-separated)
+<span class="nc" id="L336">                return ip.split(&quot;,&quot;)[0].trim();</span>
+            }
+        }
+
+<span class="nc" id="L340">        return request.getRemoteAddr();</span>
+    }
+
+    /**
+     * Helper class to hold request context information
+     */
+    private static class RequestContext {
+        Long userId;
+        String username;
+        String sessionId;
+        String ipAddress;
+        String userAgent;
+        String endpoint;
+        String httpMethod;
+        String correlationId;
+        Integer statusCode;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

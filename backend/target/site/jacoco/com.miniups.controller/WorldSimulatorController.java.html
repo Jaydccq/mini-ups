@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WorldSimulatorController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.controller</a> &gt; <span class="el_source">WorldSimulatorController.java</span></div><h1>WorldSimulatorController.java</h1><pre class="source lang-java linenums">/**
+ * World Simulator Management Controller
+ * 
+ * Features:
+ * - Provides REST API for World Simulator connection management
+ * - Supports system administrators controlling connections to simulation world
+ * - Provides truck status query and control interfaces
+ * 
+ * API Endpoints:
+ * - POST /api/world/connect - Connect to World Simulator
+ * - POST /api/world/disconnect - Disconnect connection
+ * - GET /api/world/status - Query connection status
+ * - GET /api/world/trucks - Query all truck statuses
+ * - POST /api/world/trucks/{truckId}/pickup - Send truck for pickup
+ * - POST /api/world/trucks/{truckId}/deliver - Send truck for delivery
+ * - GET /api/world/trucks/{truckId}/status - Query truck status
+ * 
+ * Permission Control:
+ * - Requires admin or operator permissions
+ * - Connection management requires elevated permissions
+ * - Truck operations require operator permissions
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.controller;
+
+import com.miniups.model.entity.Truck;
+import com.miniups.proto.WorldUpsProto;
+import com.miniups.service.WorldSimulatorService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
+@RestController
+@RequestMapping(&quot;/api/world&quot;)
+@CrossOrigin(origins = &quot;*&quot;)
+<span class="nc" id="L48">public class WorldSimulatorController {</span>
+    
+<span class="nc" id="L50">    private static final Logger logger = LoggerFactory.getLogger(WorldSimulatorController.class);</span>
+    
+    @Autowired
+    private WorldSimulatorService worldSimulatorService;
+    
+    /**
+     * Connect to World Simulator
+     * 
+     * @param connectionRequest Connection request parameters
+     * @return Connection result
+     */
+    @PostMapping(&quot;/connect&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; connectToWorld(@RequestBody(required = false) Map&lt;String, Object&gt; connectionRequest) {
+        try {
+<span class="nc" id="L65">            logger.info(&quot;Received request to connect to World Simulator&quot;);</span>
+            
+            // Check if already connected
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            if (worldSimulatorService.isConnected()) {</span>
+<span class="nc" id="L69">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L70">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Already connected to World Simulator&quot;,
+<span class="nc" id="L72">                    &quot;world_id&quot;, worldSimulatorService.getWorldId(),</span>
+<span class="nc" id="L73">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L75">                return ResponseEntity.ok(response);</span>
+            }
+            
+            // Extract world ID (optional)
+<span class="nc" id="L79">            Long worldId = null;</span>
+<span class="nc bnc" id="L80" title="All 4 branches missed.">            if (connectionRequest != null &amp;&amp; connectionRequest.containsKey(&quot;world_id&quot;)) {</span>
+<span class="nc" id="L81">                Object worldIdObj = connectionRequest.get(&quot;world_id&quot;);</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">                if (worldIdObj instanceof Number) {</span>
+<span class="nc" id="L83">                    worldId = ((Number) worldIdObj).longValue();</span>
+                }
+            }
+            
+            // Attempt connection
+<span class="nc" id="L88">            boolean connected = worldSimulatorService.connect(worldId);</span>
+            
+<span class="nc bnc" id="L90" title="All 2 branches missed.">            if (connected) {</span>
+<span class="nc" id="L91">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L92">                    &quot;success&quot;, true,</span>
+                    &quot;message&quot;, &quot;Successfully connected to World Simulator&quot;,
+<span class="nc" id="L94">                    &quot;world_id&quot;, worldSimulatorService.getWorldId(),</span>
+<span class="nc" id="L95">                    &quot;trucks_count&quot;, worldSimulatorService.getAvailableTrucks().size(),</span>
+<span class="nc" id="L96">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L98">                return ResponseEntity.ok(response);</span>
+            } else {
+<span class="nc" id="L100">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L101">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Failed to connect to World Simulator&quot;,
+<span class="nc" id="L103">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L105">                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);</span>
+            }
+            
+<span class="nc" id="L108">        } catch (Exception e) {</span>
+<span class="nc" id="L109">            logger.error(&quot;Error connecting to World Simulator&quot;, e);</span>
+<span class="nc" id="L110">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L111">                &quot;success&quot;, false,</span>
+<span class="nc" id="L112">                &quot;message&quot;, &quot;Internal error: &quot; + e.getMessage(),</span>
+<span class="nc" id="L113">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L115">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+        }
+    }
+    
+    /**
+     * Disconnect from World Simulator
+     * 
+     * @return Disconnect result
+     */
+    @PostMapping(&quot;/disconnect&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; disconnectFromWorld() {
+        try {
+<span class="nc" id="L128">            logger.info(&quot;Received request to disconnect from World Simulator&quot;);</span>
+            
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            if (!worldSimulatorService.isConnected()) {</span>
+<span class="nc" id="L131">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L132">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Not connected to World Simulator&quot;,
+<span class="nc" id="L134">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L136">                return ResponseEntity.ok(response);</span>
+            }
+            
+<span class="nc" id="L139">            worldSimulatorService.disconnect();</span>
+            
+<span class="nc" id="L141">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L142">                &quot;success&quot;, true,</span>
+                &quot;message&quot;, &quot;Successfully disconnected from World Simulator&quot;,
+<span class="nc" id="L144">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L146">            return ResponseEntity.ok(response);</span>
+            
+<span class="nc" id="L148">        } catch (Exception e) {</span>
+<span class="nc" id="L149">            logger.error(&quot;Error disconnecting from World Simulator&quot;, e);</span>
+<span class="nc" id="L150">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L151">                &quot;success&quot;, false,</span>
+<span class="nc" id="L152">                &quot;message&quot;, &quot;Internal error: &quot; + e.getMessage(),</span>
+<span class="nc" id="L153">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L155">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+        }
+    }
+    
+    /**
+     * Query World Simulator connection status
+     * 
+     * @return Connection status information
+     */
+    @GetMapping(&quot;/status&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasRole('OPERATOR')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getConnectionStatus() {
+<span class="nc" id="L167">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L168">        response.put(&quot;connected&quot;, worldSimulatorService.isConnected());</span>
+<span class="nc" id="L169">        response.put(&quot;world_id&quot;, worldSimulatorService.getWorldId());</span>
+<span class="nc" id="L170">        response.put(&quot;trucks_count&quot;, worldSimulatorService.getAvailableTrucks().size());</span>
+<span class="nc" id="L171">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+        
+<span class="nc" id="L173">        return ResponseEntity.ok(response);</span>
+    }
+    
+    /**
+     * Query all truck statuses
+     * 
+     * @return Truck status list
+     */
+    @GetMapping(&quot;/trucks&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasRole('OPERATOR')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getAllTrucks() {
+        try {
+<span class="nc" id="L185">            List&lt;Truck&gt; trucks = worldSimulatorService.getAvailableTrucks();</span>
+            
+<span class="nc" id="L187">            List&lt;Map&lt;String, Object&gt;&gt; trucksData = trucks.stream()</span>
+<span class="nc" id="L188">                .map(this::mapTruckToResponse)</span>
+<span class="nc" id="L189">                .toList();</span>
+            
+<span class="nc" id="L191">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L192">                &quot;success&quot;, true,</span>
+                &quot;trucks&quot;, trucksData,
+<span class="nc" id="L194">                &quot;total_count&quot;, trucksData.size(),</span>
+<span class="nc" id="L195">                &quot;connected&quot;, worldSimulatorService.isConnected(),</span>
+<span class="nc" id="L196">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+            
+<span class="nc" id="L199">            return ResponseEntity.ok(response);</span>
+            
+<span class="nc" id="L201">        } catch (Exception e) {</span>
+<span class="nc" id="L202">            logger.error(&quot;Error getting truck status&quot;, e);</span>
+<span class="nc" id="L203">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L204">                &quot;success&quot;, false,</span>
+<span class="nc" id="L205">                &quot;message&quot;, &quot;Error retrieving truck information: &quot; + e.getMessage(),</span>
+<span class="nc" id="L206">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L208">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+        }
+    }
+    
+    /**
+     * Send truck to warehouse for pickup
+     * 
+     * @param truckId Truck ID
+     * @param pickupRequest Pickup request parameters
+     * @return Operation result
+     */
+    @PostMapping(&quot;/trucks/{truckId}/pickup&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasRole('OPERATOR')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; sendTruckToPickup(
+            @PathVariable Integer truckId,
+            @RequestBody Map&lt;String, Object&gt; pickupRequest) {
+        try {
+<span class="nc" id="L225">            logger.info(&quot;Sending truck {} to pickup&quot;, truckId);</span>
+            
+<span class="nc bnc" id="L227" title="All 2 branches missed.">            if (!worldSimulatorService.isConnected()) {</span>
+<span class="nc" id="L228">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L229">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Not connected to World Simulator&quot;,
+<span class="nc" id="L231">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L233">                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);</span>
+            }
+            
+            // 提取仓库ID
+<span class="nc" id="L237">            Object warehouseIdObj = pickupRequest.get(&quot;warehouse_id&quot;);</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">            if (warehouseIdObj == null) {</span>
+<span class="nc" id="L239">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L240">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;warehouse_id is required&quot;,
+<span class="nc" id="L242">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L244">                return ResponseEntity.badRequest().body(response);</span>
+            }
+            
+<span class="nc" id="L247">            Integer warehouseId = ((Number) warehouseIdObj).intValue();</span>
+            
+            // 发送取货指令
+<span class="nc" id="L250">            CompletableFuture&lt;Boolean&gt; future = worldSimulatorService.sendTruckToPickup(truckId, warehouseId);</span>
+            
+            // 等待结果
+<span class="nc" id="L253">            Boolean success = future.get(10, TimeUnit.SECONDS);</span>
+            
+<span class="nc bnc" id="L255" title="All 2 branches missed.">            if (success) {</span>
+<span class="nc" id="L256">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L257">                    &quot;success&quot;, true,</span>
+                    &quot;message&quot;, &quot;Truck sent to pickup successfully&quot;,
+                    &quot;truck_id&quot;, truckId,
+                    &quot;warehouse_id&quot;, warehouseId,
+<span class="nc" id="L261">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L263">                return ResponseEntity.ok(response);</span>
+            } else {
+<span class="nc" id="L265">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L266">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Failed to send truck to pickup&quot;,
+                    &quot;truck_id&quot;, truckId,
+                    &quot;warehouse_id&quot;, warehouseId,
+<span class="nc" id="L270">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L272">                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);</span>
+            }
+            
+<span class="nc" id="L275">        } catch (Exception e) {</span>
+<span class="nc" id="L276">            logger.error(&quot;Error sending truck to pickup&quot;, e);</span>
+<span class="nc" id="L277">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L278">                &quot;success&quot;, false,</span>
+<span class="nc" id="L279">                &quot;message&quot;, &quot;Internal error: &quot; + e.getMessage(),</span>
+<span class="nc" id="L280">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L282">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+        }
+    }
+    
+    /**
+     * Send truck for delivery
+     * 
+     * @param truckId Truck ID
+     * @param deliveryRequest Delivery request parameters
+     * @return Operation result
+     */
+    @PostMapping(&quot;/trucks/{truckId}/deliver&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasRole('OPERATOR')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; sendTruckToDeliver(
+            @PathVariable Integer truckId,
+            @RequestBody Map&lt;String, Object&gt; deliveryRequest) {
+        try {
+<span class="nc" id="L299">            logger.info(&quot;Sending truck {} to deliver&quot;, truckId);</span>
+            
+<span class="nc bnc" id="L301" title="All 2 branches missed.">            if (!worldSimulatorService.isConnected()) {</span>
+<span class="nc" id="L302">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L303">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Not connected to World Simulator&quot;,
+<span class="nc" id="L305">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L307">                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);</span>
+            }
+            
+            // 提取配送信息
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L312">            List&lt;Map&lt;String, Object&gt;&gt; deliveries = (List&lt;Map&lt;String, Object&gt;&gt;) deliveryRequest.get(&quot;deliveries&quot;);</span>
+            
+<span class="nc bnc" id="L314" title="All 4 branches missed.">            if (deliveries == null || deliveries.isEmpty()) {</span>
+<span class="nc" id="L315">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L316">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;deliveries list is required and cannot be empty&quot;,
+<span class="nc" id="L318">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L320">                return ResponseEntity.badRequest().body(response);</span>
+            }
+            
+            // 转换配送数据
+<span class="nc" id="L324">            Map&lt;Long, int[]&gt; deliveryMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">            for (Map&lt;String, Object&gt; delivery : deliveries) {</span>
+<span class="nc" id="L326">                Long packageId = ((Number) delivery.get(&quot;package_id&quot;)).longValue();</span>
+<span class="nc" id="L327">                Integer x = ((Number) delivery.get(&quot;x&quot;)).intValue();</span>
+<span class="nc" id="L328">                Integer y = ((Number) delivery.get(&quot;y&quot;)).intValue();</span>
+<span class="nc" id="L329">                deliveryMap.put(packageId, new int[]{x, y});</span>
+<span class="nc" id="L330">            }</span>
+            
+            // 发送配送指令
+<span class="nc" id="L333">            CompletableFuture&lt;Boolean&gt; future = worldSimulatorService.sendTruckToDeliver(truckId, deliveryMap);</span>
+            
+            // 等待结果
+<span class="nc" id="L336">            Boolean success = future.get(10, TimeUnit.SECONDS);</span>
+            
+<span class="nc bnc" id="L338" title="All 2 branches missed.">            if (success) {</span>
+<span class="nc" id="L339">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L340">                    &quot;success&quot;, true,</span>
+                    &quot;message&quot;, &quot;Truck sent to deliver successfully&quot;,
+                    &quot;truck_id&quot;, truckId,
+<span class="nc" id="L343">                    &quot;deliveries_count&quot;, deliveryMap.size(),</span>
+<span class="nc" id="L344">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L346">                return ResponseEntity.ok(response);</span>
+            } else {
+<span class="nc" id="L348">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L349">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Failed to send truck to deliver&quot;,
+                    &quot;truck_id&quot;, truckId,
+<span class="nc" id="L352">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L354">                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);</span>
+            }
+            
+<span class="nc" id="L357">        } catch (Exception e) {</span>
+<span class="nc" id="L358">            logger.error(&quot;Error sending truck to deliver&quot;, e);</span>
+<span class="nc" id="L359">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L360">                &quot;success&quot;, false,</span>
+<span class="nc" id="L361">                &quot;message&quot;, &quot;Internal error: &quot; + e.getMessage(),</span>
+<span class="nc" id="L362">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L364">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+        }
+    }
+    
+    /**
+     * Query specified truck status
+     * 
+     * @param truckId Truck ID
+     * @return Truck status information
+     */
+    @GetMapping(&quot;/trucks/{truckId}/status&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasRole('OPERATOR')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getTruckStatus(@PathVariable Integer truckId) {
+        try {
+<span class="nc bnc" id="L378" title="All 2 branches missed.">            if (!worldSimulatorService.isConnected()) {</span>
+<span class="nc" id="L379">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L380">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Not connected to World Simulator&quot;,
+<span class="nc" id="L382">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L384">                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);</span>
+            }
+            
+            // 查询卡车状态
+<span class="nc" id="L388">            CompletableFuture&lt;WorldUpsProto.UTruck&gt; future = worldSimulatorService.queryTruckStatus(truckId);</span>
+            
+            // 等待结果
+<span class="nc" id="L391">            WorldUpsProto.UTruck truckStatus = future.get(10, TimeUnit.SECONDS);</span>
+            
+<span class="nc bnc" id="L393" title="All 2 branches missed.">            if (truckStatus != null) {</span>
+<span class="nc" id="L394">                Map&lt;String, Object&gt; truckData = Map.of(</span>
+<span class="nc" id="L395">                    &quot;truck_id&quot;, truckStatus.getTruckid(),</span>
+<span class="nc" id="L396">                    &quot;status&quot;, truckStatus.getStatus(),</span>
+<span class="nc" id="L397">                    &quot;x&quot;, truckStatus.getX(),</span>
+<span class="nc" id="L398">                    &quot;y&quot;, truckStatus.getY(),</span>
+<span class="nc" id="L399">                    &quot;seqnum&quot;, truckStatus.getSeqnum()</span>
+                );
+                
+<span class="nc" id="L402">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L403">                    &quot;success&quot;, true,</span>
+                    &quot;truck&quot;, truckData,
+<span class="nc" id="L405">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L407">                return ResponseEntity.ok(response);</span>
+            } else {
+<span class="nc" id="L409">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L410">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Failed to get truck status or truck not found&quot;,
+                    &quot;truck_id&quot;, truckId,
+<span class="nc" id="L413">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L415">                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);</span>
+            }
+            
+<span class="nc" id="L418">        } catch (Exception e) {</span>
+<span class="nc" id="L419">            logger.error(&quot;Error getting truck status&quot;, e);</span>
+<span class="nc" id="L420">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L421">                &quot;success&quot;, false,</span>
+<span class="nc" id="L422">                &quot;message&quot;, &quot;Internal error: &quot; + e.getMessage(),</span>
+<span class="nc" id="L423">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L425">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+        }
+    }
+    
+    /**
+     * Set simulation speed
+     * 
+     * @param speedRequest Speed setting request
+     * @return Operation result
+     */
+    @PostMapping(&quot;/simulation-speed&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; setSimulationSpeed(@RequestBody Map&lt;String, Object&gt; speedRequest) {
+        try {
+<span class="nc bnc" id="L439" title="All 2 branches missed.">            if (!worldSimulatorService.isConnected()) {</span>
+<span class="nc" id="L440">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L441">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;Not connected to World Simulator&quot;,
+<span class="nc" id="L443">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L445">                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);</span>
+            }
+            
+<span class="nc" id="L448">            Object speedObj = speedRequest.get(&quot;speed&quot;);</span>
+<span class="nc bnc" id="L449" title="All 2 branches missed.">            if (speedObj == null) {</span>
+<span class="nc" id="L450">                Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L451">                    &quot;success&quot;, false,</span>
+                    &quot;message&quot;, &quot;speed parameter is required&quot;,
+<span class="nc" id="L453">                    &quot;timestamp&quot;, LocalDateTime.now()</span>
+                );
+<span class="nc" id="L455">                return ResponseEntity.badRequest().body(response);</span>
+            }
+            
+<span class="nc" id="L458">            int speed = ((Number) speedObj).intValue();</span>
+            
+<span class="nc" id="L460">            worldSimulatorService.setSimulationSpeed(speed);</span>
+            
+<span class="nc" id="L462">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L463">                &quot;success&quot;, true,</span>
+                &quot;message&quot;, &quot;Simulation speed updated successfully&quot;,
+<span class="nc" id="L465">                &quot;speed&quot;, speed,</span>
+<span class="nc" id="L466">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L468">            return ResponseEntity.ok(response);</span>
+            
+<span class="nc" id="L470">        } catch (Exception e) {</span>
+<span class="nc" id="L471">            logger.error(&quot;Error setting simulation speed&quot;, e);</span>
+<span class="nc" id="L472">            Map&lt;String, Object&gt; response = Map.of(</span>
+<span class="nc" id="L473">                &quot;success&quot;, false,</span>
+<span class="nc" id="L474">                &quot;message&quot;, &quot;Internal error: &quot; + e.getMessage(),</span>
+<span class="nc" id="L475">                &quot;timestamp&quot;, LocalDateTime.now()</span>
+            );
+<span class="nc" id="L477">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+        }
+    }
+    
+    // Private helper methods
+    
+    private Map&lt;String, Object&gt; mapTruckToResponse(Truck truck) {
+<span class="nc" id="L484">        Map&lt;String, Object&gt; truckMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L485">        truckMap.put(&quot;id&quot;, truck.getId());</span>
+<span class="nc" id="L486">        truckMap.put(&quot;truck_id&quot;, truck.getTruckId());</span>
+<span class="nc" id="L487">        truckMap.put(&quot;status&quot;, truck.getStatus().toString());</span>
+<span class="nc" id="L488">        truckMap.put(&quot;status_display&quot;, truck.getStatus().getDisplayName());</span>
+<span class="nc" id="L489">        truckMap.put(&quot;current_x&quot;, truck.getCurrentX());</span>
+<span class="nc" id="L490">        truckMap.put(&quot;current_y&quot;, truck.getCurrentY());</span>
+<span class="nc" id="L491">        truckMap.put(&quot;capacity&quot;, truck.getCapacity());</span>
+<span class="nc" id="L492">        truckMap.put(&quot;driver_id&quot;, truck.getDriverId());</span>
+<span class="nc" id="L493">        truckMap.put(&quot;world_id&quot;, truck.getWorldId());</span>
+<span class="nc" id="L494">        truckMap.put(&quot;available&quot;, truck.isAvailable());</span>
+<span class="nc" id="L495">        truckMap.put(&quot;created_at&quot;, truck.getCreatedAt());</span>
+<span class="nc" id="L496">        truckMap.put(&quot;updated_at&quot;, truck.getUpdatedAt());</span>
+        
+<span class="nc" id="L498">        return truckMap;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceNotFoundException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.exception</a> &gt; <span class="el_source">ResourceNotFoundException.java</span></div><h1>ResourceNotFoundException.java</h1><pre class="source lang-java linenums">/**
+ * Resource Not Found Exception
+ * 
+ * 资源未找到异常，用于处理各类资源查找失败的情况
+ * 
+ * Common scenarios:
+ * - 订单未找到
+ * - 卡车未找到
+ * - 包裹未找到
+ * - 仓库未找到
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.exception;
+
+import com.miniups.model.enums.ExceptionSeverity;
+
+public class ResourceNotFoundException extends BaseBusinessException {
+    
+    public ResourceNotFoundException(String resourceType, String identifier) {
+<span class="nc" id="L22">        super(&quot;RESOURCE_NOT_FOUND&quot;, String.format(&quot;%s not found with identifier: %s&quot;, resourceType, identifier), ExceptionSeverity.LOW);</span>
+<span class="nc" id="L23">    }</span>
+    
+    public ResourceNotFoundException(String resourceType, Long id) {
+<span class="nc" id="L26">        this(resourceType, String.valueOf(id));</span>
+<span class="nc" id="L27">    }</span>
+    
+    // 便利方法用于常见资源类型
+    public static ResourceNotFoundException shipment(Long shipmentId) {
+<span class="nc" id="L31">        return new ResourceNotFoundException(&quot;Shipment&quot;, shipmentId);</span>
+    }
+    
+    public static ResourceNotFoundException truck(Long truckId) {
+<span class="nc" id="L35">        return new ResourceNotFoundException(&quot;Truck&quot;, truckId);</span>
+    }
+    
+    public static ResourceNotFoundException packageResource(Long packageId) {
+<span class="nc" id="L39">        return new ResourceNotFoundException(&quot;Package&quot;, packageId);</span>
+    }
+    
+    public static ResourceNotFoundException warehouse(Long warehouseId) {
+<span class="nc" id="L43">        return new ResourceNotFoundException(&quot;Warehouse&quot;, warehouseId);</span>
+    }
+    
+    public static ResourceNotFoundException tracking(String trackingNumber) {
+<span class="nc" id="L47">        return new ResourceNotFoundException(&quot;Tracking&quot;, trackingNumber);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

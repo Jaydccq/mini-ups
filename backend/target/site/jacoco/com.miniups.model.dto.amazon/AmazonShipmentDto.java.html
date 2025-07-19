@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AmazonShipmentDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.model.dto.amazon</a> &gt; <span class="el_source">AmazonShipmentDto.java</span></div><h1>AmazonShipmentDto.java</h1><pre class="source lang-java linenums">/**
+ * Amazon Shipment Data Transfer Object
+ * 
+ * 功能说明：
+ * - 处理Amazon系统与UPS系统之间的运输数据传输
+ * - 标准化Amazon运输信息的格式和验证
+ * - 支持Amazon API集成和webhook通信
+ * 
+ * 数据字段：
+ * - shipmentId: UPS运输ID
+ * - amazonOrderId: Amazon订单ID
+ * - trackingNumber: 跟踪号码
+ * - status: 运输状态
+ * - carrier: 承运商信息
+ * 
+ * 验证规则：
+ * - 必填字段验证
+ * - 状态值范围检查
+ * - 跟踪号码格式验证
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.model.dto.amazon;
+
+import jakarta.validation.constraints.*;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+
+public class AmazonShipmentDto {
+    
+    @NotBlank(message = &quot;Shipment ID cannot be blank&quot;)
+    @Size(max = 100, message = &quot;Shipment ID must not exceed 100 characters&quot;)
+    private String shipmentId;
+    
+    @NotBlank(message = &quot;Amazon order ID cannot be blank&quot;)
+    @Size(max = 100, message = &quot;Amazon order ID must not exceed 100 characters&quot;)
+    private String amazonOrderId;
+    
+    @Size(max = 50, message = &quot;Tracking number must not exceed 50 characters&quot;)
+    private String trackingNumber;
+    
+    @NotBlank(message = &quot;Status cannot be blank&quot;)
+    @Pattern(regexp = &quot;PENDING|PROCESSING|SHIPPED|DELIVERED|CANCELLED&quot;, 
+             message = &quot;Invalid shipment status&quot;)
+    private String status;
+    
+<span class="nc" id="L48">    @NotBlank(message = &quot;Carrier cannot be blank&quot;)</span>
+    private String carrier = &quot;UPS&quot;;
+    
+    @NotNull(message = &quot;Created date is required&quot;)
+    private LocalDateTime createdDate;
+    
+    private LocalDateTime shippedDate;
+    private LocalDateTime deliveredDate;
+    
+    @Size(max = 500, message = &quot;Notes must not exceed 500 characters&quot;)
+    private String notes;
+    
+    @DecimalMin(value = &quot;0.0&quot;, message = &quot;Shipping cost must be non-negative&quot;)
+    private BigDecimal shippingCost;
+    
+    @Size(max = 100, message = &quot;Delivery address must not exceed 100 characters&quot;)
+    private String deliveryAddress;
+    
+    @Size(max = 50, message = &quot;Delivery city must not exceed 50 characters&quot;)
+    private String deliveryCity;
+    
+    @Size(max = 20, message = &quot;Delivery state must not exceed 20 characters&quot;)
+    private String deliveryState;
+    
+    @Pattern(regexp = &quot;\\d{5}(-\\d{4})?&quot;, message = &quot;Invalid ZIP code format&quot;)
+    private String deliveryZipCode;
+    
+    private Integer deliveryX;
+    private Integer deliveryY;
+    
+    // Constructors
+<span class="nc" id="L79">    public AmazonShipmentDto() {</span>
+<span class="nc" id="L80">        this.createdDate = LocalDateTime.now();</span>
+<span class="nc" id="L81">        this.status = &quot;PENDING&quot;;</span>
+<span class="nc" id="L82">    }</span>
+    
+    public AmazonShipmentDto(String shipmentId, String amazonOrderId) {
+<span class="nc" id="L85">        this();</span>
+<span class="nc" id="L86">        this.shipmentId = shipmentId;</span>
+<span class="nc" id="L87">        this.amazonOrderId = amazonOrderId;</span>
+<span class="nc" id="L88">    }</span>
+    
+    // Getters and Setters
+    public String getShipmentId() {
+<span class="nc" id="L92">        return shipmentId;</span>
+    }
+    
+    public void setShipmentId(String shipmentId) {
+<span class="nc" id="L96">        this.shipmentId = shipmentId;</span>
+<span class="nc" id="L97">    }</span>
+    
+    public String getAmazonOrderId() {
+<span class="nc" id="L100">        return amazonOrderId;</span>
+    }
+    
+    public void setAmazonOrderId(String amazonOrderId) {
+<span class="nc" id="L104">        this.amazonOrderId = amazonOrderId;</span>
+<span class="nc" id="L105">    }</span>
+    
+    public String getTrackingNumber() {
+<span class="nc" id="L108">        return trackingNumber;</span>
+    }
+    
+    public void setTrackingNumber(String trackingNumber) {
+<span class="nc" id="L112">        this.trackingNumber = trackingNumber;</span>
+<span class="nc" id="L113">    }</span>
+    
+    public String getStatus() {
+<span class="nc" id="L116">        return status;</span>
+    }
+    
+    public void setStatus(String status) {
+<span class="nc" id="L120">        this.status = status;</span>
+<span class="nc" id="L121">    }</span>
+    
+    public String getCarrier() {
+<span class="nc" id="L124">        return carrier;</span>
+    }
+    
+    public void setCarrier(String carrier) {
+<span class="nc" id="L128">        this.carrier = carrier;</span>
+<span class="nc" id="L129">    }</span>
+    
+    public LocalDateTime getCreatedDate() {
+<span class="nc" id="L132">        return createdDate;</span>
+    }
+    
+    public void setCreatedDate(LocalDateTime createdDate) {
+<span class="nc" id="L136">        this.createdDate = createdDate;</span>
+<span class="nc" id="L137">    }</span>
+    
+    public LocalDateTime getShippedDate() {
+<span class="nc" id="L140">        return shippedDate;</span>
+    }
+    
+    public void setShippedDate(LocalDateTime shippedDate) {
+<span class="nc" id="L144">        this.shippedDate = shippedDate;</span>
+<span class="nc" id="L145">    }</span>
+    
+    public LocalDateTime getDeliveredDate() {
+<span class="nc" id="L148">        return deliveredDate;</span>
+    }
+    
+    public void setDeliveredDate(LocalDateTime deliveredDate) {
+<span class="nc" id="L152">        this.deliveredDate = deliveredDate;</span>
+<span class="nc" id="L153">    }</span>
+    
+    public String getNotes() {
+<span class="nc" id="L156">        return notes;</span>
+    }
+    
+    public void setNotes(String notes) {
+<span class="nc" id="L160">        this.notes = notes;</span>
+<span class="nc" id="L161">    }</span>
+    
+    public BigDecimal getShippingCost() {
+<span class="nc" id="L164">        return shippingCost;</span>
+    }
+    
+    public void setShippingCost(BigDecimal shippingCost) {
+<span class="nc" id="L168">        this.shippingCost = shippingCost;</span>
+<span class="nc" id="L169">    }</span>
+    
+    public String getDeliveryAddress() {
+<span class="nc" id="L172">        return deliveryAddress;</span>
+    }
+    
+    public void setDeliveryAddress(String deliveryAddress) {
+<span class="nc" id="L176">        this.deliveryAddress = deliveryAddress;</span>
+<span class="nc" id="L177">    }</span>
+    
+    public String getDeliveryCity() {
+<span class="nc" id="L180">        return deliveryCity;</span>
+    }
+    
+    public void setDeliveryCity(String deliveryCity) {
+<span class="nc" id="L184">        this.deliveryCity = deliveryCity;</span>
+<span class="nc" id="L185">    }</span>
+    
+    public String getDeliveryState() {
+<span class="nc" id="L188">        return deliveryState;</span>
+    }
+    
+    public void setDeliveryState(String deliveryState) {
+<span class="nc" id="L192">        this.deliveryState = deliveryState;</span>
+<span class="nc" id="L193">    }</span>
+    
+    public String getDeliveryZipCode() {
+<span class="nc" id="L196">        return deliveryZipCode;</span>
+    }
+    
+    public void setDeliveryZipCode(String deliveryZipCode) {
+<span class="nc" id="L200">        this.deliveryZipCode = deliveryZipCode;</span>
+<span class="nc" id="L201">    }</span>
+    
+    public Integer getDeliveryX() {
+<span class="nc" id="L204">        return deliveryX;</span>
+    }
+    
+    public void setDeliveryX(Integer deliveryX) {
+<span class="nc" id="L208">        this.deliveryX = deliveryX;</span>
+<span class="nc" id="L209">    }</span>
+    
+    public Integer getDeliveryY() {
+<span class="nc" id="L212">        return deliveryY;</span>
+    }
+    
+    public void setDeliveryY(Integer deliveryY) {
+<span class="nc" id="L216">        this.deliveryY = deliveryY;</span>
+<span class="nc" id="L217">    }</span>
+    
+    // Helper methods
+    public boolean isDelivered() {
+<span class="nc" id="L221">        return &quot;DELIVERED&quot;.equals(status);</span>
+    }
+    
+    public boolean isShipped() {
+<span class="nc bnc" id="L225" title="All 4 branches missed.">        return &quot;SHIPPED&quot;.equals(status) || &quot;DELIVERED&quot;.equals(status);</span>
+    }
+    
+    public boolean isPending() {
+<span class="nc" id="L229">        return &quot;PENDING&quot;.equals(status);</span>
+    }
+    
+    public boolean isCancelled() {
+<span class="nc" id="L233">        return &quot;CANCELLED&quot;.equals(status);</span>
+    }
+    
+    public void markAsShipped() {
+<span class="nc" id="L237">        this.status = &quot;SHIPPED&quot;;</span>
+<span class="nc" id="L238">        this.shippedDate = LocalDateTime.now();</span>
+<span class="nc" id="L239">    }</span>
+    
+    public void markAsDelivered() {
+<span class="nc" id="L242">        this.status = &quot;DELIVERED&quot;;</span>
+<span class="nc" id="L243">        this.deliveredDate = LocalDateTime.now();</span>
+<span class="nc" id="L244">    }</span>
+    
+    public void markAsCancelled() {
+<span class="nc" id="L247">        this.status = &quot;CANCELLED&quot;;</span>
+<span class="nc" id="L248">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

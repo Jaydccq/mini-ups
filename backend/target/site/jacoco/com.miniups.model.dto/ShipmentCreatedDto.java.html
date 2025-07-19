@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShipmentCreatedDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.model.dto</a> &gt; <span class="el_source">ShipmentCreatedDto.java</span></div><h1>ShipmentCreatedDto.java</h1><pre class="source lang-java linenums">/**
+ * Shipping Order Creation Request Data Transfer Object
+ * 
+ * Functionality:
+ * - Receives ShipmentCreated messages from Amazon system
+ * - Contains all information needed to create shipping orders
+ * - Supports user association and address information management
+ * 
+ * Required Fields:
+ * - user_id: User ID
+ * - email: User email
+ * - shipment_id: Amazon's shipping order ID
+ * - warehouse_id: Warehouse ID (pickup point)
+ * - destination_x/y: Target coordinates
+ * 
+ * Optional Fields:
+ * - ups_account: UPS account association
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.model.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+public class ShipmentCreatedDto {
+    
+    @NotNull(message = &quot;User ID is required&quot;)
+    private Long userId;
+    
+    @NotBlank(message = &quot;Email is required&quot;)
+    @Email(message = &quot;Invalid email format&quot;)
+    @Size(max = 255, message = &quot;Email must not exceed 255 characters&quot;)
+    private String email;
+    
+    @NotBlank(message = &quot;Shipment ID is required&quot;)
+    @Size(max = 100, message = &quot;Shipment ID must not exceed 100 characters&quot;)
+    private String shipmentId;
+    
+    @NotNull(message = &quot;Warehouse ID is required&quot;)
+    private Long warehouseId;
+    
+    @NotNull(message = &quot;Destination X coordinate is required&quot;)
+    private Integer destinationX;
+    
+    @NotNull(message = &quot;Destination Y coordinate is required&quot;)
+    private Integer destinationY;
+    
+    @Size(max = 100, message = &quot;UPS account must not exceed 100 characters&quot;)
+    private String upsAccount;
+    
+    // Constructors
+<span class="nc" id="L56">    public ShipmentCreatedDto() {}</span>
+    
+    public ShipmentCreatedDto(Long userId, String email, String shipmentId, 
+<span class="nc" id="L59">                            Long warehouseId, Integer destinationX, Integer destinationY) {</span>
+<span class="nc" id="L60">        this.userId = userId;</span>
+<span class="nc" id="L61">        this.email = email;</span>
+<span class="nc" id="L62">        this.shipmentId = shipmentId;</span>
+<span class="nc" id="L63">        this.warehouseId = warehouseId;</span>
+<span class="nc" id="L64">        this.destinationX = destinationX;</span>
+<span class="nc" id="L65">        this.destinationY = destinationY;</span>
+<span class="nc" id="L66">    }</span>
+    
+    // Getters and Setters
+    public Long getUserId() {
+<span class="nc" id="L70">        return userId;</span>
+    }
+    
+    public void setUserId(Long userId) {
+<span class="nc" id="L74">        this.userId = userId;</span>
+<span class="nc" id="L75">    }</span>
+    
+    public String getEmail() {
+<span class="nc" id="L78">        return email;</span>
+    }
+    
+    public void setEmail(String email) {
+<span class="nc" id="L82">        this.email = email;</span>
+<span class="nc" id="L83">    }</span>
+    
+    public String getShipmentId() {
+<span class="nc" id="L86">        return shipmentId;</span>
+    }
+    
+    public void setShipmentId(String shipmentId) {
+<span class="nc" id="L90">        this.shipmentId = shipmentId;</span>
+<span class="nc" id="L91">    }</span>
+    
+    public Long getWarehouseId() {
+<span class="nc" id="L94">        return warehouseId;</span>
+    }
+    
+    public void setWarehouseId(Long warehouseId) {
+<span class="nc" id="L98">        this.warehouseId = warehouseId;</span>
+<span class="nc" id="L99">    }</span>
+    
+    public Integer getDestinationX() {
+<span class="nc" id="L102">        return destinationX;</span>
+    }
+    
+    public void setDestinationX(Integer destinationX) {
+<span class="nc" id="L106">        this.destinationX = destinationX;</span>
+<span class="nc" id="L107">    }</span>
+    
+    public Integer getDestinationY() {
+<span class="nc" id="L110">        return destinationY;</span>
+    }
+    
+    public void setDestinationY(Integer destinationY) {
+<span class="nc" id="L114">        this.destinationY = destinationY;</span>
+<span class="nc" id="L115">    }</span>
+    
+    public String getUpsAccount() {
+<span class="nc" id="L118">        return upsAccount;</span>
+    }
+    
+    public void setUpsAccount(String upsAccount) {
+<span class="nc" id="L122">        this.upsAccount = upsAccount;</span>
+<span class="nc" id="L123">    }</span>
+    
+    // Helper methods
+    public boolean hasUpsAccount() {
+<span class="nc bnc" id="L127" title="All 4 branches missed.">        return upsAccount != null &amp;&amp; !upsAccount.trim().isEmpty();</span>
+    }
+    
+    @Override
+    public String toString() {
+<span class="nc" id="L132">        return &quot;ShipmentCreatedDto{&quot; +</span>
+                &quot;userId=&quot; + userId +
+                &quot;, email='&quot; + email + '\'' +
+                &quot;, shipmentId='&quot; + shipmentId + '\'' +
+                &quot;, warehouseId=&quot; + warehouseId +
+                &quot;, destinationX=&quot; + destinationX +
+                &quot;, destinationY=&quot; + destinationY +
+                &quot;, upsAccount='&quot; + upsAccount + '\'' +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

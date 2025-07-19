@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">/**
+ * User Authentication Service
+ * 
+ * Purpose:
+ * - Handles core business logic for user registration and login
+ * - Manages JWT token generation and validation
+ * - Provides password encryption and verification functionality
+ * 
+ * Core Features:
+ * - User Registration: Uniqueness validation, password encryption, user creation
+ * - User Login: Identity verification, token generation, login records
+ * - Password Management: Password modification, validation, security checks
+ * - Token Management: JWT generation, validation, refresh
+ * 
+ * Security Features:
+ * - BCrypt password encryption
+ * - Username/email uniqueness validation
+ * - Login failure rate limiting
+ * - Token expiration management
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.service;
+
+import com.miniups.exception.*;
+import com.miniups.model.dto.auth.AuthResponseDto;
+import com.miniups.model.dto.auth.LoginRequestDto;
+import com.miniups.model.dto.auth.PasswordChangeDto;
+import com.miniups.model.dto.auth.RegisterRequestDto;
+import com.miniups.model.dto.user.UserDto;
+import com.miniups.model.entity.User;
+import com.miniups.model.enums.UserRole;
+import com.miniups.repository.UserRepository;
+import com.miniups.security.JwtTokenProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Service
+@Transactional
+public class AuthService {
+    
+<span class="fc" id="L56">    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);</span>
+    
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationManager authenticationManager;
+    
+    public AuthService(UserRepository userRepository, 
+                      PasswordEncoder passwordEncoder,
+                      JwtTokenProvider jwtTokenProvider,
+<span class="fc" id="L66">                      AuthenticationManager authenticationManager) {</span>
+<span class="fc" id="L67">        this.userRepository = userRepository;</span>
+<span class="fc" id="L68">        this.passwordEncoder = passwordEncoder;</span>
+<span class="fc" id="L69">        this.jwtTokenProvider = jwtTokenProvider;</span>
+<span class="fc" id="L70">        this.authenticationManager = authenticationManager;</span>
+<span class="fc" id="L71">    }</span>
+    
+    /**
+     * 用户注册
+     * 
+     * @param registerRequest 注册请求数据
+     * @return 注册成功响应和JWT令牌
+     * @throws RuntimeException 当用户名或邮箱已存在时抛出
+     */
+    public AuthResponseDto register(RegisterRequestDto registerRequest) {
+<span class="fc" id="L81">        logger.info(&quot;开始处理用户注册: username={}, email={}&quot;, </span>
+<span class="fc" id="L82">                   registerRequest.getUsername(), registerRequest.getEmail());</span>
+        
+        // 检查用户名是否已存在
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (userRepository.existsByUsername(registerRequest.getUsername())) {</span>
+<span class="fc" id="L86">            logger.warn(&quot;注册失败 - 用户名已存在: {}&quot;, registerRequest.getUsername());</span>
+<span class="fc" id="L87">            throw new UserAlreadyExistsException(&quot;用户名&quot;, registerRequest.getUsername());</span>
+        }
+        
+        // 检查邮箱是否已存在
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (userRepository.existsByEmail(registerRequest.getEmail())) {</span>
+<span class="fc" id="L92">            logger.warn(&quot;注册失败 - 邮箱已存在: {}&quot;, registerRequest.getEmail());</span>
+<span class="fc" id="L93">            throw new UserAlreadyExistsException(&quot;邮箱&quot;, registerRequest.getEmail());</span>
+        }
+        
+        try {
+            // 创建新用户
+<span class="nc" id="L98">            User user = createUserFromRegisterRequest(registerRequest);</span>
+            
+            // 保存用户到数据库
+<span class="nc" id="L101">            User savedUser = userRepository.save(user);</span>
+<span class="nc" id="L102">            logger.info(&quot;用户创建成功: id={}, username={}&quot;, savedUser.getId(), savedUser.getUsername());</span>
+            
+            // Generate JWT token
+<span class="nc" id="L105">            String token = jwtTokenProvider.generateToken(savedUser.getUsername());</span>
+<span class="nc" id="L106">            Long expiresIn = jwtTokenProvider.getExpirationTime();</span>
+            
+            // Create user DTO
+<span class="nc" id="L109">            UserDto userDto = UserDto.fromEntity(savedUser);</span>
+            
+            // Return authentication response
+<span class="nc" id="L112">            AuthResponseDto response = AuthResponseDto.registerSuccess(token, expiresIn, userDto);</span>
+            
+<span class="nc" id="L114">            logger.info(&quot;用户注册完成: username={}&quot;, savedUser.getUsername());</span>
+<span class="nc" id="L115">            return response;</span>
+            
+<span class="nc" id="L117">        } catch (DataAccessException e) {</span>
+<span class="nc" id="L118">            logger.error(&quot;数据库操作异常: username={}&quot;, registerRequest.getUsername(), e);</span>
+<span class="nc" id="L119">            throw DatabaseOperationException.save(&quot;User&quot;, e);</span>
+<span class="nc" id="L120">        } catch (Exception e) {</span>
+<span class="nc" id="L121">            logger.error(&quot;用户注册过程中出现异常: username={}&quot;, registerRequest.getUsername(), e);</span>
+<span class="nc" id="L122">            throw new SystemException(&quot;USER_REGISTRATION_FAILED&quot;, &quot;用户注册失败，请稍后重试&quot;, e);</span>
+        }
+    }
+    
+    /**
+     * 用户登录
+     * 
+     * @param loginRequest 登录请求数据
+     * @return 登录成功响应和JWT令牌
+     * @throws InvalidCredentialsException 当认证失败时抛出
+     */
+    public AuthResponseDto login(LoginRequestDto loginRequest) {
+<span class="nc" id="L134">        logger.info(&quot;开始处理用户登录: usernameOrEmail={}&quot;, loginRequest.getUsernameOrEmail());</span>
+        
+        try {
+            // 直接使用 AuthenticationManager 进行认证
+<span class="nc" id="L138">            Authentication authentication = authenticationManager.authenticate(</span>
+                new UsernamePasswordAuthenticationToken(
+<span class="nc" id="L140">                    loginRequest.getUsernameOrEmail(),</span>
+<span class="nc" id="L141">                    loginRequest.getPassword()</span>
+                )
+            );
+            
+            // 认证成功后，从认证信息中获取用户名
+<span class="nc" id="L146">            String username = authentication.getName();</span>
+            
+            // 查找用户实体以获取完整信息
+<span class="nc" id="L149">            User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L150">                    .orElseThrow(() -&gt; new UserNotFoundException(username));</span>
+            
+            // 检查用户是否被禁用（虽然UserDetailsService应该已经检查了）
+<span class="nc bnc" id="L153" title="All 2 branches missed.">            if (!user.getEnabled()) {</span>
+<span class="nc" id="L154">                logger.warn(&quot;登录失败 - 用户已被禁用: {}&quot;, username);</span>
+<span class="nc" id="L155">                throw new InvalidCredentialsException(&quot;账户已被禁用，请联系管理员&quot;);</span>
+            }
+            
+            // Generate JWT token
+<span class="nc" id="L159">            String token = jwtTokenProvider.generateToken(username);</span>
+<span class="nc" id="L160">            Long expiresIn = jwtTokenProvider.getExpirationTime();</span>
+            
+            // Create user DTO
+<span class="nc" id="L163">            UserDto userDto = UserDto.fromEntity(user);</span>
+            
+            // Return authentication response
+<span class="nc" id="L166">            AuthResponseDto response = AuthResponseDto.loginSuccess(token, expiresIn, userDto);</span>
+            
+<span class="nc" id="L168">            logger.info(&quot;用户登录成功: username={}&quot;, username);</span>
+<span class="nc" id="L169">            return response;</span>
+            
+<span class="nc" id="L171">        } catch (BadCredentialsException e) {</span>
+<span class="nc" id="L172">            logger.warn(&quot;登录失败 - 凭证无效: usernameOrEmail={}&quot;, loginRequest.getUsernameOrEmail());</span>
+<span class="nc" id="L173">            throw new InvalidCredentialsException();</span>
+<span class="nc" id="L174">        } catch (AuthenticationException e) {</span>
+<span class="nc" id="L175">            logger.warn(&quot;登录失败 - 认证异常: usernameOrEmail={}, error={}&quot;, </span>
+<span class="nc" id="L176">                       loginRequest.getUsernameOrEmail(), e.getMessage());</span>
+<span class="nc" id="L177">            throw new InvalidCredentialsException();</span>
+<span class="nc" id="L178">        } catch (DataAccessException e) {</span>
+<span class="nc" id="L179">            logger.error(&quot;数据库操作异常: usernameOrEmail={}&quot;, loginRequest.getUsernameOrEmail(), e);</span>
+<span class="nc" id="L180">            throw DatabaseOperationException.find(&quot;User&quot;, loginRequest.getUsernameOrEmail());</span>
+<span class="nc" id="L181">        } catch (Exception e) {</span>
+<span class="nc" id="L182">            logger.error(&quot;登录过程中出现异常: usernameOrEmail={}&quot;, </span>
+<span class="nc" id="L183">                        loginRequest.getUsernameOrEmail(), e);</span>
+<span class="nc" id="L184">            throw new SystemException(&quot;USER_LOGIN_FAILED&quot;, &quot;登录失败，请稍后重试&quot;, e);</span>
+        }
+    }
+    
+    /**
+     * 修改密码
+     * 
+     * @param username 用户名
+     * @param passwordChangeRequest 密码修改请求
+     * @throws RuntimeException 当当前密码验证失败时抛出
+     */
+    public void changePassword(String username, PasswordChangeDto passwordChangeRequest) {
+<span class="nc" id="L196">        logger.info(&quot;开始处理密码修改: username={}&quot;, username);</span>
+        
+        // 查找用户
+<span class="nc" id="L199">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L200">                .orElseThrow(() -&gt; new UserNotFoundException(username));</span>
+        
+        // 验证当前密码
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (!passwordEncoder.matches(passwordChangeRequest.getCurrentPassword(), user.getPassword())) {</span>
+<span class="nc" id="L204">            logger.warn(&quot;密码修改失败 - 当前密码错误: username={}&quot;, username);</span>
+<span class="nc" id="L205">            throw new InvalidCredentialsException(&quot;当前密码错误&quot;);</span>
+        }
+        
+        // 检查新密码是否与当前密码相同
+<span class="nc bnc" id="L209" title="All 2 branches missed.">        if (passwordEncoder.matches(passwordChangeRequest.getNewPassword(), user.getPassword())) {</span>
+<span class="nc" id="L210">            logger.warn(&quot;密码修改失败 - 新密码与当前密码相同: username={}&quot;, username);</span>
+<span class="nc" id="L211">            throw new IllegalArgumentException(&quot;新密码不能与当前密码相同&quot;);</span>
+        }
+        
+        try {
+            // 加密新密码
+<span class="nc" id="L216">            String encodedNewPassword = passwordEncoder.encode(passwordChangeRequest.getNewPassword());</span>
+            
+            // 更新密码
+<span class="nc" id="L219">            user.setPassword(encodedNewPassword);</span>
+<span class="nc" id="L220">            userRepository.save(user);</span>
+            
+<span class="nc" id="L222">            logger.info(&quot;密码修改成功: username={}&quot;, username);</span>
+            
+<span class="nc" id="L224">        } catch (Exception e) {</span>
+<span class="nc" id="L225">            logger.error(&quot;密码修改过程中出现异常: username={}&quot;, username, e);</span>
+<span class="nc" id="L226">            throw new RuntimeException(&quot;密码修改失败，请稍后重试&quot;);</span>
+<span class="nc" id="L227">        }</span>
+<span class="nc" id="L228">    }</span>
+    
+    /**
+     * 验证令牌
+     * 
+     * @param token JWT令牌
+     * @return 令牌是否有效
+     */
+    public boolean validateToken(String token) {
+        try {
+<span class="nc" id="L238">            return jwtTokenProvider.validateToken(token);</span>
+<span class="nc" id="L239">        } catch (Exception e) {</span>
+<span class="nc" id="L240">            logger.warn(&quot;令牌验证失败: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L241">            return false;</span>
+        }
+    }
+    
+    /**
+     * 从令牌获取用户名
+     * 
+     * @param token JWT令牌
+     * @return 用户名
+     */
+    public String getUsernameFromToken(String token) {
+<span class="nc" id="L252">        return jwtTokenProvider.getUsernameFromToken(token);</span>
+    }
+    
+    /**
+     * 根据用户名或邮箱查找用户
+     * 
+     * @param usernameOrEmail 用户名或邮箱
+     * @return 用户实体，如果不存在则返回null
+     */
+    private User findUserByUsernameOrEmail(String usernameOrEmail) {
+        // 判断输入是邮箱还是用户名
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        if (usernameOrEmail.contains(&quot;@&quot;)) {</span>
+<span class="nc" id="L264">            return userRepository.findByEmail(usernameOrEmail).orElse(null);</span>
+        } else {
+<span class="nc" id="L266">            return userRepository.findByUsername(usernameOrEmail).orElse(null);</span>
+        }
+    }
+    
+    /**
+     * 从注册请求创建用户实体
+     * 
+     * @param registerRequest 注册请求
+     * @return 用户实体
+     */
+    private User createUserFromRegisterRequest(RegisterRequestDto registerRequest) {
+<span class="nc" id="L277">        User user = new User();</span>
+<span class="nc" id="L278">        user.setUsername(registerRequest.getUsername());</span>
+<span class="nc" id="L279">        user.setEmail(registerRequest.getEmail());</span>
+<span class="nc" id="L280">        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));</span>
+<span class="nc" id="L281">        user.setFirstName(registerRequest.getFirstName());</span>
+<span class="nc" id="L282">        user.setLastName(registerRequest.getLastName());</span>
+<span class="nc" id="L283">        user.setPhone(registerRequest.getPhone());</span>
+<span class="nc" id="L284">        user.setAddress(registerRequest.getAddress());</span>
+<span class="nc" id="L285">        user.setRole(UserRole.USER); // 默认注册为普通用户</span>
+<span class="nc" id="L286">        user.setEnabled(true);</span>
+        
+<span class="nc" id="L288">        return user;</span>
+    }
+    
+    /**
+     * 检查用户名是否可用
+     * 
+     * @param username 用户名
+     * @return 是否可用
+     */
+    public boolean isUsernameAvailable(String username) {
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        return !userRepository.existsByUsername(username);</span>
+    }
+    
+    /**
+     * 检查邮箱是否可用
+     * 
+     * @param email 邮箱
+     * @return 是否可用
+     */
+    public boolean isEmailAvailable(String email) {
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        return !userRepository.existsByEmail(email);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

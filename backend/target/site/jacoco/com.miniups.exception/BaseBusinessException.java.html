@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BaseBusinessException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.exception</a> &gt; <span class="el_source">BaseBusinessException.java</span></div><h1>BaseBusinessException.java</h1><pre class="source lang-java linenums">/**
+ * Base Business Exception
+ * 
+ * 业务异常基类，所有业务相关异常都应继承此类
+ * 
+ * Features:
+ * - 提供统一的错误代码和消息格式
+ * - 支持异常链追踪
+ * - 便于异常分类处理
+ * - 提供异常严重等级分类
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.exception;
+
+import com.miniups.model.enums.ExceptionSeverity;
+
+public abstract class BaseBusinessException extends RuntimeException {
+    
+    private final String errorCode;
+    private final Object[] args;
+    private final ExceptionSeverity severity;
+    
+    public BaseBusinessException(String errorCode, String message, ExceptionSeverity severity) {
+<span class="fc" id="L26">        super(message);</span>
+<span class="fc" id="L27">        this.errorCode = errorCode;</span>
+<span class="fc" id="L28">        this.args = null;</span>
+<span class="fc" id="L29">        this.severity = severity;</span>
+<span class="fc" id="L30">    }</span>
+    
+    public BaseBusinessException(String errorCode, String message, ExceptionSeverity severity, Throwable cause) {
+<span class="nc" id="L33">        super(message, cause);</span>
+<span class="nc" id="L34">        this.errorCode = errorCode;</span>
+<span class="nc" id="L35">        this.args = null;</span>
+<span class="nc" id="L36">        this.severity = severity;</span>
+<span class="nc" id="L37">    }</span>
+    
+    public BaseBusinessException(String errorCode, String message, Object[] args, ExceptionSeverity severity) {
+<span class="nc" id="L40">        super(message);</span>
+<span class="nc" id="L41">        this.errorCode = errorCode;</span>
+<span class="nc" id="L42">        this.args = args;</span>
+<span class="nc" id="L43">        this.severity = severity;</span>
+<span class="nc" id="L44">    }</span>
+    
+    public BaseBusinessException(String errorCode, String message, Object[] args, ExceptionSeverity severity, Throwable cause) {
+<span class="nc" id="L47">        super(message, cause);</span>
+<span class="nc" id="L48">        this.errorCode = errorCode;</span>
+<span class="nc" id="L49">        this.args = args;</span>
+<span class="nc" id="L50">        this.severity = severity;</span>
+<span class="nc" id="L51">    }</span>
+    
+    public String getErrorCode() {
+<span class="nc" id="L54">        return errorCode;</span>
+    }
+    
+    public Object[] getArgs() {
+<span class="nc" id="L58">        return args;</span>
+    }
+    
+    public ExceptionSeverity getSeverity() {
+<span class="nc" id="L62">        return severity;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

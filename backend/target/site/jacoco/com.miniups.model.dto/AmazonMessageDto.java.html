@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AmazonMessageDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.model.dto</a> &gt; <span class="el_source">AmazonMessageDto.java</span></div><h1>AmazonMessageDto.java</h1><pre class="source lang-java linenums">/**
+ * Amazon Message Data Transfer Object
+ * 
+ * Functionality:
+ * - Defines standard message format for communication between Amazon and UPS systems
+ * - Supports all types of Amazon messages (ShipmentCreated, ShipmentLoaded, etc.)
+ * - Provides message validation and serialization functionality
+ * 
+ * Message Types:
+ * - ShipmentCreated: Amazon creates shipping order
+ * - ShipmentLoaded: Amazon notifies package has been loaded
+ * - ShipmentStatusRequest: Amazon queries shipping status
+ * - AddressChange: Amazon requests address change
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.model.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+public class AmazonMessageDto {
+    
+    @NotBlank(message = &quot;Message type is required&quot;)
+    @Pattern(regexp = &quot;ShipmentCreated|ShipmentLoaded|ShipmentStatusRequest|AddressChange&quot;, 
+             message = &quot;Invalid message type&quot;)
+    private String messageType;
+    
+    @NotNull(message = &quot;Timestamp is required&quot;)
+    private LocalDateTime timestamp;
+    
+    @NotNull(message = &quot;Payload is required&quot;)
+    private Map&lt;String, Object&gt; payload;
+    
+    // Constructors
+<span class="nc" id="L41">    public AmazonMessageDto() {}</span>
+    
+<span class="nc" id="L43">    public AmazonMessageDto(String messageType, LocalDateTime timestamp, Map&lt;String, Object&gt; payload) {</span>
+<span class="nc" id="L44">        this.messageType = messageType;</span>
+<span class="nc" id="L45">        this.timestamp = timestamp;</span>
+<span class="nc" id="L46">        this.payload = payload;</span>
+<span class="nc" id="L47">    }</span>
+    
+    // Getters and Setters
+    public String getMessageType() {
+<span class="nc" id="L51">        return messageType;</span>
+    }
+    
+    public void setMessageType(String messageType) {
+<span class="nc" id="L55">        this.messageType = messageType;</span>
+<span class="nc" id="L56">    }</span>
+    
+    public LocalDateTime getTimestamp() {
+<span class="nc" id="L59">        return timestamp;</span>
+    }
+    
+    public void setTimestamp(LocalDateTime timestamp) {
+<span class="nc" id="L63">        this.timestamp = timestamp;</span>
+<span class="nc" id="L64">    }</span>
+    
+    public Map&lt;String, Object&gt; getPayload() {
+<span class="nc" id="L67">        return payload;</span>
+    }
+    
+    public void setPayload(Map&lt;String, Object&gt; payload) {
+<span class="nc" id="L71">        this.payload = payload;</span>
+<span class="nc" id="L72">    }</span>
+    
+    // Helper methods
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T getPayloadValue(String key, Class&lt;T&gt; type) {
+<span class="nc" id="L77">        Object value = payload.get(key);</span>
+<span class="nc bnc" id="L78" title="All 4 branches missed.">        if (value != null &amp;&amp; type.isAssignableFrom(value.getClass())) {</span>
+<span class="nc" id="L79">            return (T) value;</span>
+        }
+<span class="nc" id="L81">        return null;</span>
+    }
+    
+    public String getPayloadString(String key) {
+<span class="nc" id="L85">        return getPayloadValue(key, String.class);</span>
+    }
+    
+    public Integer getPayloadInteger(String key) {
+<span class="nc" id="L89">        Object value = payload.get(key);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (value instanceof Number) {</span>
+<span class="nc" id="L91">            return ((Number) value).intValue();</span>
+        }
+<span class="nc" id="L93">        return null;</span>
+    }
+    
+    public boolean isShipmentCreated() {
+<span class="nc" id="L97">        return &quot;ShipmentCreated&quot;.equals(messageType);</span>
+    }
+    
+    public boolean isShipmentLoaded() {
+<span class="nc" id="L101">        return &quot;ShipmentLoaded&quot;.equals(messageType);</span>
+    }
+    
+    public boolean isShipmentStatusRequest() {
+<span class="nc" id="L105">        return &quot;ShipmentStatusRequest&quot;.equals(messageType);</span>
+    }
+    
+    public boolean isAddressChange() {
+<span class="nc" id="L109">        return &quot;AddressChange&quot;.equals(messageType);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
