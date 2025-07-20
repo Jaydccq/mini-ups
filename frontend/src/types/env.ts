@@ -8,6 +8,7 @@ export interface EnvironmentConfig {
   // API Configuration
   VITE_API_BASE_URL: string;
   VITE_WS_BASE_URL: string;
+  VITE_WS_URL?: string;
   
   // App Configuration
   VITE_APP_NAME: string;

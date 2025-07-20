@@ -117,6 +117,7 @@ const createEnvConfig = (): EnvironmentConfig => {
     // API Configuration
     VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081',
     VITE_WS_BASE_URL: import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8081',
+    VITE_WS_URL: import.meta.env.VITE_WS_URL || import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8081',
     
     // App Configuration
     VITE_APP_NAME: import.meta.env.VITE_APP_NAME || 'Mini-UPS',
