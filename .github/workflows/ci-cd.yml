@@ -186,11 +186,11 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      run: |
+        echo "📋 Security scan completed"
+        echo "Would upload SARIF results to GitHub Security tab"
+        echo "(Code scanning not enabled in repository)"
       continue-on-error: true
-      with:
-        sarif_file: 'trivy-results.sarif'
 
   # Docker Build and Push
   docker-build:
