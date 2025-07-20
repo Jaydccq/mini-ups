@@ -53,7 +53,7 @@ jobs:
         run: npm run lint
 
       - name: Run tests with coverage
-        run: npm run test -- --coverage --reporter=verbose
+        run: npm run test:coverage
 
       - name: Build for preview
         run: npm run build:staging

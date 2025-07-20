@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
   # PostgreSQL数据库
   database:
     image: postgres:15
     container_name: mini-ups-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB?POSTGRES_DB is not set}
-      POSTGRES_USER: ${POSTGRES_USER?POSTGRES_USER is not set}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?POSTGRES_PASSWORD is not set}
+      POSTGRES_DB: ${POSTGRES_DB:-ups_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abc123}
       TZ: UTC
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -24,9 +22,9 @@ services:
   redis:
     image: redis:7-alpine
     container_name: mini-ups-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD?REDIS_PASSWORD is not set}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-test123}
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD?REDIS_PASSWORD is not set}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-test123}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -60,17 +58,17 @@ services:
     container_name: mini-ups-backend
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
-      DATABASE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB?POSTGRES_DB is not set}
-      DATABASE_USERNAME: ${POSTGRES_USER?POSTGRES_USER is not set}
-      DATABASE_PASSWORD: ${POSTGRES_PASSWORD?POSTGRES_PASSWORD is not set}
+      DATABASE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-ups_db}
+      DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-abc123}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD?REDIS_PASSWORD is not set}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-test123}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
-      JWT_SECRET: ${JWT_SECRET?JWT_SECRET is not set}
+      JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_for_development_only}
       WORLD_SIMULATOR_HOST: ${WORLD_SIMULATOR_HOST:-localhost}
       AMAZON_API_URL: ${AMAZON_API_URL:-http://localhost:8080}
       NUM_TRUCKS: ${NUM_TRUCKS:-5}
@@ -85,7 +83,7 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/api/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3

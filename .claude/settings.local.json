@@ -57,7 +57,13 @@
       "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
       "Bash(pip3 install:*)",
       "Bash(createdb:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(./scripts/test-ci.sh:*)",
+      "Bash(docker system prune:*)",
+      "Bash(docker pull:*)",
+      "Bash(./scripts/validate-ci-fixes.sh:*)"
     ],
     "deny": []
   }

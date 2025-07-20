@@ -143,7 +143,7 @@ jobs:
 
     - name: Run frontend tests
       working-directory: ./frontend
-      run: npm run test:coverage -- --run --reporter=verbose
+      run: npm run test:coverage
       env:
         CI: true
 
@@ -283,10 +283,12 @@ jobs:
           # Pull latest code
           git pull origin main
           
-          # Update environment variables
-          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" > .env.staging
+          # Copy CI environment as base and update with deployment images
+          cp .env.ci .env.staging
+          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" >> .env.staging
           echo "FRONTEND_IMAGE=${{ needs.docker-build.outputs.frontend-image }}" >> .env.staging
           echo "ENVIRONMENT=staging" >> .env.staging
+          echo "SPRING_PROFILES_ACTIVE=staging" >> .env.staging
           
           # Deploy with Docker Compose
           docker compose -f docker-compose.yml --env-file .env.staging down
@@ -309,10 +311,10 @@ jobs:
           curl -f http://localhost:3000
           
           # Database connectivity check
-          docker exec mini-ups-postgres pg_isready -U postgres
+          docker exec $(docker ps -q --filter "name=.*postgres.*") pg_isready -U postgres
           
           # Redis connectivity check
-          docker exec mini-ups-redis redis-cli ping
+          docker exec $(docker ps -q --filter "name=.*redis.*") redis-cli ping
 
   # Deploy to Production
   deploy-production:
@@ -344,10 +346,17 @@ jobs:
           # Pull latest code
           git pull origin main
           
-          # Update environment variables
-          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" > .env.production
+          # Copy CI environment as base and update with deployment images
+          cp .env.ci .env.production
+          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" >> .env.production
           echo "FRONTEND_IMAGE=${{ needs.docker-build.outputs.frontend-image }}" >> .env.production
           echo "ENVIRONMENT=production" >> .env.production
+          echo "SPRING_PROFILES_ACTIVE=production" >> .env.production
+          
+          # Override with production-specific secrets
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env.production
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env.production
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.production
           
           # Deploy with Docker Compose
           docker compose -f docker-compose.yml --env-file .env.production pull
@@ -369,14 +378,14 @@ jobs:
           curl -f http://localhost:3000
           
           # Database connectivity
-          docker exec mini-ups-postgres pg_isready -U postgres
+          docker exec $(docker ps -q --filter "name=.*postgres.*") pg_isready -U postgres
           
           # Redis connectivity
-          docker exec mini-ups-redis redis-cli ping
+          docker exec $(docker ps -q --filter "name=.*redis.*") redis-cli ping
           
           # Application-specific checks
-          curl -f http://localhost:8081/api/auth/health
-          curl -f http://localhost:8081/api/users/health
+          curl -f http://localhost:8081/api/health
+          curl -f http://localhost:8081/actuator/health
 
   # Notification
   notify:
