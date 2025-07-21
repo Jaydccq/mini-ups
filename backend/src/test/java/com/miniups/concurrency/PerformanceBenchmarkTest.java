@@ -359,19 +359,14 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
     private CreateShipmentDto createShipmentDto() {
         long uniqueId = System.nanoTime() + Thread.currentThread().getId();
         CreateShipmentDto dto = new CreateShipmentDto();
-        dto.setSenderName("Bench Sender " + uniqueId);
-        dto.setSenderEmail("sender_" + uniqueId + "@example.com");
-        dto.setSenderPhone("1234567890");
-        dto.setSenderAddress("123 Sender St");
-        dto.setRecipientName("Bench Recipient " + uniqueId);
-        dto.setRecipientEmail("recipient_" + uniqueId + "@example.com");
-        dto.setRecipientPhone("0987654321");
-        dto.setRecipientAddress("456 Recipient Ave");
+        dto.setCustomerId("CUSTOMER_" + uniqueId);
+        dto.setCustomerName("Bench Customer " + uniqueId);
+        dto.setCustomerEmail("customer_" + uniqueId + "@example.com");
         dto.setOriginX((int)(Math.random() * 100));
         dto.setOriginY((int)(Math.random() * 100));
         dto.setDestX((int)(Math.random() * 100));
         dto.setDestY((int)(Math.random() * 100));
-        dto.setWeight(BigDecimal.valueOf(1.0 + Math.random() * 10.0));
+        dto.setWeight(new BigDecimal("1.0").add(BigDecimal.valueOf(Math.random() * 10.0)));
         dto.setShipmentId("BENCH" + uniqueId);
         return dto;
     }

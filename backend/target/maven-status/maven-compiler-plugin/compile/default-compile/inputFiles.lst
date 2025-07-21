@@ -39,6 +39,7 @@
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/model/dto/auth/RegisterRequestDto.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/model/dto/common/ApiResponse.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/model/dto/common/BaseUserRequestDto.java
+/Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/model/dto/shipment/CreateShipmentDto.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/model/dto/user/CreateUserDto.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/model/dto/user/UpdateUserDto.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/model/dto/user/UserDto.java
@@ -75,6 +76,7 @@
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/service/AsyncAuditService.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/service/AuthService.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/service/EventPublisherService.java
+/Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/service/ShipmentService.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/service/TokenBlacklistService.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/service/TrackingService.java
 /Users/hongxichen/Desktop/mini-ups/backend/src/main/java/com/miniups/service/TruckManagementService.java

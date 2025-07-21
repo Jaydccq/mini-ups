@@ -90,8 +90,8 @@ export default defineConfig(({ command, mode }) => {
       // Generate sourcemaps for production debugging
       sourcemap: isProd ? 'hidden' : true,
       
-      // Build optimizations
-      minify: isProd ? 'esbuild' : false,
+      // Build optimizations  
+      minify: isProd ? 'terser' : false,
       cssMinify: isProd,
       
       // Increase chunk size warning limit

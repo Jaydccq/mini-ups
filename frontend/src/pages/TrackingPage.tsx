@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Package, Search, MapPin, Calendar, Truck, AlertCircle, CheckCircle, Wifi, WifiOff } from 'lucide-react'
-import { shipmentApi, Shipment, ShipmentStatusHistory } from '@/services/shipment'
+import { shipmentApi, Shipment, ShipmentStatusHistory, TrackingHistoryResponse } from '@/services/shipment'
 import { TrackingTimeline } from '@/components/shipment/TrackingTimeline'
 import { TrackingMap } from '@/components/tracking/TrackingMap'
 import { StatusIndicator } from '@/components/ui/status-indicator'
@@ -33,7 +33,7 @@ export const TrackingPage: React.FC = () => {
     isLoading: shipmentLoading, 
     error: shipmentError,
     refetch: refetchShipment
-  } = useQuery({
+  } = useQuery<Shipment>({
     queryKey: ['shipment', searchedTrackingNumber],
     queryFn: () => shipmentApi.getShipmentByTrackingNumber(searchedTrackingNumber!),
     enabled: !!searchedTrackingNumber,
@@ -46,7 +46,7 @@ export const TrackingPage: React.FC = () => {
     data: historyData, 
     isLoading: historyLoading,
     refetch: refetchHistory
-  } = useQuery({
+  } = useQuery<TrackingHistoryResponse>({
     queryKey: ['trackingHistory', searchedTrackingNumber],
     queryFn: () => shipmentApi.getTrackingHistory(searchedTrackingNumber!),
     enabled: !!searchedTrackingNumber,
@@ -232,7 +232,7 @@ export const TrackingPage: React.FC = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-2xl">Package Status</CardTitle>
-                    <FlashOnUpdate value={shipment.status} className="transition-colors duration-300">
+                    <FlashOnUpdate trigger={shipment.status} className="transition-colors duration-300">
                       <StatusIndicator 
                         status={shipment.status}
                         showDot={true}

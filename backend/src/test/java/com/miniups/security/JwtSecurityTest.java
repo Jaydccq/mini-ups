@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-    "spring.datasource.url=jdbc:h2:mem:jwttest",
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
     "spring.jpa.hibernate.ddl-auto=create-drop",
     "app.jwtSecret=mySecretKey",
     "app.jwtExpirationInMs=86400000"

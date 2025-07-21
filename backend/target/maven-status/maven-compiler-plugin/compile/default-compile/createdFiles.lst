@@ -18,10 +18,12 @@ com/miniups/model/dto/auth/AuthResponseDto.class
 com/miniups/model/dto/amazon/AmazonOrderDto.class
 com/miniups/exception/InvalidCredentialsException.class
 com/miniups/proto/WorldUpsProto$UConnected$1.class
+com/miniups/model/dto/shipment/CreateShipmentDto.class
 com/miniups/validation/PasswordsMatchValidator.class
 com/miniups/model/entity/AddressChange.class
 com/miniups/service/WorldSimulatorService.class
 com/miniups/controller/AuthController.class
+com/miniups/service/ShipmentService.class
 com/miniups/proto/WorldUpsProto$UResponses$1.class
 com/miniups/config/JpaConfig.class
 com/miniups/proto/WorldUpsProto$UCommands$1.class

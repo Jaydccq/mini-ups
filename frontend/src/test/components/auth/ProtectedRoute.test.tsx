@@ -5,7 +5,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 // Mock the auth store
 const mockUseAuthStore = vi.fn()
-vi.mock('@/stores/authStore', () => ({
+vi.mock('@/stores/auth-store', () => ({
   useAuthStore: () => mockUseAuthStore()
 }))
 

@@ -73,21 +73,4 @@ public class HomeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/api/health")
-    public ResponseEntity<?> apiHealth() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "UP");
-        response.put("service", "Mini-UPS API");
-        response.put("timestamp", LocalDateTime.now());
-        response.put("version", "1.0.0");
-        
-        Map<String, String> checks = new HashMap<>();
-        checks.put("database", "UP");
-        checks.put("cache", "UP");
-        checks.put("api", "UP");
-        
-        response.put("components", checks);
-        
-        return ResponseEntity.ok(response);
-    }
 }

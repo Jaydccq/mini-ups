@@ -43,13 +43,13 @@ import java.util.Map;
 @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
 public class AdminController {
     
-<span class="nc" id="L46">    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);</span>
+<span class="fc" id="L46">    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);</span>
     
     private final AdminService adminService;
     
-<span class="nc" id="L50">    public AdminController(AdminService adminService) {</span>
-<span class="nc" id="L51">        this.adminService = adminService;</span>
-<span class="nc" id="L52">    }</span>
+<span class="fc" id="L50">    public AdminController(AdminService adminService) {</span>
+<span class="fc" id="L51">        this.adminService = adminService;</span>
+<span class="fc" id="L52">    }</span>
     
     /**
      * Get dashboard KPI statistics

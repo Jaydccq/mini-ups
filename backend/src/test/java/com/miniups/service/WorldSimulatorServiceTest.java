@@ -16,11 +16,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -55,7 +57,7 @@ class WorldSimulatorServiceTest {
         ReflectionTestUtils.setField(worldSimulatorService, "worldHost", "localhost");
         ReflectionTestUtils.setField(worldSimulatorService, "worldPort", 12345);
         ReflectionTestUtils.setField(worldSimulatorService, "connectionTimeout", 5000);
-        ReflectionTestUtils.setField(worldSimulatorService, "enabled", false); // Disabled for unit tests
+        ReflectionTestUtils.setField(worldSimulatorService, "connected", false); // Disabled for unit tests
 
         // Create test truck
         testTruck = new Truck();
@@ -91,10 +93,10 @@ class WorldSimulatorServiceTest {
 
         // When
         CompletableFuture<Boolean> result = 
-                worldSimulatorService.sendTruckToPickup(testTruck.getCurrentX(), testTruck.getCurrentY());
+                worldSimulatorService.sendTruckToPickup(testTruck.getTruckId(), 1);
 
         // Then
-        assertThat(result).isCompletedExceptionally();
+        assertThat(result).succeedsWithin(Duration.ofSeconds(1)).isEqualTo(false);
         verifyNoInteractions(truckRepository);
     }
 
@@ -112,7 +114,7 @@ class WorldSimulatorServiceTest {
                 worldSimulatorService.sendTruckToDeliver(testTruck.getTruckId(), deliveries);
 
         // Then
-        assertThat(result).isCompletedExceptionally();
+        assertThat(result).succeedsWithin(Duration.ofSeconds(1)).isEqualTo(false);
         verifyNoInteractions(truckRepository);
     }
 
@@ -140,7 +142,7 @@ class WorldSimulatorServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> 
-                worldSimulatorService.sendTruckToPickup(nullTruckId, 10))
+                worldSimulatorService.sendTruckToPickup(nullTruckId, 1))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -153,7 +155,7 @@ class WorldSimulatorServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> 
-                worldSimulatorService.sendTruckToPickup(validTruckId, -1))
+                worldSimulatorService.sendTruckToPickup(validTruckId, invalidWarehouseId))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -175,8 +177,8 @@ class WorldSimulatorServiceTest {
     void testQueryTruckStatus_ServiceEnabled() {
         // Given
         Integer truckId = 1;
-        ReflectionTestUtils.setField(worldSimulatorService, "enabled", true);
         ReflectionTestUtils.setField(worldSimulatorService, "connected", true);
+        ReflectionTestUtils.setField(worldSimulatorService, "messageQueue", new java.util.concurrent.LinkedBlockingQueue<>());
 
         // When
         CompletableFuture<WorldUpsProto.UTruck> result = 
@@ -252,10 +254,10 @@ class WorldSimulatorServiceTest {
 
         // When - Test message creation through public method behavior
         CompletableFuture<Boolean> result = 
-                worldSimulatorService.sendTruckToPickup(testTruck.getCurrentX(), testTruck.getCurrentY());
+                worldSimulatorService.sendTruckToPickup(testTruck.getTruckId(), 1);
 
         // Then
-        assertThat(result).isCompletedExceptionally();
+        assertThat(result).succeedsWithin(Duration.ofSeconds(1)).isEqualTo(false);
         // Message creation logic is tested indirectly through the service call
     }
 
@@ -271,7 +273,7 @@ class WorldSimulatorServiceTest {
                 worldSimulatorService.sendTruckToDeliver(testTruck.getTruckId(), deliveries);
 
         // Then
-        assertThat(result).isCompletedExceptionally();
+        assertThat(result).succeedsWithin(Duration.ofSeconds(1)).isEqualTo(false);
         // Message creation logic is tested indirectly through the service call
     }
 
@@ -283,13 +285,13 @@ class WorldSimulatorServiceTest {
         deliveries.put(1L, new int[]{14, 24});
         
         CompletableFuture<Boolean> future1 = 
-                worldSimulatorService.sendTruckToPickup(testTruck.getCurrentX(), testTruck.getCurrentY());
+                worldSimulatorService.sendTruckToPickup(testTruck.getTruckId(), 1);
         CompletableFuture<Boolean> future2 = 
                 worldSimulatorService.sendTruckToDeliver(testTruck.getTruckId(), deliveries);
 
         // When & Then
-        assertThat(future1).isCompletedExceptionally();
-        assertThat(future2).isCompletedExceptionally();
+        assertThat(future1).succeedsWithin(Duration.ofSeconds(1)).isEqualTo(false);
+        assertThat(future2).succeedsWithin(Duration.ofSeconds(1)).isEqualTo(false);
     }
 
     @Test
@@ -301,11 +303,11 @@ class WorldSimulatorServiceTest {
         
         // Valid coordinates
         assertThatCode(() -> 
-                worldSimulatorService.sendTruckToPickup(testTruck.getCurrentX(), testTruck.getCurrentY()))
+                worldSimulatorService.sendTruckToPickup(testTruck.getTruckId(), 1))
                 .doesNotThrowAnyException();
         
         assertThatCode(() -> 
-                worldSimulatorService.sendTruckToPickup(testTruck.getCurrentX(), testTruck.getCurrentY()))
+                worldSimulatorService.sendTruckToPickup(testTruck.getTruckId(), 1))
                 .doesNotThrowAnyException();
 
         // Valid delivery parameters

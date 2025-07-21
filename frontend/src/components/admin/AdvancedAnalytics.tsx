@@ -20,23 +20,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   TrendingUp, 
   TrendingDown,
-  BarChart3, 
   LineChart as LineChartIcon,
-  PieChart as PieChartIcon,
   Activity, 
   Zap,
   Target,
-  Clock,
   Users,
   Truck,
-  Package,
   DollarSign,
   AlertTriangle,
-  CheckCircle,
-  RefreshCw,
-  Filter,
-  Calendar,
-  Download
+  RefreshCw
 } from 'lucide-react';
 
 interface MetricData {
@@ -82,7 +74,6 @@ interface AdvancedAnalyticsProps {
 
 export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({ className = '' }) => {
   const [timeRange, setTimeRange] = useState('30d');
-  const [selectedMetric, setSelectedMetric] = useState<string>('delivery-efficiency');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);

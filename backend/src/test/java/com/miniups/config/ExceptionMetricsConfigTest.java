@@ -1,3 +1,5 @@
+package com.miniups.config;
+
 /**
  * Exception Metrics Config Test
  * 
@@ -6,7 +8,6 @@
  * @author Mini-UPS Team
  * @version 1.0.0
  */
-package com.miniups.config;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

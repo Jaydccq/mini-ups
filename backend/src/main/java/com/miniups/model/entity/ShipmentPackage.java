@@ -65,7 +65,7 @@ public class ShipmentPackage extends BaseEntity {
     @Column(name = "height_cm", precision = 8, scale = 2)
     private BigDecimal height;
     
-    @Column(name = "value", precision = 12, scale = 2)
+    @Column(name = "\"value\"", precision = 12, scale = 2)
     private BigDecimal value;
     
     @Column(name = "fragile", nullable = false)

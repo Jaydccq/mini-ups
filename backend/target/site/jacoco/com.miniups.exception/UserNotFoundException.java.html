@@ -13,8 +13,8 @@ import com.miniups.model.enums.ExceptionSeverity;
 public class UserNotFoundException extends BaseBusinessException {
     
     public UserNotFoundException(String username) {
-<span class="nc" id="L16">        super(&quot;USER_NOT_FOUND&quot;, String.format(&quot;用户 '%s' 不存在&quot;, username), ExceptionSeverity.LOW);</span>
-<span class="nc" id="L17">    }</span>
+<span class="fc" id="L16">        super(&quot;USER_NOT_FOUND&quot;, String.format(&quot;用户 '%s' 不存在&quot;, username), ExceptionSeverity.LOW);</span>
+<span class="fc" id="L17">    }</span>
     
     public UserNotFoundException(String field, String value) {
 <span class="nc" id="L20">        super(&quot;USER_NOT_FOUND&quot;, String.format(&quot;用户%s '%s' 不存在&quot;, field, value), ExceptionSeverity.LOW);</span>

@@ -52,6 +52,7 @@ services:
 
   # Spring Boot后端
   backend:
+    image: ${BACKEND_IMAGE:-mini-ups-backend:latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -93,6 +94,7 @@ services:
 
   # React前端
   frontend:
+    image: ${FRONTEND_IMAGE:-mini-ups-frontend:latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile

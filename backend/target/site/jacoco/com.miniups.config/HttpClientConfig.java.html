@@ -34,7 +34,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-<span class="nc" id="L37">public class HttpClientConfig {</span>
+<span class="fc" id="L37">public class HttpClientConfig {</span>
 
     @Value(&quot;${http.client.max-total-connections:100}&quot;)
     private int maxTotalConnections;
@@ -55,7 +55,7 @@ import org.springframework.web.client.RestTemplate;
      */
     @Bean
     public RestTemplate restTemplate() {
-<span class="nc" id="L58">        return new RestTemplate(clientHttpRequestFactory());</span>
+<span class="fc" id="L58">        return new RestTemplate(clientHttpRequestFactory());</span>
     }
 
     /**
@@ -67,21 +67,21 @@ import org.springframework.web.client.RestTemplate;
     @Bean
     public ClientHttpRequestFactory clientHttpRequestFactory() {
         // Configure connection pool manager
-<span class="nc" id="L70">        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();</span>
-<span class="nc" id="L71">        connectionManager.setMaxTotal(maxTotalConnections);</span>
-<span class="nc" id="L72">        connectionManager.setDefaultMaxPerRoute(maxDefaultPerRoute);</span>
+<span class="fc" id="L70">        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();</span>
+<span class="fc" id="L71">        connectionManager.setMaxTotal(maxTotalConnections);</span>
+<span class="fc" id="L72">        connectionManager.setDefaultMaxPerRoute(maxDefaultPerRoute);</span>
 
         // Build HTTP client with connection pool
-<span class="nc" id="L75">        CloseableHttpClient httpClient = HttpClients.custom()</span>
-<span class="nc" id="L76">                .setConnectionManager(connectionManager)</span>
-<span class="nc" id="L77">                .build();</span>
+<span class="fc" id="L75">        CloseableHttpClient httpClient = HttpClients.custom()</span>
+<span class="fc" id="L76">                .setConnectionManager(connectionManager)</span>
+<span class="fc" id="L77">                .build();</span>
 
         // Configure request factory with timeouts
-<span class="nc" id="L80">        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);</span>
-<span class="nc" id="L81">        factory.setConnectTimeout(connectTimeout);</span>
-<span class="nc" id="L82">        factory.setConnectionRequestTimeout(5000); // Pool acquisition timeout</span>
+<span class="fc" id="L80">        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);</span>
+<span class="fc" id="L81">        factory.setConnectTimeout(connectTimeout);</span>
+<span class="fc" id="L82">        factory.setConnectionRequestTimeout(5000); // Pool acquisition timeout</span>
         
-<span class="nc" id="L84">        return factory;</span>
+<span class="fc" id="L84">        return factory;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

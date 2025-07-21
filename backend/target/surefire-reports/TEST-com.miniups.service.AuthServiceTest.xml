@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.miniups.service.AuthServiceTest" time="0.882" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.miniups.service.AuthServiceTest" time="1.349" tests="20" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -13,7 +13,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="/opt/homebrew/Cellar/openjdk@17/17.0.16/libexec/openjdk.jdk/Contents/Home/lib"/>
-    <property name="sun.java.command" value="/Users/hongxichen/Desktop/mini-ups/backend/target/surefire/surefirebooter-20250718214351876_3.jar /Users/hongxichen/Desktop/mini-ups/backend/target/surefire 2025-07-18T21-43-51_848-jvmRun1 surefire-20250718214351876_1tmp surefire_0-20250718214351876_2tmp"/>
+    <property name="sun.java.command" value="/Users/hongxichen/Desktop/mini-ups/backend/target/surefire/surefirebooter-20250720222554263_3.jar /Users/hongxichen/Desktop/mini-ups/backend/target/surefire 2025-07-20T22-25-54_234-jvmRun1 surefire-20250720222554263_1tmp surefire_0-20250720222554263_2tmp"/>
     <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="jdk.debug" value="release"/>
     <property name="test" value="AuthServiceTest"/>
@@ -30,7 +30,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="/Users/hongxichen/Desktop/mini-ups/backend/target/surefire/surefirebooter-20250718214351876_3.jar"/>
+    <property name="surefire.real.class.path" value="/Users/hongxichen/Desktop/mini-ups/backend/target/surefire/surefirebooter-20250720222554263_3.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.runtime.version" value="17.0.16+0"/>
@@ -58,14 +58,230 @@
     <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.class.version" value="61.0"/>
   </properties>
-  <testcase name="whenRegisteringUserWithExistingEmail_thenThrowsException" classname="com.miniups.service.AuthServiceTest" time="0.859">
-    <system-out><![CDATA[21:43:53.158 [main] INFO com.miniups.service.AuthService -- 开始处理用户注册: username=newUser, email=existing@test.com
-21:43:53.169 [main] WARN com.miniups.service.AuthService -- 注册失败 - 邮箱已存在: existing@test.com
+  <testcase name="register_shouldThrowException_whenUsernameExists" classname="com.miniups.service.AuthServiceTest" time="1.23">
+    <system-out><![CDATA[22:25:55.896 [main] INFO com.miniups.service.AuthService -- 开始处理用户注册: username=newuser, email=newuser@example.com
+22:25:55.910 [main] WARN com.miniups.service.AuthService -- 注册失败 - 用户名已存在: newuser
 ]]></system-out>
   </testcase>
-  <testcase name="whenRegisteringUserWithExistingUsername_thenThrowsException" classname="com.miniups.service.AuthServiceTest" time="0.003">
-    <system-out><![CDATA[21:43:53.179 [main] INFO com.miniups.service.AuthService -- 开始处理用户注册: username=existingUser, email=test@test.com
-21:43:53.180 [main] WARN com.miniups.service.AuthService -- 注册失败 - 用户名已存在: existingUser
+  <testcase name="isUsernameAvailable_shouldReturnTrue_whenUsernameAvailable" classname="com.miniups.service.AuthServiceTest" time="0.003"/>
+  <testcase name="isUsernameAvailable_shouldReturnFalse_whenUsernameExists" classname="com.miniups.service.AuthServiceTest" time="0.002"/>
+  <testcase name="login_shouldSucceed_whenValidCredentials" classname="com.miniups.service.AuthServiceTest" time="0.036">
+    <system-out><![CDATA[22:25:55.994 [main] INFO com.miniups.service.AuthService -- 开始处理用户登录: usernameOrEmail=testuser
+22:25:55.997 [main] INFO com.miniups.service.AuthService -- 用户登录成功: username=testuser
+]]></system-out>
+  </testcase>
+  <testcase name="availabilityCheck_shouldHandleEmptyAndNullValues" classname="com.miniups.service.AuthServiceTest" time="0.002"/>
+  <testcase name="login_shouldThrowException_whenBadCredentials" classname="com.miniups.service.AuthServiceTest" time="0.005">
+    <system-out><![CDATA[22:25:56.013 [main] INFO com.miniups.service.AuthService -- 开始处理用户登录: usernameOrEmail=testuser
+22:25:56.013 [main] WARN com.miniups.service.AuthService -- 登录失败 - 凭证无效: usernameOrEmail=testuser
+]]></system-out>
+  </testcase>
+  <testcase name="isEmailAvailable_shouldReturnFalse_whenEmailExists" classname="com.miniups.service.AuthServiceTest" time="0.002"/>
+  <testcase name="getUsernameFromToken_shouldReturnUsername" classname="com.miniups.service.AuthServiceTest" time="0.002"/>
+  <testcase name="register_shouldThrowException_whenEmailExists" classname="com.miniups.service.AuthServiceTest" time="0.002">
+    <system-out><![CDATA[22:25:56.020 [main] INFO com.miniups.service.AuthService -- 开始处理用户注册: username=newuser, email=newuser@example.com
+22:25:56.020 [main] WARN com.miniups.service.AuthService -- 注册失败 - 邮箱已存在: newuser@example.com
+]]></system-out>
+  </testcase>
+  <testcase name="validateToken_shouldReturnFalse_whenTokenInvalid" classname="com.miniups.service.AuthServiceTest" time="0.001"/>
+  <testcase name="isEmailAvailable_shouldReturnTrue_whenEmailAvailable" classname="com.miniups.service.AuthServiceTest" time="0.001"/>
+  <testcase name="validateToken_shouldReturnTrue_whenTokenValid" classname="com.miniups.service.AuthServiceTest" time="0.001"/>
+  <testcase name="changePassword_shouldFail_whenNewPasswordSameAsCurrent" classname="com.miniups.service.AuthServiceTest" time="0.002">
+    <system-out><![CDATA[22:25:56.028 [main] INFO com.miniups.service.AuthService -- 开始处理密码修改: username=testuser
+22:25:56.028 [main] WARN com.miniups.service.AuthService -- 密码修改失败 - 新密码与当前密码相同: username=testuser
+]]></system-out>
+  </testcase>
+  <testcase name="register_shouldHandleDatabaseSaveException" classname="com.miniups.service.AuthServiceTest" time="0.006">
+    <system-out><![CDATA[22:25:56.030 [main] INFO com.miniups.service.AuthService -- 开始处理用户注册: username=newuser, email=newuser@example.com
+22:25:56.031 [main] ERROR com.miniups.service.AuthService -- 用户注册过程中出现异常: username=newuser
+java.lang.RuntimeException: Database save failed
+	at com.miniups.service.AuthService.register(AuthService.java:101)
+	at com.miniups.service.AuthServiceTest.lambda$register_shouldHandleDatabaseSaveException$7(AuthServiceTest.java:453)
+	at org.assertj.core.api.ThrowableAssert.catchThrowable(ThrowableAssert.java:63)
+	at org.assertj.core.api.AssertionsForClassTypes.catchThrowable(AssertionsForClassTypes.java:892)
+	at org.assertj.core.api.Assertions.catchThrowable(Assertions.java:1365)
+	at org.assertj.core.api.Assertions.assertThatThrownBy(Assertions.java:1209)
+	at com.miniups.service.AuthServiceTest.register_shouldHandleDatabaseSaveException(AuthServiceTest.java:453)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+]]></system-out>
+  </testcase>
+  <testcase name="changePassword_shouldFail_whenUserNotFound" classname="com.miniups.service.AuthServiceTest" time="0.001">
+    <system-out><![CDATA[22:25:56.037 [main] INFO com.miniups.service.AuthService -- 开始处理密码修改: username=nonexistent
+]]></system-out>
+  </testcase>
+  <testcase name="validateToken_shouldReturnFalse_whenExceptionThrown" classname="com.miniups.service.AuthServiceTest" time="0.001">
+    <system-out><![CDATA[22:25:56.039 [main] WARN com.miniups.service.AuthService -- 令牌验证失败: Token validation error
+]]></system-out>
+  </testcase>
+  <testcase name="register_shouldSucceed_whenValidData" classname="com.miniups.service.AuthServiceTest" time="0.008">
+    <system-out><![CDATA[22:25:56.046 [main] INFO com.miniups.service.AuthService -- 开始处理用户注册: username=newuser, email=newuser@example.com
+22:25:56.050 [main] INFO com.miniups.service.AuthService -- 用户创建成功: id=1, username=newuser
+22:25:56.050 [main] INFO com.miniups.service.AuthService -- 用户注册完成: username=newuser
+]]></system-out>
+  </testcase>
+  <testcase name="changePassword_shouldFail_whenCurrentPasswordIncorrect" classname="com.miniups.service.AuthServiceTest" time="0.003">
+    <system-out><![CDATA[22:25:56.053 [main] INFO com.miniups.service.AuthService -- 开始处理密码修改: username=testuser
+22:25:56.053 [main] WARN com.miniups.service.AuthService -- 密码修改失败 - 当前密码错误: username=testuser
+]]></system-out>
+  </testcase>
+  <testcase name="login_shouldThrowException_whenUserDisabled" classname="com.miniups.service.AuthServiceTest" time="0.003">
+    <system-out><![CDATA[22:25:56.055 [main] INFO com.miniups.service.AuthService -- 开始处理用户登录: usernameOrEmail=testuser
+22:25:56.056 [main] WARN com.miniups.service.AuthService -- 登录失败 - 用户已被禁用: testuser
+22:25:56.056 [main] ERROR com.miniups.service.AuthService -- 登录过程中出现异常: usernameOrEmail=testuser
+com.miniups.exception.InvalidCredentialsException: 账户已被禁用，请联系管理员
+	at com.miniups.service.AuthService.login(AuthService.java:155)
+	at com.miniups.service.AuthServiceTest.lambda$login_shouldThrowException_whenUserDisabled$3(AuthServiceTest.java:201)
+	at org.assertj.core.api.ThrowableAssert.catchThrowable(ThrowableAssert.java:63)
+	at org.assertj.core.api.AssertionsForClassTypes.catchThrowable(AssertionsForClassTypes.java:892)
+	at org.assertj.core.api.Assertions.catchThrowable(Assertions.java:1365)
+	at org.assertj.core.api.Assertions.assertThatThrownBy(Assertions.java:1209)
+	at com.miniups.service.AuthServiceTest.login_shouldThrowException_whenUserDisabled(AuthServiceTest.java:201)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+]]></system-out>
+  </testcase>
+  <testcase name="changePassword_shouldSucceed_whenCurrentPasswordCorrect" classname="com.miniups.service.AuthServiceTest" time="0.002">
+    <system-out><![CDATA[22:25:56.059 [main] INFO com.miniups.service.AuthService -- 开始处理密码修改: username=testuser
+22:25:56.060 [main] INFO com.miniups.service.AuthService -- 密码修改成功: username=testuser
 ]]></system-out>
   </testcase>
 </testsuite>

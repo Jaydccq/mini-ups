@@ -30,11 +30,11 @@ public abstract class BaseBusinessException extends RuntimeException {
 <span class="fc" id="L30">    }</span>
     
     public BaseBusinessException(String errorCode, String message, ExceptionSeverity severity, Throwable cause) {
-<span class="nc" id="L33">        super(message, cause);</span>
-<span class="nc" id="L34">        this.errorCode = errorCode;</span>
-<span class="nc" id="L35">        this.args = null;</span>
-<span class="nc" id="L36">        this.severity = severity;</span>
-<span class="nc" id="L37">    }</span>
+<span class="fc" id="L33">        super(message, cause);</span>
+<span class="fc" id="L34">        this.errorCode = errorCode;</span>
+<span class="fc" id="L35">        this.args = null;</span>
+<span class="fc" id="L36">        this.severity = severity;</span>
+<span class="fc" id="L37">    }</span>
     
     public BaseBusinessException(String errorCode, String message, Object[] args, ExceptionSeverity severity) {
 <span class="nc" id="L40">        super(message);</span>

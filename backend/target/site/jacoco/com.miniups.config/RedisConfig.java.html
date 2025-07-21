@@ -103,32 +103,32 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-<span class="nc" id="L106">public class RedisConfig {</span>
+<span class="fc" id="L106">public class RedisConfig {</span>
 
 
     @Bean
     public RedisTemplate&lt;String, Object&gt; redisTemplate(RedisConnectionFactory connectionFactory) {
-<span class="nc" id="L111">        RedisTemplate&lt;String, Object&gt; template = new RedisTemplate&lt;&gt;();</span>
-<span class="nc" id="L112">        template.setConnectionFactory(connectionFactory);</span>
+<span class="fc" id="L111">        RedisTemplate&lt;String, Object&gt; template = new RedisTemplate&lt;&gt;();</span>
+<span class="fc" id="L112">        template.setConnectionFactory(connectionFactory);</span>
         
         // String serializer for keys
-<span class="nc" id="L115">        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();</span>
-<span class="nc" id="L116">        template.setKeySerializer(stringRedisSerializer);</span>
-<span class="nc" id="L117">        template.setHashKeySerializer(stringRedisSerializer);</span>
+<span class="fc" id="L115">        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();</span>
+<span class="fc" id="L116">        template.setKeySerializer(stringRedisSerializer);</span>
+<span class="fc" id="L117">        template.setHashKeySerializer(stringRedisSerializer);</span>
         
         // JSON serializer for values
-<span class="nc" id="L120">        GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer =</span>
+<span class="fc" id="L120">        GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer =</span>
             new GenericJackson2JsonRedisSerializer();
-<span class="nc" id="L122">        template.setValueSerializer(jackson2JsonRedisSerializer);</span>
-<span class="nc" id="L123">        template.setHashValueSerializer(jackson2JsonRedisSerializer);</span>
+<span class="fc" id="L122">        template.setValueSerializer(jackson2JsonRedisSerializer);</span>
+<span class="fc" id="L123">        template.setHashValueSerializer(jackson2JsonRedisSerializer);</span>
         
-<span class="nc" id="L125">        template.afterPropertiesSet();</span>
-<span class="nc" id="L126">        return template;</span>
+<span class="fc" id="L125">        template.afterPropertiesSet();</span>
+<span class="fc" id="L126">        return template;</span>
     }
     
     @Bean
     public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
-<span class="nc" id="L131">        return new StringRedisTemplate(connectionFactory);</span>
+<span class="fc" id="L131">        return new StringRedisTemplate(connectionFactory);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

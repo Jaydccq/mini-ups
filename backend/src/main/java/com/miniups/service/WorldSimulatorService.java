@@ -277,6 +277,13 @@ public class WorldSimulatorService {
      * @return Whether operation was successful
      */
     public CompletableFuture<Boolean> sendTruckToPickup(Integer truckId, Integer warehouseId) {
+        if (truckId == null) {
+            throw new IllegalArgumentException("Truck ID cannot be null");
+        }
+        if (warehouseId == null || warehouseId < 0) {
+            throw new IllegalArgumentException("Warehouse ID must be a positive number");
+        }
+        
         if (!connected) {
             return CompletableFuture.completedFuture(false);
         }
@@ -322,7 +329,14 @@ public class WorldSimulatorService {
      * @return Whether operation was successful
      */
     public CompletableFuture<Boolean> sendTruckToDeliver(Integer truckId, Map<Long, int[]> deliveries) {
-        if (!connected || deliveries.isEmpty()) {
+        if (truckId == null) {
+            throw new IllegalArgumentException("Truck ID cannot be null");
+        }
+        if (deliveries == null || deliveries.isEmpty()) {
+            throw new IllegalArgumentException("Deliveries cannot be null or empty");
+        }
+        
+        if (!connected) {
             return CompletableFuture.completedFuture(false);
         }
         

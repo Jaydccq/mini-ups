@@ -27,13 +27,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorldSimulatorHealthIndicator implements HealthIndicator {
 
-<span class="nc" id="L30">    private static final Logger logger = LoggerFactory.getLogger(WorldSimulatorHealthIndicator.class);</span>
+<span class="fc" id="L30">    private static final Logger logger = LoggerFactory.getLogger(WorldSimulatorHealthIndicator.class);</span>
     
     private final WorldSimulatorService worldSimulatorService;
 
-<span class="nc" id="L34">    public WorldSimulatorHealthIndicator(WorldSimulatorService worldSimulatorService) {</span>
-<span class="nc" id="L35">        this.worldSimulatorService = worldSimulatorService;</span>
-<span class="nc" id="L36">    }</span>
+<span class="fc" id="L34">    public WorldSimulatorHealthIndicator(WorldSimulatorService worldSimulatorService) {</span>
+<span class="fc" id="L35">        this.worldSimulatorService = worldSimulatorService;</span>
+<span class="fc" id="L36">    }</span>
 
     @Override
     public Health health() {

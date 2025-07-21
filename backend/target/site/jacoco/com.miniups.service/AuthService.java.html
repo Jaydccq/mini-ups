@@ -53,7 +53,7 @@ import java.util.Optional;
 @Transactional
 public class AuthService {
     
-<span class="fc" id="L56">    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);</span>
+<span class="nc" id="L56">    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);</span>
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -63,12 +63,12 @@ public class AuthService {
     public AuthService(UserRepository userRepository, 
                       PasswordEncoder passwordEncoder,
                       JwtTokenProvider jwtTokenProvider,
-<span class="fc" id="L66">                      AuthenticationManager authenticationManager) {</span>
-<span class="fc" id="L67">        this.userRepository = userRepository;</span>
-<span class="fc" id="L68">        this.passwordEncoder = passwordEncoder;</span>
-<span class="fc" id="L69">        this.jwtTokenProvider = jwtTokenProvider;</span>
-<span class="fc" id="L70">        this.authenticationManager = authenticationManager;</span>
-<span class="fc" id="L71">    }</span>
+<span class="nc" id="L66">                      AuthenticationManager authenticationManager) {</span>
+<span class="nc" id="L67">        this.userRepository = userRepository;</span>
+<span class="nc" id="L68">        this.passwordEncoder = passwordEncoder;</span>
+<span class="nc" id="L69">        this.jwtTokenProvider = jwtTokenProvider;</span>
+<span class="nc" id="L70">        this.authenticationManager = authenticationManager;</span>
+<span class="nc" id="L71">    }</span>
     
     /**
      * 用户注册
@@ -78,19 +78,19 @@ public class AuthService {
      * @throws RuntimeException 当用户名或邮箱已存在时抛出
      */
     public AuthResponseDto register(RegisterRequestDto registerRequest) {
-<span class="fc" id="L81">        logger.info(&quot;开始处理用户注册: username={}, email={}&quot;, </span>
-<span class="fc" id="L82">                   registerRequest.getUsername(), registerRequest.getEmail());</span>
+<span class="nc" id="L81">        logger.info(&quot;开始处理用户注册: username={}, email={}&quot;, </span>
+<span class="nc" id="L82">                   registerRequest.getUsername(), registerRequest.getEmail());</span>
         
         // 检查用户名是否已存在
-<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (userRepository.existsByUsername(registerRequest.getUsername())) {</span>
-<span class="fc" id="L86">            logger.warn(&quot;注册失败 - 用户名已存在: {}&quot;, registerRequest.getUsername());</span>
-<span class="fc" id="L87">            throw new UserAlreadyExistsException(&quot;用户名&quot;, registerRequest.getUsername());</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (userRepository.existsByUsername(registerRequest.getUsername())) {</span>
+<span class="nc" id="L86">            logger.warn(&quot;注册失败 - 用户名已存在: {}&quot;, registerRequest.getUsername());</span>
+<span class="nc" id="L87">            throw new UserAlreadyExistsException(&quot;用户名&quot;, registerRequest.getUsername());</span>
         }
         
         // 检查邮箱是否已存在
-<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (userRepository.existsByEmail(registerRequest.getEmail())) {</span>
-<span class="fc" id="L92">            logger.warn(&quot;注册失败 - 邮箱已存在: {}&quot;, registerRequest.getEmail());</span>
-<span class="fc" id="L93">            throw new UserAlreadyExistsException(&quot;邮箱&quot;, registerRequest.getEmail());</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (userRepository.existsByEmail(registerRequest.getEmail())) {</span>
+<span class="nc" id="L92">            logger.warn(&quot;注册失败 - 邮箱已存在: {}&quot;, registerRequest.getEmail());</span>
+<span class="nc" id="L93">            throw new UserAlreadyExistsException(&quot;邮箱&quot;, registerRequest.getEmail());</span>
         }
         
         try {

@@ -37,9 +37,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Component
-<span class="nc" id="L40">public class WebhookAuthenticationFilter extends OncePerRequestFilter {</span>
+<span class="fc" id="L40">public class WebhookAuthenticationFilter extends OncePerRequestFilter {</span>
     
-<span class="nc" id="L42">    private static final Logger logger = LoggerFactory.getLogger(WebhookAuthenticationFilter.class);</span>
+<span class="fc" id="L42">    private static final Logger logger = LoggerFactory.getLogger(WebhookAuthenticationFilter.class);</span>
     
     @Value(&quot;${amazon.webhook.secret:default-webhook-secret-key}&quot;)
     private String webhookSecret;

@@ -277,40 +277,47 @@ import java.util.concurrent.atomic.AtomicLong;
      * @return Whether operation was successful
      */
     public CompletableFuture&lt;Boolean&gt; sendTruckToPickup(Integer truckId, Integer warehouseId) {
-<span class="nc bnc" id="L280" title="All 2 branches missed.">        if (!connected) {</span>
-<span class="nc" id="L281">            return CompletableFuture.completedFuture(false);</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">        if (truckId == null) {</span>
+<span class="nc" id="L281">            throw new IllegalArgumentException(&quot;Truck ID cannot be null&quot;);</span>
+        }
+<span class="nc bnc" id="L283" title="All 4 branches missed.">        if (warehouseId == null || warehouseId &lt; 0) {</span>
+<span class="nc" id="L284">            throw new IllegalArgumentException(&quot;Warehouse ID must be a positive number&quot;);</span>
+        }
+        
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if (!connected) {</span>
+<span class="nc" id="L288">            return CompletableFuture.completedFuture(false);</span>
         }
         
         try {
-<span class="nc" id="L285">            long seqNum = getNextSequenceNumber();</span>
+<span class="nc" id="L292">            long seqNum = getNextSequenceNumber();</span>
             
-<span class="nc" id="L287">            WorldUpsProto.UGoPickup.Builder pickupBuilder = WorldUpsProto.UGoPickup.newBuilder();</span>
-<span class="nc" id="L288">            pickupBuilder.setTruckid(truckId);</span>
-<span class="nc" id="L289">            pickupBuilder.setWhid(warehouseId);</span>
-<span class="nc" id="L290">            pickupBuilder.setSeqnum(seqNum);</span>
+<span class="nc" id="L294">            WorldUpsProto.UGoPickup.Builder pickupBuilder = WorldUpsProto.UGoPickup.newBuilder();</span>
+<span class="nc" id="L295">            pickupBuilder.setTruckid(truckId);</span>
+<span class="nc" id="L296">            pickupBuilder.setWhid(warehouseId);</span>
+<span class="nc" id="L297">            pickupBuilder.setSeqnum(seqNum);</span>
             
-<span class="nc" id="L292">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
-<span class="nc" id="L293">            commandsBuilder.addPickups(pickupBuilder.build());</span>
+<span class="nc" id="L299">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
+<span class="nc" id="L300">            commandsBuilder.addPickups(pickupBuilder.build());</span>
             
-<span class="nc" id="L295">            CompletableFuture&lt;Object&gt; future = new CompletableFuture&lt;&gt;();</span>
-<span class="nc" id="L296">            pendingResponses.put(seqNum, future);</span>
-<span class="nc" id="L297">            responseTimeouts.put(seqNum, LocalDateTime.now().plusSeconds(30));</span>
+<span class="nc" id="L302">            CompletableFuture&lt;Object&gt; future = new CompletableFuture&lt;&gt;();</span>
+<span class="nc" id="L303">            pendingResponses.put(seqNum, future);</span>
+<span class="nc" id="L304">            responseTimeouts.put(seqNum, LocalDateTime.now().plusSeconds(30));</span>
             
-<span class="nc" id="L299">            sendCommandsAsync(commandsBuilder.build());</span>
+<span class="nc" id="L306">            sendCommandsAsync(commandsBuilder.build());</span>
             
-<span class="nc" id="L301">            logger.info(&quot;Sent truck {} to pickup at warehouse {}&quot;, truckId, warehouseId);</span>
+<span class="nc" id="L308">            logger.info(&quot;Sent truck {} to pickup at warehouse {}&quot;, truckId, warehouseId);</span>
             
-<span class="nc" id="L303">            return future.thenApply(result -&gt; {</span>
-<span class="nc bnc" id="L304" title="All 4 branches missed.">                if (result instanceof String &amp;&amp; ((String) result).contains(&quot;Error&quot;)) {</span>
-<span class="nc" id="L305">                    logger.error(&quot;Pickup failed: {}&quot;, result);</span>
-<span class="nc" id="L306">                    return false;</span>
+<span class="nc" id="L310">            return future.thenApply(result -&gt; {</span>
+<span class="nc bnc" id="L311" title="All 4 branches missed.">                if (result instanceof String &amp;&amp; ((String) result).contains(&quot;Error&quot;)) {</span>
+<span class="nc" id="L312">                    logger.error(&quot;Pickup failed: {}&quot;, result);</span>
+<span class="nc" id="L313">                    return false;</span>
                 }
-<span class="nc" id="L308">                return true;</span>
+<span class="nc" id="L315">                return true;</span>
             });
             
-<span class="nc" id="L311">        } catch (Exception e) {</span>
-<span class="nc" id="L312">            logger.error(&quot;Error sending truck to pickup&quot;, e);</span>
-<span class="nc" id="L313">            return CompletableFuture.completedFuture(false);</span>
+<span class="nc" id="L318">        } catch (Exception e) {</span>
+<span class="nc" id="L319">            logger.error(&quot;Error sending truck to pickup&quot;, e);</span>
+<span class="nc" id="L320">            return CompletableFuture.completedFuture(false);</span>
         }
     }
     
@@ -322,48 +329,55 @@ import java.util.concurrent.atomic.AtomicLong;
      * @return Whether operation was successful
      */
     public CompletableFuture&lt;Boolean&gt; sendTruckToDeliver(Integer truckId, Map&lt;Long, int[]&gt; deliveries) {
-<span class="nc bnc" id="L325" title="All 4 branches missed.">        if (!connected || deliveries.isEmpty()) {</span>
-<span class="nc" id="L326">            return CompletableFuture.completedFuture(false);</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        if (truckId == null) {</span>
+<span class="nc" id="L333">            throw new IllegalArgumentException(&quot;Truck ID cannot be null&quot;);</span>
+        }
+<span class="nc bnc" id="L335" title="All 4 branches missed.">        if (deliveries == null || deliveries.isEmpty()) {</span>
+<span class="nc" id="L336">            throw new IllegalArgumentException(&quot;Deliveries cannot be null or empty&quot;);</span>
+        }
+        
+<span class="nc bnc" id="L339" title="All 2 branches missed.">        if (!connected) {</span>
+<span class="nc" id="L340">            return CompletableFuture.completedFuture(false);</span>
         }
         
         try {
-<span class="nc" id="L330">            long seqNum = getNextSequenceNumber();</span>
+<span class="nc" id="L344">            long seqNum = getNextSequenceNumber();</span>
             
-<span class="nc" id="L332">            WorldUpsProto.UGoDeliver.Builder deliverBuilder = WorldUpsProto.UGoDeliver.newBuilder();</span>
-<span class="nc" id="L333">            deliverBuilder.setTruckid(truckId);</span>
-<span class="nc" id="L334">            deliverBuilder.setSeqnum(seqNum);</span>
+<span class="nc" id="L346">            WorldUpsProto.UGoDeliver.Builder deliverBuilder = WorldUpsProto.UGoDeliver.newBuilder();</span>
+<span class="nc" id="L347">            deliverBuilder.setTruckid(truckId);</span>
+<span class="nc" id="L348">            deliverBuilder.setSeqnum(seqNum);</span>
             
             // Add delivery locations
-<span class="nc bnc" id="L337" title="All 2 branches missed.">            for (Map.Entry&lt;Long, int[]&gt; delivery : deliveries.entrySet()) {</span>
-<span class="nc" id="L338">                WorldUpsProto.UDeliveryLocation.Builder locationBuilder = WorldUpsProto.UDeliveryLocation.newBuilder();</span>
-<span class="nc" id="L339">                locationBuilder.setPackageid(delivery.getKey());</span>
-<span class="nc" id="L340">                locationBuilder.setX(delivery.getValue()[0]);</span>
-<span class="nc" id="L341">                locationBuilder.setY(delivery.getValue()[1]);</span>
-<span class="nc" id="L342">                deliverBuilder.addPackages(locationBuilder.build());</span>
-<span class="nc" id="L343">            }</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">            for (Map.Entry&lt;Long, int[]&gt; delivery : deliveries.entrySet()) {</span>
+<span class="nc" id="L352">                WorldUpsProto.UDeliveryLocation.Builder locationBuilder = WorldUpsProto.UDeliveryLocation.newBuilder();</span>
+<span class="nc" id="L353">                locationBuilder.setPackageid(delivery.getKey());</span>
+<span class="nc" id="L354">                locationBuilder.setX(delivery.getValue()[0]);</span>
+<span class="nc" id="L355">                locationBuilder.setY(delivery.getValue()[1]);</span>
+<span class="nc" id="L356">                deliverBuilder.addPackages(locationBuilder.build());</span>
+<span class="nc" id="L357">            }</span>
             
-<span class="nc" id="L345">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
-<span class="nc" id="L346">            commandsBuilder.addDeliveries(deliverBuilder.build());</span>
+<span class="nc" id="L359">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
+<span class="nc" id="L360">            commandsBuilder.addDeliveries(deliverBuilder.build());</span>
             
-<span class="nc" id="L348">            CompletableFuture&lt;Object&gt; future = new CompletableFuture&lt;&gt;();</span>
-<span class="nc" id="L349">            pendingResponses.put(seqNum, future);</span>
-<span class="nc" id="L350">            responseTimeouts.put(seqNum, LocalDateTime.now().plusSeconds(30));</span>
+<span class="nc" id="L362">            CompletableFuture&lt;Object&gt; future = new CompletableFuture&lt;&gt;();</span>
+<span class="nc" id="L363">            pendingResponses.put(seqNum, future);</span>
+<span class="nc" id="L364">            responseTimeouts.put(seqNum, LocalDateTime.now().plusSeconds(30));</span>
             
-<span class="nc" id="L352">            sendCommandsAsync(commandsBuilder.build());</span>
+<span class="nc" id="L366">            sendCommandsAsync(commandsBuilder.build());</span>
             
-<span class="nc" id="L354">            logger.info(&quot;Sent truck {} to deliver {} packages&quot;, truckId, deliveries.size());</span>
+<span class="nc" id="L368">            logger.info(&quot;Sent truck {} to deliver {} packages&quot;, truckId, deliveries.size());</span>
             
-<span class="nc" id="L356">            return future.thenApply(result -&gt; {</span>
-<span class="nc bnc" id="L357" title="All 4 branches missed.">                if (result instanceof String &amp;&amp; ((String) result).contains(&quot;Error&quot;)) {</span>
-<span class="nc" id="L358">                    logger.error(&quot;Delivery failed: {}&quot;, result);</span>
-<span class="nc" id="L359">                    return false;</span>
+<span class="nc" id="L370">            return future.thenApply(result -&gt; {</span>
+<span class="nc bnc" id="L371" title="All 4 branches missed.">                if (result instanceof String &amp;&amp; ((String) result).contains(&quot;Error&quot;)) {</span>
+<span class="nc" id="L372">                    logger.error(&quot;Delivery failed: {}&quot;, result);</span>
+<span class="nc" id="L373">                    return false;</span>
                 }
-<span class="nc" id="L361">                return true;</span>
+<span class="nc" id="L375">                return true;</span>
             });
             
-<span class="nc" id="L364">        } catch (Exception e) {</span>
-<span class="nc" id="L365">            logger.error(&quot;Error sending truck to deliver&quot;, e);</span>
-<span class="nc" id="L366">            return CompletableFuture.completedFuture(false);</span>
+<span class="nc" id="L378">        } catch (Exception e) {</span>
+<span class="nc" id="L379">            logger.error(&quot;Error sending truck to deliver&quot;, e);</span>
+<span class="nc" id="L380">            return CompletableFuture.completedFuture(false);</span>
         }
     }
     
@@ -374,36 +388,36 @@ import java.util.concurrent.atomic.AtomicLong;
      * @return Truck status information
      */
     public CompletableFuture&lt;WorldUpsProto.UTruck&gt; queryTruckStatus(Integer truckId) {
-<span class="nc bnc" id="L377" title="All 2 branches missed.">        if (!connected) {</span>
-<span class="nc" id="L378">            return CompletableFuture.completedFuture(null);</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">        if (!connected) {</span>
+<span class="nc" id="L392">            return CompletableFuture.completedFuture(null);</span>
         }
         
         try {
-<span class="nc" id="L382">            long seqNum = getNextSequenceNumber();</span>
+<span class="nc" id="L396">            long seqNum = getNextSequenceNumber();</span>
             
-<span class="nc" id="L384">            WorldUpsProto.UQuery.Builder queryBuilder = WorldUpsProto.UQuery.newBuilder();</span>
-<span class="nc" id="L385">            queryBuilder.setTruckid(truckId);</span>
-<span class="nc" id="L386">            queryBuilder.setSeqnum(seqNum);</span>
+<span class="nc" id="L398">            WorldUpsProto.UQuery.Builder queryBuilder = WorldUpsProto.UQuery.newBuilder();</span>
+<span class="nc" id="L399">            queryBuilder.setTruckid(truckId);</span>
+<span class="nc" id="L400">            queryBuilder.setSeqnum(seqNum);</span>
             
-<span class="nc" id="L388">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
-<span class="nc" id="L389">            commandsBuilder.addQueries(queryBuilder.build());</span>
+<span class="nc" id="L402">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
+<span class="nc" id="L403">            commandsBuilder.addQueries(queryBuilder.build());</span>
             
-<span class="nc" id="L391">            CompletableFuture&lt;Object&gt; future = new CompletableFuture&lt;&gt;();</span>
-<span class="nc" id="L392">            pendingResponses.put(seqNum, future);</span>
-<span class="nc" id="L393">            responseTimeouts.put(seqNum, LocalDateTime.now().plusSeconds(10));</span>
+<span class="nc" id="L405">            CompletableFuture&lt;Object&gt; future = new CompletableFuture&lt;&gt;();</span>
+<span class="nc" id="L406">            pendingResponses.put(seqNum, future);</span>
+<span class="nc" id="L407">            responseTimeouts.put(seqNum, LocalDateTime.now().plusSeconds(10));</span>
             
-<span class="nc" id="L395">            sendCommandsAsync(commandsBuilder.build());</span>
+<span class="nc" id="L409">            sendCommandsAsync(commandsBuilder.build());</span>
             
-<span class="nc" id="L397">            return future.thenApply(result -&gt; {</span>
-<span class="nc bnc" id="L398" title="All 2 branches missed.">                if (result instanceof WorldUpsProto.UTruck) {</span>
-<span class="nc" id="L399">                    return (WorldUpsProto.UTruck) result;</span>
+<span class="nc" id="L411">            return future.thenApply(result -&gt; {</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">                if (result instanceof WorldUpsProto.UTruck) {</span>
+<span class="nc" id="L413">                    return (WorldUpsProto.UTruck) result;</span>
                 }
-<span class="nc" id="L401">                return null;</span>
+<span class="nc" id="L415">                return null;</span>
             });
             
-<span class="nc" id="L404">        } catch (Exception e) {</span>
-<span class="nc" id="L405">            logger.error(&quot;Error querying truck status&quot;, e);</span>
-<span class="nc" id="L406">            return CompletableFuture.completedFuture(null);</span>
+<span class="nc" id="L418">        } catch (Exception e) {</span>
+<span class="nc" id="L419">            logger.error(&quot;Error querying truck status&quot;, e);</span>
+<span class="nc" id="L420">            return CompletableFuture.completedFuture(null);</span>
         }
     }
     
@@ -413,595 +427,595 @@ import java.util.concurrent.atomic.AtomicLong;
      * @param speed Speed value
      */
     public void setSimulationSpeed(int speed) {
-<span class="nc bnc" id="L416" title="All 2 branches missed.">        if (!connected) {</span>
-<span class="nc" id="L417">            return;</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">        if (!connected) {</span>
+<span class="nc" id="L431">            return;</span>
         }
         
         try {
-<span class="nc" id="L421">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
-<span class="nc" id="L422">            commandsBuilder.setSimspeed(speed);</span>
+<span class="nc" id="L435">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
+<span class="nc" id="L436">            commandsBuilder.setSimspeed(speed);</span>
             
-<span class="nc" id="L424">            sendCommandsAsync(commandsBuilder.build());</span>
+<span class="nc" id="L438">            sendCommandsAsync(commandsBuilder.build());</span>
             
-<span class="nc" id="L426">            logger.info(&quot;Set simulation speed to {}&quot;, speed);</span>
+<span class="nc" id="L440">            logger.info(&quot;Set simulation speed to {}&quot;, speed);</span>
             
-<span class="nc" id="L428">        } catch (Exception e) {</span>
-<span class="nc" id="L429">            logger.error(&quot;Error setting simulation speed&quot;, e);</span>
-<span class="nc" id="L430">        }</span>
-<span class="nc" id="L431">    }</span>
+<span class="nc" id="L442">        } catch (Exception e) {</span>
+<span class="nc" id="L443">            logger.error(&quot;Error setting simulation speed&quot;, e);</span>
+<span class="nc" id="L444">        }</span>
+<span class="nc" id="L445">    }</span>
     
     // Private helper methods
     
     private void initializeTrucks() {
-<span class="nc" id="L436">        availableTrucks = truckRepository.findAll();</span>
-<span class="nc bnc" id="L437" title="All 2 branches missed.">        if (availableTrucks.isEmpty()) {</span>
+<span class="nc" id="L450">        availableTrucks = truckRepository.findAll();</span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">        if (availableTrucks.isEmpty()) {</span>
             // Create default trucks
-<span class="nc bnc" id="L439" title="All 2 branches missed.">            for (int i = 1; i &lt;= 10; i++) {</span>
-<span class="nc" id="L440">                Truck truck = new Truck();</span>
-<span class="nc" id="L441">                truck.setTruckId(i);</span>
-<span class="nc" id="L442">                truck.setStatus(TruckStatus.IDLE);</span>
-<span class="nc" id="L443">                truck.setCurrentX(0);</span>
-<span class="nc" id="L444">                truck.setCurrentY(0);</span>
-<span class="nc" id="L445">                truck.setCapacity(1000);</span>
-<span class="nc" id="L446">                availableTrucks.add(truckRepository.save(truck));</span>
+<span class="nc bnc" id="L453" title="All 2 branches missed.">            for (int i = 1; i &lt;= 10; i++) {</span>
+<span class="nc" id="L454">                Truck truck = new Truck();</span>
+<span class="nc" id="L455">                truck.setTruckId(i);</span>
+<span class="nc" id="L456">                truck.setStatus(TruckStatus.IDLE);</span>
+<span class="nc" id="L457">                truck.setCurrentX(0);</span>
+<span class="nc" id="L458">                truck.setCurrentY(0);</span>
+<span class="nc" id="L459">                truck.setCapacity(1000);</span>
+<span class="nc" id="L460">                availableTrucks.add(truckRepository.save(truck));</span>
             }
-<span class="nc" id="L448">            logger.info(&quot;Created {} default trucks&quot;, availableTrucks.size());</span>
+<span class="nc" id="L462">            logger.info(&quot;Created {} default trucks&quot;, availableTrucks.size());</span>
         }
-<span class="nc" id="L450">        logger.info(&quot;Initialized {} trucks for world connection&quot;, availableTrucks.size());</span>
-<span class="nc" id="L451">    }</span>
+<span class="nc" id="L464">        logger.info(&quot;Initialized {} trucks for world connection&quot;, availableTrucks.size());</span>
+<span class="nc" id="L465">    }</span>
     
     private void startMessageProcessing() {
         // 启动消息发送线程
-<span class="nc" id="L455">        senderTask = executorService.submit(this::messageSenderLoop);</span>
+<span class="nc" id="L469">        senderTask = executorService.submit(this::messageSenderLoop);</span>
         
         // 启动消息接收线程
-<span class="nc" id="L458">        receiverTask = executorService.submit(this::messageReceiverLoop);</span>
+<span class="nc" id="L472">        receiverTask = executorService.submit(this::messageReceiverLoop);</span>
         
         // 启动超时清理线程
-<span class="nc" id="L461">        executorService.submit(this::timeoutCleanupLoop);</span>
-<span class="nc" id="L462">    }</span>
+<span class="nc" id="L475">        executorService.submit(this::timeoutCleanupLoop);</span>
+<span class="nc" id="L476">    }</span>
     
     private void stopMessageProcessing() {
-<span class="nc bnc" id="L465" title="All 2 branches missed.">        if (senderTask != null) {</span>
-<span class="nc" id="L466">            senderTask.cancel(true);</span>
+<span class="nc bnc" id="L479" title="All 2 branches missed.">        if (senderTask != null) {</span>
+<span class="nc" id="L480">            senderTask.cancel(true);</span>
         }
-<span class="nc bnc" id="L468" title="All 2 branches missed.">        if (receiverTask != null) {</span>
-<span class="nc" id="L469">            receiverTask.cancel(true);</span>
+<span class="nc bnc" id="L482" title="All 2 branches missed.">        if (receiverTask != null) {</span>
+<span class="nc" id="L483">            receiverTask.cancel(true);</span>
         }
-<span class="nc" id="L471">    }</span>
+<span class="nc" id="L485">    }</span>
     
     private void messageSenderLoop() {
-<span class="nc" id="L474">        logger.info(&quot;Message sender loop started&quot;);</span>
+<span class="nc" id="L488">        logger.info(&quot;Message sender loop started&quot;);</span>
         
-<span class="nc bnc" id="L476" title="All 4 branches missed.">        while (running &amp;&amp; !Thread.currentThread().isInterrupted()) {</span>
+<span class="nc bnc" id="L490" title="All 4 branches missed.">        while (running &amp;&amp; !Thread.currentThread().isInterrupted()) {</span>
             try {
-<span class="nc" id="L478">                WorldUpsProto.UCommands command = messageQueue.poll(1, TimeUnit.SECONDS);</span>
-<span class="nc bnc" id="L479" title="All 2 branches missed.">                if (command != null) {</span>
-<span class="nc" id="L480">                    sendProtobufMessage(command);</span>
+<span class="nc" id="L492">                WorldUpsProto.UCommands command = messageQueue.poll(1, TimeUnit.SECONDS);</span>
+<span class="nc bnc" id="L493" title="All 2 branches missed.">                if (command != null) {</span>
+<span class="nc" id="L494">                    sendProtobufMessage(command);</span>
                 }
-<span class="nc" id="L482">            } catch (InterruptedException e) {</span>
-<span class="nc" id="L483">                Thread.currentThread().interrupt();</span>
-<span class="nc" id="L484">                break;</span>
-<span class="nc" id="L485">            } catch (Exception e) {</span>
-<span class="nc" id="L486">                logger.error(&quot;Error in message sender loop&quot;, e);</span>
+<span class="nc" id="L496">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L497">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L498">                break;</span>
+<span class="nc" id="L499">            } catch (Exception e) {</span>
+<span class="nc" id="L500">                logger.error(&quot;Error in message sender loop&quot;, e);</span>
                 try {
-<span class="nc" id="L488">                    Thread.sleep(1000);</span>
-<span class="nc" id="L489">                } catch (InterruptedException ie) {</span>
-<span class="nc" id="L490">                    Thread.currentThread().interrupt();</span>
-<span class="nc" id="L491">                    break;</span>
-<span class="nc" id="L492">                }</span>
-<span class="nc" id="L493">            }</span>
+<span class="nc" id="L502">                    Thread.sleep(1000);</span>
+<span class="nc" id="L503">                } catch (InterruptedException ie) {</span>
+<span class="nc" id="L504">                    Thread.currentThread().interrupt();</span>
+<span class="nc" id="L505">                    break;</span>
+<span class="nc" id="L506">                }</span>
+<span class="nc" id="L507">            }</span>
         }
         
-<span class="nc" id="L496">        logger.info(&quot;Message sender loop stopped&quot;);</span>
-<span class="nc" id="L497">    }</span>
+<span class="nc" id="L510">        logger.info(&quot;Message sender loop stopped&quot;);</span>
+<span class="nc" id="L511">    }</span>
     
     private void messageReceiverLoop() {
-<span class="nc" id="L500">        logger.info(&quot;Message receiver loop started&quot;);</span>
+<span class="nc" id="L514">        logger.info(&quot;Message receiver loop started&quot;);</span>
         
-<span class="nc bnc" id="L502" title="All 4 branches missed.">        while (running &amp;&amp; !Thread.currentThread().isInterrupted()) {</span>
+<span class="nc bnc" id="L516" title="All 4 branches missed.">        while (running &amp;&amp; !Thread.currentThread().isInterrupted()) {</span>
             try {
-<span class="nc" id="L504">                byte[] messageData = receiveMessage();</span>
-<span class="nc bnc" id="L505" title="All 2 branches missed.">                if (messageData != null) {</span>
-<span class="nc" id="L506">                    processIncomingMessage(messageData);</span>
+<span class="nc" id="L518">                byte[] messageData = receiveMessage();</span>
+<span class="nc bnc" id="L519" title="All 2 branches missed.">                if (messageData != null) {</span>
+<span class="nc" id="L520">                    processIncomingMessage(messageData);</span>
                 }
-<span class="nc" id="L508">            } catch (Exception e) {</span>
-<span class="nc bnc" id="L509" title="All 2 branches missed.">                if (running) {</span>
-<span class="nc" id="L510">                    logger.error(&quot;Error in message receiver loop&quot;, e);</span>
+<span class="nc" id="L522">            } catch (Exception e) {</span>
+<span class="nc bnc" id="L523" title="All 2 branches missed.">                if (running) {</span>
+<span class="nc" id="L524">                    logger.error(&quot;Error in message receiver loop&quot;, e);</span>
                     
                     // Check if the error is due to connection issues
-<span class="nc bnc" id="L513" title="All 2 branches missed.">                    if (isConnectionError(e)) {</span>
-<span class="nc" id="L514">                        logger.warn(&quot;Connection error detected, triggering reconnection&quot;);</span>
-<span class="nc" id="L515">                        handleConnectionLoss();</span>
-<span class="nc" id="L516">                        break; // Exit the loop, reconnection will restart it</span>
+<span class="nc bnc" id="L527" title="All 2 branches missed.">                    if (isConnectionError(e)) {</span>
+<span class="nc" id="L528">                        logger.warn(&quot;Connection error detected, triggering reconnection&quot;);</span>
+<span class="nc" id="L529">                        handleConnectionLoss();</span>
+<span class="nc" id="L530">                        break; // Exit the loop, reconnection will restart it</span>
                     }
                     
                     try {
-<span class="nc" id="L520">                        Thread.sleep(1000);</span>
-<span class="nc" id="L521">                    } catch (InterruptedException ie) {</span>
-<span class="nc" id="L522">                        Thread.currentThread().interrupt();</span>
-<span class="nc" id="L523">                        break;</span>
-<span class="nc" id="L524">                    }</span>
+<span class="nc" id="L534">                        Thread.sleep(1000);</span>
+<span class="nc" id="L535">                    } catch (InterruptedException ie) {</span>
+<span class="nc" id="L536">                        Thread.currentThread().interrupt();</span>
+<span class="nc" id="L537">                        break;</span>
+<span class="nc" id="L538">                    }</span>
                 } else {
-<span class="nc" id="L526">                    break;</span>
+<span class="nc" id="L540">                    break;</span>
                 }
-<span class="nc" id="L528">            }</span>
+<span class="nc" id="L542">            }</span>
         }
         
-<span class="nc" id="L531">        logger.info(&quot;Message receiver loop stopped&quot;);</span>
-<span class="nc" id="L532">    }</span>
+<span class="nc" id="L545">        logger.info(&quot;Message receiver loop stopped&quot;);</span>
+<span class="nc" id="L546">    }</span>
     
     private void timeoutCleanupLoop() {
-<span class="nc bnc" id="L535" title="All 4 branches missed.">        while (running &amp;&amp; !Thread.currentThread().isInterrupted()) {</span>
+<span class="nc bnc" id="L549" title="All 4 branches missed.">        while (running &amp;&amp; !Thread.currentThread().isInterrupted()) {</span>
             try {
-<span class="nc" id="L537">                LocalDateTime now = LocalDateTime.now();</span>
-<span class="nc" id="L538">                List&lt;Long&gt; timedOutSeqNums = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L551">                LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc" id="L552">                List&lt;Long&gt; timedOutSeqNums = new ArrayList&lt;&gt;();</span>
                 
-<span class="nc bnc" id="L540" title="All 2 branches missed.">                for (Map.Entry&lt;Long, LocalDateTime&gt; entry : responseTimeouts.entrySet()) {</span>
-<span class="nc bnc" id="L541" title="All 2 branches missed.">                    if (now.isAfter(entry.getValue())) {</span>
-<span class="nc" id="L542">                        timedOutSeqNums.add(entry.getKey());</span>
+<span class="nc bnc" id="L554" title="All 2 branches missed.">                for (Map.Entry&lt;Long, LocalDateTime&gt; entry : responseTimeouts.entrySet()) {</span>
+<span class="nc bnc" id="L555" title="All 2 branches missed.">                    if (now.isAfter(entry.getValue())) {</span>
+<span class="nc" id="L556">                        timedOutSeqNums.add(entry.getKey());</span>
                     }
-<span class="nc" id="L544">                }</span>
+<span class="nc" id="L558">                }</span>
                 
-<span class="nc bnc" id="L546" title="All 2 branches missed.">                for (Long seqNum : timedOutSeqNums) {</span>
-<span class="nc" id="L547">                    CompletableFuture&lt;Object&gt; future = pendingResponses.remove(seqNum);</span>
-<span class="nc" id="L548">                    responseTimeouts.remove(seqNum);</span>
-<span class="nc bnc" id="L549" title="All 2 branches missed.">                    if (future != null) {</span>
-<span class="nc" id="L550">                        future.completeExceptionally(new TimeoutException(&quot;Response timeout for seqnum: &quot; + seqNum));</span>
+<span class="nc bnc" id="L560" title="All 2 branches missed.">                for (Long seqNum : timedOutSeqNums) {</span>
+<span class="nc" id="L561">                    CompletableFuture&lt;Object&gt; future = pendingResponses.remove(seqNum);</span>
+<span class="nc" id="L562">                    responseTimeouts.remove(seqNum);</span>
+<span class="nc bnc" id="L563" title="All 2 branches missed.">                    if (future != null) {</span>
+<span class="nc" id="L564">                        future.completeExceptionally(new TimeoutException(&quot;Response timeout for seqnum: &quot; + seqNum));</span>
                     }
-<span class="nc" id="L552">                }</span>
+<span class="nc" id="L566">                }</span>
                 
-<span class="nc" id="L554">                Thread.sleep(5000); // Check every 5 seconds</span>
+<span class="nc" id="L568">                Thread.sleep(5000); // Check every 5 seconds</span>
                 
-<span class="nc" id="L556">            } catch (InterruptedException e) {</span>
-<span class="nc" id="L557">                Thread.currentThread().interrupt();</span>
-<span class="nc" id="L558">                break;</span>
-<span class="nc" id="L559">            } catch (Exception e) {</span>
-<span class="nc" id="L560">                logger.error(&quot;Error in timeout cleanup loop&quot;, e);</span>
-<span class="nc" id="L561">            }</span>
+<span class="nc" id="L570">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L571">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L572">                break;</span>
+<span class="nc" id="L573">            } catch (Exception e) {</span>
+<span class="nc" id="L574">                logger.error(&quot;Error in timeout cleanup loop&quot;, e);</span>
+<span class="nc" id="L575">            }</span>
         }
-<span class="nc" id="L563">    }</span>
+<span class="nc" id="L577">    }</span>
     
     private void processIncomingMessage(byte[] messageData) {
         try {
-<span class="nc" id="L567">            WorldUpsProto.UResponses responses = WorldUpsProto.UResponses.parseFrom(messageData);</span>
+<span class="nc" id="L581">            WorldUpsProto.UResponses responses = WorldUpsProto.UResponses.parseFrom(messageData);</span>
             
             // 发送ACK
-<span class="nc" id="L570">            List&lt;Long&gt; acksToSend = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L584">            List&lt;Long&gt; acksToSend = new ArrayList&lt;&gt;();</span>
             
             // 处理完成通知
-<span class="nc bnc" id="L573" title="All 2 branches missed.">            for (WorldUpsProto.UFinished completion : responses.getCompletionsList()) {</span>
-<span class="nc" id="L574">                acksToSend.add(completion.getSeqnum());</span>
-<span class="nc" id="L575">                handleTruckCompletion(completion);</span>
-<span class="nc" id="L576">            }</span>
+<span class="nc bnc" id="L587" title="All 2 branches missed.">            for (WorldUpsProto.UFinished completion : responses.getCompletionsList()) {</span>
+<span class="nc" id="L588">                acksToSend.add(completion.getSeqnum());</span>
+<span class="nc" id="L589">                handleTruckCompletion(completion);</span>
+<span class="nc" id="L590">            }</span>
             
             // 处理配送完成通知
-<span class="nc bnc" id="L579" title="All 2 branches missed.">            for (WorldUpsProto.UDeliveryMade delivery : responses.getDeliveredList()) {</span>
-<span class="nc" id="L580">                acksToSend.add(delivery.getSeqnum());</span>
-<span class="nc" id="L581">                handleDeliveryMade(delivery);</span>
-<span class="nc" id="L582">            }</span>
+<span class="nc bnc" id="L593" title="All 2 branches missed.">            for (WorldUpsProto.UDeliveryMade delivery : responses.getDeliveredList()) {</span>
+<span class="nc" id="L594">                acksToSend.add(delivery.getSeqnum());</span>
+<span class="nc" id="L595">                handleDeliveryMade(delivery);</span>
+<span class="nc" id="L596">            }</span>
             
             // 处理卡车状态响应
-<span class="nc bnc" id="L585" title="All 2 branches missed.">            for (WorldUpsProto.UTruck truckStatus : responses.getTruckstatusList()) {</span>
-<span class="nc" id="L586">                acksToSend.add(truckStatus.getSeqnum());</span>
-<span class="nc" id="L587">                handleTruckStatus(truckStatus);</span>
-<span class="nc" id="L588">            }</span>
+<span class="nc bnc" id="L599" title="All 2 branches missed.">            for (WorldUpsProto.UTruck truckStatus : responses.getTruckstatusList()) {</span>
+<span class="nc" id="L600">                acksToSend.add(truckStatus.getSeqnum());</span>
+<span class="nc" id="L601">                handleTruckStatus(truckStatus);</span>
+<span class="nc" id="L602">            }</span>
             
             // 处理错误响应
-<span class="nc bnc" id="L591" title="All 2 branches missed.">            for (WorldUpsProto.UErr error : responses.getErrorList()) {</span>
-<span class="nc" id="L592">                acksToSend.add(error.getSeqnum());</span>
-<span class="nc" id="L593">                handleError(error);</span>
-<span class="nc" id="L594">            }</span>
+<span class="nc bnc" id="L605" title="All 2 branches missed.">            for (WorldUpsProto.UErr error : responses.getErrorList()) {</span>
+<span class="nc" id="L606">                acksToSend.add(error.getSeqnum());</span>
+<span class="nc" id="L607">                handleError(error);</span>
+<span class="nc" id="L608">            }</span>
             
             // 处理ACK
-<span class="nc bnc" id="L597" title="All 2 branches missed.">            for (Long ack : responses.getAcksList()) {</span>
-<span class="nc" id="L598">                handleAcknowledgement(ack);</span>
-<span class="nc" id="L599">            }</span>
+<span class="nc bnc" id="L611" title="All 2 branches missed.">            for (Long ack : responses.getAcksList()) {</span>
+<span class="nc" id="L612">                handleAcknowledgement(ack);</span>
+<span class="nc" id="L613">            }</span>
             
             // 发送ACK响应
-<span class="nc bnc" id="L602" title="All 2 branches missed.">            if (!acksToSend.isEmpty()) {</span>
-<span class="nc" id="L603">                sendAcknowledgements(acksToSend);</span>
+<span class="nc bnc" id="L616" title="All 2 branches missed.">            if (!acksToSend.isEmpty()) {</span>
+<span class="nc" id="L617">                sendAcknowledgements(acksToSend);</span>
             }
             
-<span class="nc" id="L606">        } catch (InvalidProtocolBufferException e) {</span>
-<span class="nc" id="L607">            logger.error(&quot;Error parsing incoming message&quot;, e);</span>
-<span class="nc" id="L608">        }</span>
-<span class="nc" id="L609">    }</span>
+<span class="nc" id="L620">        } catch (InvalidProtocolBufferException e) {</span>
+<span class="nc" id="L621">            logger.error(&quot;Error parsing incoming message&quot;, e);</span>
+<span class="nc" id="L622">        }</span>
+<span class="nc" id="L623">    }</span>
     
     @Transactional
     protected void handleTruckCompletion(WorldUpsProto.UFinished completion) {
-<span class="nc" id="L613">        logger.info(&quot;Truck {} completed task at ({}, {}) with status: {}&quot;, </span>
-<span class="nc" id="L614">                   completion.getTruckid(), completion.getX(), completion.getY(), completion.getStatus());</span>
+<span class="nc" id="L627">        logger.info(&quot;Truck {} completed task at ({}, {}) with status: {}&quot;, </span>
+<span class="nc" id="L628">                   completion.getTruckid(), completion.getX(), completion.getY(), completion.getStatus());</span>
         
         // 更新卡车状态
-<span class="nc" id="L617">        Optional&lt;Truck&gt; truckOpt = truckRepository.findByTruckId(completion.getTruckid());</span>
-<span class="nc bnc" id="L618" title="All 2 branches missed.">        if (truckOpt.isPresent()) {</span>
-<span class="nc" id="L619">            Truck truck = truckOpt.get();</span>
-<span class="nc" id="L620">            truck.setCurrentX(completion.getX());</span>
-<span class="nc" id="L621">            truck.setCurrentY(completion.getY());</span>
+<span class="nc" id="L631">        Optional&lt;Truck&gt; truckOpt = truckRepository.findByTruckId(completion.getTruckid());</span>
+<span class="nc bnc" id="L632" title="All 2 branches missed.">        if (truckOpt.isPresent()) {</span>
+<span class="nc" id="L633">            Truck truck = truckOpt.get();</span>
+<span class="nc" id="L634">            truck.setCurrentX(completion.getX());</span>
+<span class="nc" id="L635">            truck.setCurrentY(completion.getY());</span>
             
             // 根据状态更新卡车状态
-<span class="nc bnc" id="L624" title="All 2 branches missed.">            if (&quot;idle&quot;.equals(completion.getStatus())) {</span>
-<span class="nc" id="L625">                truck.setStatus(TruckStatus.IDLE);</span>
-<span class="nc bnc" id="L626" title="All 2 branches missed.">            } else if (&quot;arrive warehouse&quot;.equals(completion.getStatus())) {</span>
-<span class="nc" id="L627">                truck.setStatus(TruckStatus.AT_WAREHOUSE);</span>
+<span class="nc bnc" id="L638" title="All 2 branches missed.">            if (&quot;idle&quot;.equals(completion.getStatus())) {</span>
+<span class="nc" id="L639">                truck.setStatus(TruckStatus.IDLE);</span>
+<span class="nc bnc" id="L640" title="All 2 branches missed.">            } else if (&quot;arrive warehouse&quot;.equals(completion.getStatus())) {</span>
+<span class="nc" id="L641">                truck.setStatus(TruckStatus.AT_WAREHOUSE);</span>
                 // 通知Amazon卡车已到达
-<span class="nc" id="L629">                notifyAmazonTruckArrived(truck, completion);</span>
+<span class="nc" id="L643">                notifyAmazonTruckArrived(truck, completion);</span>
             }
             
-<span class="nc" id="L632">            truckRepository.save(truck);</span>
+<span class="nc" id="L646">            truckRepository.save(truck);</span>
         }
         
         // 完成对应的Future
-<span class="nc" id="L636">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(completion.getSeqnum());</span>
-<span class="nc bnc" id="L637" title="All 2 branches missed.">        if (future != null) {</span>
-<span class="nc" id="L638">            future.complete(completion);</span>
+<span class="nc" id="L650">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(completion.getSeqnum());</span>
+<span class="nc bnc" id="L651" title="All 2 branches missed.">        if (future != null) {</span>
+<span class="nc" id="L652">            future.complete(completion);</span>
         }
-<span class="nc" id="L640">    }</span>
+<span class="nc" id="L654">    }</span>
     
     @Transactional
     protected void handleDeliveryMade(WorldUpsProto.UDeliveryMade delivery) {
-<span class="nc" id="L644">        logger.info(&quot;Package {} delivered by truck {}&quot;, delivery.getPackageid(), delivery.getTruckid());</span>
+<span class="nc" id="L658">        logger.info(&quot;Package {} delivered by truck {}&quot;, delivery.getPackageid(), delivery.getTruckid());</span>
         
         // 查找对应的运输订单
         // 注意：packageid在这里实际上是shipment_id
-<span class="nc" id="L648">        Optional&lt;Shipment&gt; shipmentOpt = shipmentRepository.findByShipmentId(String.valueOf(delivery.getPackageid()));</span>
-<span class="nc bnc" id="L649" title="All 2 branches missed.">        if (shipmentOpt.isPresent()) {</span>
-<span class="nc" id="L650">            Shipment shipment = shipmentOpt.get();</span>
-<span class="nc" id="L651">            shipment.updateStatus(ShipmentStatus.DELIVERED);</span>
-<span class="nc" id="L652">            shipment.setActualDelivery(LocalDateTime.now());</span>
-<span class="nc" id="L653">            shipmentRepository.save(shipment);</span>
+<span class="nc" id="L662">        Optional&lt;Shipment&gt; shipmentOpt = shipmentRepository.findByShipmentId(String.valueOf(delivery.getPackageid()));</span>
+<span class="nc bnc" id="L663" title="All 2 branches missed.">        if (shipmentOpt.isPresent()) {</span>
+<span class="nc" id="L664">            Shipment shipment = shipmentOpt.get();</span>
+<span class="nc" id="L665">            shipment.updateStatus(ShipmentStatus.DELIVERED);</span>
+<span class="nc" id="L666">            shipment.setActualDelivery(LocalDateTime.now());</span>
+<span class="nc" id="L667">            shipmentRepository.save(shipment);</span>
             
             // 通知Amazon包裹已送达
-<span class="nc" id="L656">            getAmazonIntegrationService().notifyShipmentDelivered(shipment.getShipmentId());</span>
+<span class="nc" id="L670">            getAmazonIntegrationService().notifyShipmentDelivered(shipment.getShipmentId());</span>
             
-<span class="nc" id="L658">            logger.info(&quot;Updated shipment {} status to delivered&quot;, shipment.getShipmentId());</span>
+<span class="nc" id="L672">            logger.info(&quot;Updated shipment {} status to delivered&quot;, shipment.getShipmentId());</span>
         }
         
         // 完成对应的Future
-<span class="nc" id="L662">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(delivery.getSeqnum());</span>
-<span class="nc bnc" id="L663" title="All 2 branches missed.">        if (future != null) {</span>
-<span class="nc" id="L664">            future.complete(delivery);</span>
+<span class="nc" id="L676">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(delivery.getSeqnum());</span>
+<span class="nc bnc" id="L677" title="All 2 branches missed.">        if (future != null) {</span>
+<span class="nc" id="L678">            future.complete(delivery);</span>
         }
-<span class="nc" id="L666">    }</span>
+<span class="nc" id="L680">    }</span>
     
     @Transactional
     protected void handleTruckStatus(WorldUpsProto.UTruck truckStatus) {
-<span class="nc" id="L670">        logger.debug(&quot;Truck {} status: {} at ({}, {})&quot;, </span>
-<span class="nc" id="L671">                    truckStatus.getTruckid(), truckStatus.getStatus(), </span>
-<span class="nc" id="L672">                    truckStatus.getX(), truckStatus.getY());</span>
+<span class="nc" id="L684">        logger.debug(&quot;Truck {} status: {} at ({}, {})&quot;, </span>
+<span class="nc" id="L685">                    truckStatus.getTruckid(), truckStatus.getStatus(), </span>
+<span class="nc" id="L686">                    truckStatus.getX(), truckStatus.getY());</span>
         
         // 更新数据库中的卡车状态
-<span class="nc" id="L675">        Optional&lt;Truck&gt; truckOpt = truckRepository.findByTruckId(truckStatus.getTruckid());</span>
-<span class="nc bnc" id="L676" title="All 2 branches missed.">        if (truckOpt.isPresent()) {</span>
-<span class="nc" id="L677">            Truck truck = truckOpt.get();</span>
-<span class="nc" id="L678">            truck.setCurrentX(truckStatus.getX());</span>
-<span class="nc" id="L679">            truck.setCurrentY(truckStatus.getY());</span>
+<span class="nc" id="L689">        Optional&lt;Truck&gt; truckOpt = truckRepository.findByTruckId(truckStatus.getTruckid());</span>
+<span class="nc bnc" id="L690" title="All 2 branches missed.">        if (truckOpt.isPresent()) {</span>
+<span class="nc" id="L691">            Truck truck = truckOpt.get();</span>
+<span class="nc" id="L692">            truck.setCurrentX(truckStatus.getX());</span>
+<span class="nc" id="L693">            truck.setCurrentY(truckStatus.getY());</span>
             
             // 转换状态
-<span class="nc bnc" id="L682" title="All 6 branches missed.">            switch (truckStatus.getStatus()) {</span>
+<span class="nc bnc" id="L696" title="All 6 branches missed.">            switch (truckStatus.getStatus()) {</span>
                 case &quot;idle&quot;:
-<span class="nc" id="L684">                    truck.setStatus(TruckStatus.IDLE);</span>
-<span class="nc" id="L685">                    break;</span>
+<span class="nc" id="L698">                    truck.setStatus(TruckStatus.IDLE);</span>
+<span class="nc" id="L699">                    break;</span>
                 case &quot;traveling&quot;:
-<span class="nc" id="L687">                    truck.setStatus(TruckStatus.EN_ROUTE);</span>
-<span class="nc" id="L688">                    break;</span>
+<span class="nc" id="L701">                    truck.setStatus(TruckStatus.EN_ROUTE);</span>
+<span class="nc" id="L702">                    break;</span>
                 case &quot;arrive warehouse&quot;:
-<span class="nc" id="L690">                    truck.setStatus(TruckStatus.AT_WAREHOUSE);</span>
-<span class="nc" id="L691">                    break;</span>
+<span class="nc" id="L704">                    truck.setStatus(TruckStatus.AT_WAREHOUSE);</span>
+<span class="nc" id="L705">                    break;</span>
                 case &quot;loading&quot;:
-<span class="nc" id="L693">                    truck.setStatus(TruckStatus.LOADING);</span>
-<span class="nc" id="L694">                    break;</span>
+<span class="nc" id="L707">                    truck.setStatus(TruckStatus.LOADING);</span>
+<span class="nc" id="L708">                    break;</span>
                 case &quot;delivering&quot;:
-<span class="nc" id="L696">                    truck.setStatus(TruckStatus.DELIVERING);</span>
+<span class="nc" id="L710">                    truck.setStatus(TruckStatus.DELIVERING);</span>
                     break;
             }
             
-<span class="nc" id="L700">            truckRepository.save(truck);</span>
+<span class="nc" id="L714">            truckRepository.save(truck);</span>
         }
         
         // 完成对应的Future
-<span class="nc" id="L704">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(truckStatus.getSeqnum());</span>
-<span class="nc bnc" id="L705" title="All 2 branches missed.">        if (future != null) {</span>
-<span class="nc" id="L706">            future.complete(truckStatus);</span>
+<span class="nc" id="L718">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(truckStatus.getSeqnum());</span>
+<span class="nc bnc" id="L719" title="All 2 branches missed.">        if (future != null) {</span>
+<span class="nc" id="L720">            future.complete(truckStatus);</span>
         }
-<span class="nc" id="L708">    }</span>
+<span class="nc" id="L722">    }</span>
     
     private void handleError(WorldUpsProto.UErr error) {
-<span class="nc" id="L711">        logger.error(&quot;World Simulator error for seqnum {}: {}&quot;, error.getOriginseqnum(), error.getErr());</span>
+<span class="nc" id="L725">        logger.error(&quot;World Simulator error for seqnum {}: {}&quot;, error.getOriginseqnum(), error.getErr());</span>
         
         // 完成对应的Future
-<span class="nc" id="L714">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(error.getOriginseqnum());</span>
-<span class="nc bnc" id="L715" title="All 2 branches missed.">        if (future != null) {</span>
-<span class="nc" id="L716">            future.complete(&quot;Error: &quot; + error.getErr());</span>
+<span class="nc" id="L728">        CompletableFuture&lt;Object&gt; future = pendingResponses.remove(error.getOriginseqnum());</span>
+<span class="nc bnc" id="L729" title="All 2 branches missed.">        if (future != null) {</span>
+<span class="nc" id="L730">            future.complete(&quot;Error: &quot; + error.getErr());</span>
         }
-<span class="nc" id="L718">    }</span>
+<span class="nc" id="L732">    }</span>
     
     private void handleAcknowledgement(Long ack) {
-<span class="nc" id="L721">        logger.debug(&quot;Received ACK for seqnum {}&quot;, ack);</span>
-<span class="nc" id="L722">        responseTimeouts.remove(ack);</span>
-<span class="nc" id="L723">    }</span>
+<span class="nc" id="L735">        logger.debug(&quot;Received ACK for seqnum {}&quot;, ack);</span>
+<span class="nc" id="L736">        responseTimeouts.remove(ack);</span>
+<span class="nc" id="L737">    }</span>
     
     private void notifyAmazonTruckArrived(Truck truck, WorldUpsProto.UFinished completion) {
         // 查找这个卡车正在处理的运输订单
-<span class="nc" id="L727">        Optional&lt;Shipment&gt; shipmentOpt = shipmentRepository.findByTruck(truck);</span>
-<span class="nc bnc" id="L728" title="All 2 branches missed.">        if (shipmentOpt.isPresent()) {</span>
-<span class="nc" id="L729">            Shipment shipment = shipmentOpt.get();</span>
+<span class="nc" id="L741">        Optional&lt;Shipment&gt; shipmentOpt = shipmentRepository.findByTruck(truck);</span>
+<span class="nc bnc" id="L742" title="All 2 branches missed.">        if (shipmentOpt.isPresent()) {</span>
+<span class="nc" id="L743">            Shipment shipment = shipmentOpt.get();</span>
             // 假设仓库ID可以从坐标推断，或者需要额外的映射
             // 这里简化处理，使用坐标作为仓库ID
-<span class="nc" id="L732">            String warehouseId = completion.getX() + &quot;_&quot; + completion.getY();</span>
+<span class="nc" id="L746">            String warehouseId = completion.getX() + &quot;_&quot; + completion.getY();</span>
             
-<span class="nc" id="L734">            getAmazonIntegrationService().notifyTruckArrived(</span>
-<span class="nc" id="L735">                truck.getId().toString(), </span>
+<span class="nc" id="L748">            getAmazonIntegrationService().notifyTruckArrived(</span>
+<span class="nc" id="L749">                truck.getId().toString(), </span>
                 warehouseId, 
-<span class="nc" id="L737">                shipment.getShipmentId()</span>
+<span class="nc" id="L751">                shipment.getShipmentId()</span>
             );
         }
-<span class="nc" id="L740">    }</span>
+<span class="nc" id="L754">    }</span>
     
     private void sendCommandsAsync(WorldUpsProto.UCommands commands) {
-<span class="nc" id="L743">        messageQueue.offer(commands);</span>
-<span class="nc" id="L744">    }</span>
+<span class="nc" id="L757">        messageQueue.offer(commands);</span>
+<span class="nc" id="L758">    }</span>
     
     private void sendAcknowledgements(List&lt;Long&gt; acks) {
         try {
-<span class="nc" id="L748">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
-<span class="nc" id="L749">            commandsBuilder.addAllAcks(acks);</span>
-<span class="nc" id="L750">            sendCommandsAsync(commandsBuilder.build());</span>
-<span class="nc" id="L751">        } catch (Exception e) {</span>
-<span class="nc" id="L752">            logger.error(&quot;Error sending acknowledgements&quot;, e);</span>
-<span class="nc" id="L753">        }</span>
-<span class="nc" id="L754">    }</span>
+<span class="nc" id="L762">            WorldUpsProto.UCommands.Builder commandsBuilder = WorldUpsProto.UCommands.newBuilder();</span>
+<span class="nc" id="L763">            commandsBuilder.addAllAcks(acks);</span>
+<span class="nc" id="L764">            sendCommandsAsync(commandsBuilder.build());</span>
+<span class="nc" id="L765">        } catch (Exception e) {</span>
+<span class="nc" id="L766">            logger.error(&quot;Error sending acknowledgements&quot;, e);</span>
+<span class="nc" id="L767">        }</span>
+<span class="nc" id="L768">    }</span>
     
     private void sendProtobufMessage(com.google.protobuf.Message message) throws IOException {
-<span class="nc bnc" id="L757" title="All 4 branches missed.">        if (socket == null || socket.isClosed()) {</span>
-<span class="nc" id="L758">            throw new IOException(&quot;Socket is not connected&quot;);</span>
+<span class="nc bnc" id="L771" title="All 4 branches missed.">        if (socket == null || socket.isClosed()) {</span>
+<span class="nc" id="L772">            throw new IOException(&quot;Socket is not connected&quot;);</span>
         }
         
-<span class="nc" id="L761">        byte[] messageBytes = message.toByteArray();</span>
+<span class="nc" id="L775">        byte[] messageBytes = message.toByteArray();</span>
         
         // 使用Varint32编码消息长度
-<span class="nc" id="L764">        byte[] lengthBytes = encodeVarint32(messageBytes.length);</span>
+<span class="nc" id="L778">        byte[] lengthBytes = encodeVarint32(messageBytes.length);</span>
         
         // 发送长度前缀和消息
-<span class="nc" id="L767">        socket.getOutputStream().write(lengthBytes);</span>
-<span class="nc" id="L768">        socket.getOutputStream().write(messageBytes);</span>
-<span class="nc" id="L769">        socket.getOutputStream().flush();</span>
+<span class="nc" id="L781">        socket.getOutputStream().write(lengthBytes);</span>
+<span class="nc" id="L782">        socket.getOutputStream().write(messageBytes);</span>
+<span class="nc" id="L783">        socket.getOutputStream().flush();</span>
         
-<span class="nc" id="L771">        logger.debug(&quot;Sent protobuf message of {} bytes&quot;, messageBytes.length);</span>
-<span class="nc" id="L772">    }</span>
+<span class="nc" id="L785">        logger.debug(&quot;Sent protobuf message of {} bytes&quot;, messageBytes.length);</span>
+<span class="nc" id="L786">    }</span>
     
     private byte[] receiveMessage() throws IOException {
-<span class="nc bnc" id="L775" title="All 4 branches missed.">        if (socket == null || socket.isClosed()) {</span>
-<span class="nc" id="L776">            throw new IOException(&quot;Socket is not connected&quot;);</span>
+<span class="nc bnc" id="L789" title="All 4 branches missed.">        if (socket == null || socket.isClosed()) {</span>
+<span class="nc" id="L790">            throw new IOException(&quot;Socket is not connected&quot;);</span>
         }
         
         // 读取Varint32编码的消息长度
-<span class="nc" id="L780">        int messageLength = readVarint32();</span>
+<span class="nc" id="L794">        int messageLength = readVarint32();</span>
         
         // 读取指定长度的消息数据
-<span class="nc" id="L783">        byte[] messageData = new byte[messageLength];</span>
-<span class="nc" id="L784">        int totalRead = 0;</span>
+<span class="nc" id="L797">        byte[] messageData = new byte[messageLength];</span>
+<span class="nc" id="L798">        int totalRead = 0;</span>
         
-<span class="nc bnc" id="L786" title="All 2 branches missed.">        while (totalRead &lt; messageLength) {</span>
-<span class="nc" id="L787">            int bytesRead = socket.getInputStream().read(messageData, totalRead, messageLength - totalRead);</span>
-<span class="nc bnc" id="L788" title="All 2 branches missed.">            if (bytesRead == -1) {</span>
-<span class="nc" id="L789">                throw new IOException(&quot;Unexpected end of stream&quot;);</span>
+<span class="nc bnc" id="L800" title="All 2 branches missed.">        while (totalRead &lt; messageLength) {</span>
+<span class="nc" id="L801">            int bytesRead = socket.getInputStream().read(messageData, totalRead, messageLength - totalRead);</span>
+<span class="nc bnc" id="L802" title="All 2 branches missed.">            if (bytesRead == -1) {</span>
+<span class="nc" id="L803">                throw new IOException(&quot;Unexpected end of stream&quot;);</span>
             }
-<span class="nc" id="L791">            totalRead += bytesRead;</span>
-<span class="nc" id="L792">        }</span>
+<span class="nc" id="L805">            totalRead += bytesRead;</span>
+<span class="nc" id="L806">        }</span>
         
-<span class="nc" id="L794">        logger.debug(&quot;Received protobuf message of {} bytes&quot;, messageLength);</span>
-<span class="nc" id="L795">        return messageData;</span>
+<span class="nc" id="L808">        logger.debug(&quot;Received protobuf message of {} bytes&quot;, messageLength);</span>
+<span class="nc" id="L809">        return messageData;</span>
     }
     
     private byte[] encodeVarint32(int value) {
-<span class="nc" id="L799">        ByteBuffer buffer = ByteBuffer.allocate(5);</span>
-<span class="nc bnc" id="L800" title="All 2 branches missed.">        while ((value &amp; 0x80) != 0) {</span>
-<span class="nc" id="L801">            buffer.put((byte) ((value &amp; 0x7F) | 0x80));</span>
-<span class="nc" id="L802">            value &gt;&gt;&gt;= 7;</span>
+<span class="nc" id="L813">        ByteBuffer buffer = ByteBuffer.allocate(5);</span>
+<span class="nc bnc" id="L814" title="All 2 branches missed.">        while ((value &amp; 0x80) != 0) {</span>
+<span class="nc" id="L815">            buffer.put((byte) ((value &amp; 0x7F) | 0x80));</span>
+<span class="nc" id="L816">            value &gt;&gt;&gt;= 7;</span>
         }
-<span class="nc" id="L804">        buffer.put((byte) value);</span>
+<span class="nc" id="L818">        buffer.put((byte) value);</span>
         
-<span class="nc" id="L806">        byte[] result = new byte[buffer.position()];</span>
-<span class="nc" id="L807">        buffer.flip();</span>
-<span class="nc" id="L808">        buffer.get(result);</span>
-<span class="nc" id="L809">        return result;</span>
+<span class="nc" id="L820">        byte[] result = new byte[buffer.position()];</span>
+<span class="nc" id="L821">        buffer.flip();</span>
+<span class="nc" id="L822">        buffer.get(result);</span>
+<span class="nc" id="L823">        return result;</span>
     }
     
     private int readVarint32() throws IOException {
-<span class="nc" id="L813">        int result = 0;</span>
-<span class="nc" id="L814">        int shift = 0;</span>
+<span class="nc" id="L827">        int result = 0;</span>
+<span class="nc" id="L828">        int shift = 0;</span>
         
-<span class="nc bnc" id="L816" title="All 2 branches missed.">        while (shift &lt; 32) {</span>
-<span class="nc" id="L817">            int b = socket.getInputStream().read();</span>
-<span class="nc bnc" id="L818" title="All 2 branches missed.">            if (b == -1) {</span>
-<span class="nc" id="L819">                throw new IOException(&quot;Unexpected end of stream while reading varint32&quot;);</span>
+<span class="nc bnc" id="L830" title="All 2 branches missed.">        while (shift &lt; 32) {</span>
+<span class="nc" id="L831">            int b = socket.getInputStream().read();</span>
+<span class="nc bnc" id="L832" title="All 2 branches missed.">            if (b == -1) {</span>
+<span class="nc" id="L833">                throw new IOException(&quot;Unexpected end of stream while reading varint32&quot;);</span>
             }
             
-<span class="nc" id="L822">            result |= (b &amp; 0x7F) &lt;&lt; shift;</span>
+<span class="nc" id="L836">            result |= (b &amp; 0x7F) &lt;&lt; shift;</span>
             
-<span class="nc bnc" id="L824" title="All 2 branches missed.">            if ((b &amp; 0x80) == 0) {</span>
-<span class="nc" id="L825">                return result;</span>
+<span class="nc bnc" id="L838" title="All 2 branches missed.">            if ((b &amp; 0x80) == 0) {</span>
+<span class="nc" id="L839">                return result;</span>
             }
             
-<span class="nc" id="L828">            shift += 7;</span>
-<span class="nc" id="L829">        }</span>
+<span class="nc" id="L842">            shift += 7;</span>
+<span class="nc" id="L843">        }</span>
         
-<span class="nc" id="L831">        throw new IOException(&quot;Varint32 too long&quot;);</span>
+<span class="nc" id="L845">        throw new IOException(&quot;Varint32 too long&quot;);</span>
     }
     
     private void closeSocket() {
-<span class="nc bnc" id="L835" title="All 2 branches missed.">        if (socket != null) {</span>
+<span class="nc bnc" id="L849" title="All 2 branches missed.">        if (socket != null) {</span>
             try {
-<span class="nc" id="L837">                socket.close();</span>
-<span class="nc" id="L838">            } catch (IOException e) {</span>
-<span class="nc" id="L839">                logger.debug(&quot;Error closing socket&quot;, e);</span>
-<span class="nc" id="L840">            }</span>
-<span class="nc" id="L841">            socket = null;</span>
+<span class="nc" id="L851">                socket.close();</span>
+<span class="nc" id="L852">            } catch (IOException e) {</span>
+<span class="nc" id="L853">                logger.debug(&quot;Error closing socket&quot;, e);</span>
+<span class="nc" id="L854">            }</span>
+<span class="nc" id="L855">            socket = null;</span>
         }
-<span class="nc" id="L843">    }</span>
+<span class="nc" id="L857">    }</span>
     
     private long getNextSequenceNumber() {
-<span class="nc" id="L846">        return sequenceNumber.incrementAndGet();</span>
+<span class="nc" id="L860">        return sequenceNumber.incrementAndGet();</span>
     }
     
     // Public getters
     
     public boolean isConnected() {
-<span class="nc" id="L852">        return connected;</span>
+<span class="nc" id="L866">        return connected;</span>
     }
     
     public Long getWorldId() {
-<span class="nc" id="L856">        return worldId;</span>
+<span class="nc" id="L870">        return worldId;</span>
     }
     
     public List&lt;Truck&gt; getAvailableTrucks() {
-<span class="nc" id="L860">        return new ArrayList&lt;&gt;(availableTrucks);</span>
+<span class="nc" id="L874">        return new ArrayList&lt;&gt;(availableTrucks);</span>
     }
     
     /**
      * Get AmazonIntegrationService lazily to avoid circular dependency
      */
     private AmazonIntegrationService getAmazonIntegrationService() {
-<span class="nc" id="L867">        return applicationContext.getBean(AmazonIntegrationService.class);</span>
+<span class="nc" id="L881">        return applicationContext.getBean(AmazonIntegrationService.class);</span>
     }
     
     /**
      * Check if connection is healthy
      */
     public boolean isConnectionHealthy() {
-<span class="nc bnc" id="L874" title="All 6 branches missed.">        return connected &amp;&amp; socket != null &amp;&amp; !socket.isClosed();</span>
+<span class="nc bnc" id="L888" title="All 6 branches missed.">        return connected &amp;&amp; socket != null &amp;&amp; !socket.isClosed();</span>
     }
     
     /**
      * Handle connection loss and trigger reconnection
      */
     private void handleConnectionLoss() {
-<span class="nc bnc" id="L881" title="All 2 branches missed.">        if (reconnectionInProgress) {</span>
-<span class="nc" id="L882">            return;</span>
+<span class="nc bnc" id="L895" title="All 2 branches missed.">        if (reconnectionInProgress) {</span>
+<span class="nc" id="L896">            return;</span>
         }
         
-<span class="nc" id="L885">        synchronized (this) {</span>
-<span class="nc bnc" id="L886" title="All 2 branches missed.">            if (reconnectionInProgress) {</span>
-<span class="nc" id="L887">                return;</span>
+<span class="nc" id="L899">        synchronized (this) {</span>
+<span class="nc bnc" id="L900" title="All 2 branches missed.">            if (reconnectionInProgress) {</span>
+<span class="nc" id="L901">                return;</span>
             }
-<span class="nc" id="L889">            reconnectionInProgress = true;</span>
-<span class="nc" id="L890">        }</span>
+<span class="nc" id="L903">            reconnectionInProgress = true;</span>
+<span class="nc" id="L904">        }</span>
         
-<span class="nc" id="L892">        logger.warn(&quot;Connection lost, cleaning up and attempting reconnection&quot;);</span>
+<span class="nc" id="L906">        logger.warn(&quot;Connection lost, cleaning up and attempting reconnection&quot;);</span>
         
         // Clean up current connection
-<span class="nc" id="L895">        cleanupConnection();</span>
+<span class="nc" id="L909">        cleanupConnection();</span>
         
-<span class="nc bnc" id="L897" title="All 2 branches missed.">        if (reconnectionEnabled) {</span>
+<span class="nc bnc" id="L911" title="All 2 branches missed.">        if (reconnectionEnabled) {</span>
             // Start reconnection in a separate thread
-<span class="nc" id="L899">            executorService.submit(this::attemptReconnection);</span>
+<span class="nc" id="L913">            executorService.submit(this::attemptReconnection);</span>
         } else {
-<span class="nc" id="L901">            logger.warn(&quot;Reconnection is disabled, stopping service&quot;);</span>
-<span class="nc" id="L902">            running = false;</span>
+<span class="nc" id="L915">            logger.warn(&quot;Reconnection is disabled, stopping service&quot;);</span>
+<span class="nc" id="L916">            running = false;</span>
         }
-<span class="nc" id="L904">    }</span>
+<span class="nc" id="L918">    }</span>
     
     /**
      * Attempt to reconnect with exponential backoff
      */
     private void attemptReconnection() {
-<span class="nc" id="L910">        long delay = reconnectionInitialDelay;</span>
-<span class="nc" id="L911">        int attempts = 0;</span>
+<span class="nc" id="L924">        long delay = reconnectionInitialDelay;</span>
+<span class="nc" id="L925">        int attempts = 0;</span>
         
-<span class="nc bnc" id="L913" title="All 4 branches missed.">        while (running &amp;&amp; attempts &lt; reconnectionMaxAttempts) {</span>
-<span class="nc" id="L914">            attempts++;</span>
+<span class="nc bnc" id="L927" title="All 4 branches missed.">        while (running &amp;&amp; attempts &lt; reconnectionMaxAttempts) {</span>
+<span class="nc" id="L928">            attempts++;</span>
             
             try {
-<span class="nc" id="L917">                logger.info(&quot;Reconnection attempt {} of {}&quot;, attempts, reconnectionMaxAttempts);</span>
+<span class="nc" id="L931">                logger.info(&quot;Reconnection attempt {} of {}&quot;, attempts, reconnectionMaxAttempts);</span>
                 
                 // Wait before attempting reconnection
-<span class="nc bnc" id="L920" title="All 2 branches missed.">                if (attempts &gt; 1) {</span>
-<span class="nc" id="L921">                    Thread.sleep(delay);</span>
+<span class="nc bnc" id="L934" title="All 2 branches missed.">                if (attempts &gt; 1) {</span>
+<span class="nc" id="L935">                    Thread.sleep(delay);</span>
                 }
                 
                 // Attempt to reconnect
-<span class="nc bnc" id="L925" title="All 2 branches missed.">                if (connect(worldId)) {</span>
-<span class="nc" id="L926">                    logger.info(&quot;Successfully reconnected to World Simulator&quot;);</span>
-<span class="nc" id="L927">                    reconnectionInProgress = false;</span>
-<span class="nc" id="L928">                    return;</span>
+<span class="nc bnc" id="L939" title="All 2 branches missed.">                if (connect(worldId)) {</span>
+<span class="nc" id="L940">                    logger.info(&quot;Successfully reconnected to World Simulator&quot;);</span>
+<span class="nc" id="L941">                    reconnectionInProgress = false;</span>
+<span class="nc" id="L942">                    return;</span>
                 }
                 
                 // Exponential backoff for next attempt
-<span class="nc" id="L932">                delay = Math.min((long) (delay * reconnectionMultiplier), reconnectionMaxDelay);</span>
+<span class="nc" id="L946">                delay = Math.min((long) (delay * reconnectionMultiplier), reconnectionMaxDelay);</span>
                 
-<span class="nc" id="L934">            } catch (InterruptedException e) {</span>
-<span class="nc" id="L935">                Thread.currentThread().interrupt();</span>
-<span class="nc" id="L936">                break;</span>
-<span class="nc" id="L937">            } catch (Exception e) {</span>
-<span class="nc" id="L938">                logger.error(&quot;Error during reconnection attempt {}&quot;, attempts, e);</span>
-<span class="nc" id="L939">            }</span>
+<span class="nc" id="L948">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L949">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L950">                break;</span>
+<span class="nc" id="L951">            } catch (Exception e) {</span>
+<span class="nc" id="L952">                logger.error(&quot;Error during reconnection attempt {}&quot;, attempts, e);</span>
+<span class="nc" id="L953">            }</span>
         }
         
-<span class="nc bnc" id="L942" title="All 2 branches missed.">        if (attempts &gt;= reconnectionMaxAttempts) {</span>
-<span class="nc" id="L943">            logger.error(&quot;Failed to reconnect after {} attempts, giving up&quot;, reconnectionMaxAttempts);</span>
+<span class="nc bnc" id="L956" title="All 2 branches missed.">        if (attempts &gt;= reconnectionMaxAttempts) {</span>
+<span class="nc" id="L957">            logger.error(&quot;Failed to reconnect after {} attempts, giving up&quot;, reconnectionMaxAttempts);</span>
         }
         
-<span class="nc" id="L946">        reconnectionInProgress = false;</span>
-<span class="nc" id="L947">        running = false;</span>
-<span class="nc" id="L948">    }</span>
+<span class="nc" id="L960">        reconnectionInProgress = false;</span>
+<span class="nc" id="L961">        running = false;</span>
+<span class="nc" id="L962">    }</span>
     
     /**
      * Clean up connection resources
      */
     private void cleanupConnection() {
-<span class="nc" id="L954">        connected = false;</span>
+<span class="nc" id="L968">        connected = false;</span>
         
         // Stop message processing threads
-<span class="nc" id="L957">        stopMessageProcessing();</span>
+<span class="nc" id="L971">        stopMessageProcessing();</span>
         
         // Close socket
-<span class="nc" id="L960">        closeSocket();</span>
+<span class="nc" id="L974">        closeSocket();</span>
         
         // Clear pending responses with timeout exceptions
-<span class="nc bnc" id="L963" title="All 2 branches missed.">        for (Map.Entry&lt;Long, CompletableFuture&lt;Object&gt;&gt; entry : pendingResponses.entrySet()) {</span>
-<span class="nc" id="L964">            entry.getValue().completeExceptionally(</span>
+<span class="nc bnc" id="L977" title="All 2 branches missed.">        for (Map.Entry&lt;Long, CompletableFuture&lt;Object&gt;&gt; entry : pendingResponses.entrySet()) {</span>
+<span class="nc" id="L978">            entry.getValue().completeExceptionally(</span>
                 new IOException(&quot;Connection lost during operation&quot;)
             );
-<span class="nc" id="L967">        }</span>
-<span class="nc" id="L968">        pendingResponses.clear();</span>
-<span class="nc" id="L969">        responseTimeouts.clear();</span>
+<span class="nc" id="L981">        }</span>
+<span class="nc" id="L982">        pendingResponses.clear();</span>
+<span class="nc" id="L983">        responseTimeouts.clear();</span>
         
         // Clear message queue
-<span class="nc" id="L972">        messageQueue.clear();</span>
-<span class="nc" id="L973">    }</span>
+<span class="nc" id="L986">        messageQueue.clear();</span>
+<span class="nc" id="L987">    }</span>
     
     /**
      * Check if an exception indicates a connection error
      */
     private boolean isConnectionError(Exception e) {
-<span class="nc bnc" id="L979" title="All 2 branches missed.">        return e instanceof IOException ||</span>
-<span class="nc bnc" id="L980" title="All 2 branches missed.">               e.getCause() instanceof IOException ||</span>
-<span class="nc bnc" id="L981" title="All 2 branches missed.">               e.getMessage().contains(&quot;Connection reset&quot;) ||</span>
-<span class="nc bnc" id="L982" title="All 2 branches missed.">               e.getMessage().contains(&quot;Socket closed&quot;) ||</span>
-<span class="nc bnc" id="L983" title="All 2 branches missed.">               e.getMessage().contains(&quot;Broken pipe&quot;) ||</span>
-<span class="nc bnc" id="L984" title="All 2 branches missed.">               e.getMessage().contains(&quot;Connection refused&quot;) ||</span>
-<span class="nc bnc" id="L985" title="All 2 branches missed.">               e.getMessage().contains(&quot;Unexpected end of stream&quot;);</span>
+<span class="nc bnc" id="L993" title="All 2 branches missed.">        return e instanceof IOException ||</span>
+<span class="nc bnc" id="L994" title="All 2 branches missed.">               e.getCause() instanceof IOException ||</span>
+<span class="nc bnc" id="L995" title="All 2 branches missed.">               e.getMessage().contains(&quot;Connection reset&quot;) ||</span>
+<span class="nc bnc" id="L996" title="All 2 branches missed.">               e.getMessage().contains(&quot;Socket closed&quot;) ||</span>
+<span class="nc bnc" id="L997" title="All 2 branches missed.">               e.getMessage().contains(&quot;Broken pipe&quot;) ||</span>
+<span class="nc bnc" id="L998" title="All 2 branches missed.">               e.getMessage().contains(&quot;Connection refused&quot;) ||</span>
+<span class="nc bnc" id="L999" title="All 2 branches missed.">               e.getMessage().contains(&quot;Unexpected end of stream&quot;);</span>
     }
     
     /**
      * Test connection health by sending a ping if possible
      */
     public boolean testConnection() {
-<span class="nc bnc" id="L992" title="All 2 branches missed.">        if (!isConnectionHealthy()) {</span>
-<span class="nc" id="L993">            return false;</span>
+<span class="nc bnc" id="L1006" title="All 2 branches missed.">        if (!isConnectionHealthy()) {</span>
+<span class="nc" id="L1007">            return false;</span>
         }
         
         try {
             // Use a simple query to test connection
-<span class="nc" id="L998">            CompletableFuture&lt;WorldUpsProto.UTruck&gt; future = queryTruckStatus(1);</span>
+<span class="nc" id="L1012">            CompletableFuture&lt;WorldUpsProto.UTruck&gt; future = queryTruckStatus(1);</span>
             // Wait up to 5 seconds for response
-<span class="nc" id="L1000">            future.get(5, TimeUnit.SECONDS);</span>
-<span class="nc" id="L1001">            return true;</span>
-<span class="nc" id="L1002">        } catch (Exception e) {</span>
-<span class="nc" id="L1003">            logger.debug(&quot;Connection test failed&quot;, e);</span>
-<span class="nc" id="L1004">            return false;</span>
+<span class="nc" id="L1014">            future.get(5, TimeUnit.SECONDS);</span>
+<span class="nc" id="L1015">            return true;</span>
+<span class="nc" id="L1016">        } catch (Exception e) {</span>
+<span class="nc" id="L1017">            logger.debug(&quot;Connection test failed&quot;, e);</span>
+<span class="nc" id="L1018">            return false;</span>
         }
     }
 }

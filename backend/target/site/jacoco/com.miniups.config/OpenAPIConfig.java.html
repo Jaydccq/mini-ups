@@ -10,22 +10,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-<span class="nc" id="L13">public class OpenAPIConfig {</span>
+<span class="fc" id="L13">public class OpenAPIConfig {</span>
 
     @Bean
     public OpenAPI customOpenAPI() {
-<span class="nc" id="L17">        final String securitySchemeName = &quot;bearerAuth&quot;;</span>
-<span class="nc" id="L18">        return new OpenAPI()</span>
-<span class="nc" id="L19">                .info(new Info().title(&quot;Mini-UPS API&quot;).version(&quot;v1&quot;))</span>
-<span class="nc" id="L20">                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))</span>
-<span class="nc" id="L21">                .components(</span>
+<span class="fc" id="L17">        final String securitySchemeName = &quot;bearerAuth&quot;;</span>
+<span class="fc" id="L18">        return new OpenAPI()</span>
+<span class="fc" id="L19">                .info(new Info().title(&quot;Mini-UPS API&quot;).version(&quot;v1&quot;))</span>
+<span class="fc" id="L20">                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))</span>
+<span class="fc" id="L21">                .components(</span>
                         new Components()
-<span class="nc" id="L23">                                .addSecuritySchemes(securitySchemeName,</span>
+<span class="fc" id="L23">                                .addSecuritySchemes(securitySchemeName,</span>
                                         new SecurityScheme()
-<span class="nc" id="L25">                                                .name(securitySchemeName)</span>
-<span class="nc" id="L26">                                                .type(SecurityScheme.Type.HTTP)</span>
-<span class="nc" id="L27">                                                .scheme(&quot;bearer&quot;)</span>
-<span class="nc" id="L28">                                                .bearerFormat(&quot;JWT&quot;)</span>
+<span class="fc" id="L25">                                                .name(securitySchemeName)</span>
+<span class="fc" id="L26">                                                .type(SecurityScheme.Type.HTTP)</span>
+<span class="fc" id="L27">                                                .scheme(&quot;bearer&quot;)</span>
+<span class="fc" id="L28">                                                .bearerFormat(&quot;JWT&quot;)</span>
                                 )
                 );
     }

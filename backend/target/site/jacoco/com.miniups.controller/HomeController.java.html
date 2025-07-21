@@ -72,5 +72,23 @@ import java.util.Map;
         
 <span class="nc" id="L73">        return ResponseEntity.ok(response);</span>
     }
+
+    @GetMapping(&quot;/api/health&quot;)
+    public ResponseEntity&lt;?&gt; apiHealth() {
+<span class="nc" id="L78">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L79">        response.put(&quot;status&quot;, &quot;UP&quot;);</span>
+<span class="nc" id="L80">        response.put(&quot;service&quot;, &quot;Mini-UPS API&quot;);</span>
+<span class="nc" id="L81">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+<span class="nc" id="L82">        response.put(&quot;version&quot;, &quot;1.0.0&quot;);</span>
+        
+<span class="nc" id="L84">        Map&lt;String, String&gt; checks = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L85">        checks.put(&quot;database&quot;, &quot;UP&quot;);</span>
+<span class="nc" id="L86">        checks.put(&quot;cache&quot;, &quot;UP&quot;);</span>
+<span class="nc" id="L87">        checks.put(&quot;api&quot;, &quot;UP&quot;);</span>
+        
+<span class="nc" id="L89">        response.put(&quot;components&quot;, checks);</span>
+        
+<span class="nc" id="L91">        return ResponseEntity.ok(response);</span>
+    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

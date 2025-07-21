@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreateShipmentDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.model.dto.shipment</a> &gt; <span class="el_source">CreateShipmentDto.java</span></div><h1>CreateShipmentDto.java</h1><pre class="source lang-java linenums">/**
+ * Create Shipment Data Transfer Object
+ * 
+ * 功能说明：
+ * - 用于创建新运单的请求数据传输对象
+ * - 支持Amazon系统和外部API的运单创建请求
+ * - 包含运单创建所需的所有必要信息
+ * 
+ * 数据字段：
+ * - shipmentId: 运单ID (可选，系统自动生成)
+ * - customerId: 客户ID
+ * - customerName: 客户姓名
+ * - customerEmail: 客户邮箱
+ * - originX/Y: 起始坐标
+ * - destX/Y: 目标坐标
+ * - weight: 包裹重量
+ * - priority: 运输优先级
+ * 
+ * 验证规则：
+ * - 必填字段验证
+ * - 坐标范围验证
+ * - 重量范围检查
+ * - 邮箱格式验证
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.model.dto.shipment;
+
+import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
+
+public class CreateShipmentDto {
+    
+    @Size(max = 50, message = &quot;Shipment ID must not exceed 50 characters&quot;)
+    private String shipmentId;
+    
+    @NotBlank(message = &quot;Customer ID cannot be blank&quot;)
+    @Size(max = 50, message = &quot;Customer ID must not exceed 50 characters&quot;)
+    private String customerId;
+    
+    @NotBlank(message = &quot;Customer name cannot be blank&quot;)
+    @Size(max = 100, message = &quot;Customer name must not exceed 100 characters&quot;)
+    private String customerName;
+    
+    @Email(message = &quot;Invalid email format&quot;)
+    @NotBlank(message = &quot;Customer email cannot be blank&quot;)
+    private String customerEmail;
+    
+    @NotNull(message = &quot;Origin X coordinate is required&quot;)
+    @Min(value = 0, message = &quot;Origin X coordinate must be non-negative&quot;)
+    @Max(value = 1000, message = &quot;Origin X coordinate must not exceed 1000&quot;)
+    private Integer originX;
+    
+    @NotNull(message = &quot;Origin Y coordinate is required&quot;)
+    @Min(value = 0, message = &quot;Origin Y coordinate must be non-negative&quot;)
+    @Max(value = 1000, message = &quot;Origin Y coordinate must not exceed 1000&quot;)
+    private Integer originY;
+    
+    @NotNull(message = &quot;Destination X coordinate is required&quot;)
+    @Min(value = 0, message = &quot;Destination X coordinate must be non-negative&quot;)
+    @Max(value = 1000, message = &quot;Destination X coordinate must not exceed 1000&quot;)
+    private Integer destX;
+    
+    @NotNull(message = &quot;Destination Y coordinate is required&quot;)
+    @Min(value = 0, message = &quot;Destination Y coordinate must be non-negative&quot;)
+    @Max(value = 1000, message = &quot;Destination Y coordinate must not exceed 1000&quot;)
+    private Integer destY;
+    
+    @NotNull(message = &quot;Weight is required&quot;)
+    @DecimalMin(value = &quot;0.1&quot;, message = &quot;Weight must be at least 0.1 kg&quot;)
+    @DecimalMax(value = &quot;50.0&quot;, message = &quot;Weight cannot exceed 50 kg&quot;)
+    private BigDecimal weight;
+    
+<span class="nc" id="L75">    @Pattern(regexp = &quot;STANDARD|EXPRESS|OVERNIGHT&quot;, message = &quot;Invalid priority&quot;)</span>
+    private String priority = &quot;STANDARD&quot;;
+    
+    @Size(max = 500, message = &quot;Special instructions must not exceed 500 characters&quot;)
+    private String specialInstructions;
+    
+<span class="nc" id="L81">    private Boolean requiresSignature = false;</span>
+<span class="nc" id="L82">    private Boolean fragile = false;</span>
+    
+    // Constructors
+<span class="nc" id="L85">    public CreateShipmentDto() {}</span>
+    
+    public CreateShipmentDto(String customerId, String customerName, String customerEmail,
+                           Integer originX, Integer originY, Integer destX, Integer destY,
+<span class="nc" id="L89">                           BigDecimal weight) {</span>
+<span class="nc" id="L90">        this.customerId = customerId;</span>
+<span class="nc" id="L91">        this.customerName = customerName;</span>
+<span class="nc" id="L92">        this.customerEmail = customerEmail;</span>
+<span class="nc" id="L93">        this.originX = originX;</span>
+<span class="nc" id="L94">        this.originY = originY;</span>
+<span class="nc" id="L95">        this.destX = destX;</span>
+<span class="nc" id="L96">        this.destY = destY;</span>
+<span class="nc" id="L97">        this.weight = weight;</span>
+<span class="nc" id="L98">    }</span>
+    
+    // Getters and Setters
+    public String getShipmentId() {
+<span class="nc" id="L102">        return shipmentId;</span>
+    }
+    
+    public void setShipmentId(String shipmentId) {
+<span class="nc" id="L106">        this.shipmentId = shipmentId;</span>
+<span class="nc" id="L107">    }</span>
+    
+    public String getCustomerId() {
+<span class="nc" id="L110">        return customerId;</span>
+    }
+    
+    public void setCustomerId(String customerId) {
+<span class="nc" id="L114">        this.customerId = customerId;</span>
+<span class="nc" id="L115">    }</span>
+    
+    public String getCustomerName() {
+<span class="nc" id="L118">        return customerName;</span>
+    }
+    
+    public void setCustomerName(String customerName) {
+<span class="nc" id="L122">        this.customerName = customerName;</span>
+<span class="nc" id="L123">    }</span>
+    
+    public String getCustomerEmail() {
+<span class="nc" id="L126">        return customerEmail;</span>
+    }
+    
+    public void setCustomerEmail(String customerEmail) {
+<span class="nc" id="L130">        this.customerEmail = customerEmail;</span>
+<span class="nc" id="L131">    }</span>
+    
+    public Integer getOriginX() {
+<span class="nc" id="L134">        return originX;</span>
+    }
+    
+    public void setOriginX(Integer originX) {
+<span class="nc" id="L138">        this.originX = originX;</span>
+<span class="nc" id="L139">    }</span>
+    
+    public Integer getOriginY() {
+<span class="nc" id="L142">        return originY;</span>
+    }
+    
+    public void setOriginY(Integer originY) {
+<span class="nc" id="L146">        this.originY = originY;</span>
+<span class="nc" id="L147">    }</span>
+    
+    public Integer getDestX() {
+<span class="nc" id="L150">        return destX;</span>
+    }
+    
+    public void setDestX(Integer destX) {
+<span class="nc" id="L154">        this.destX = destX;</span>
+<span class="nc" id="L155">    }</span>
+    
+    public Integer getDestY() {
+<span class="nc" id="L158">        return destY;</span>
+    }
+    
+    public void setDestY(Integer destY) {
+<span class="nc" id="L162">        this.destY = destY;</span>
+<span class="nc" id="L163">    }</span>
+    
+    public BigDecimal getWeight() {
+<span class="nc" id="L166">        return weight;</span>
+    }
+    
+    public void setWeight(BigDecimal weight) {
+<span class="nc" id="L170">        this.weight = weight;</span>
+<span class="nc" id="L171">    }</span>
+    
+    public String getPriority() {
+<span class="nc" id="L174">        return priority;</span>
+    }
+    
+    public void setPriority(String priority) {
+<span class="nc" id="L178">        this.priority = priority;</span>
+<span class="nc" id="L179">    }</span>
+    
+    public String getSpecialInstructions() {
+<span class="nc" id="L182">        return specialInstructions;</span>
+    }
+    
+    public void setSpecialInstructions(String specialInstructions) {
+<span class="nc" id="L186">        this.specialInstructions = specialInstructions;</span>
+<span class="nc" id="L187">    }</span>
+    
+    public Boolean getRequiresSignature() {
+<span class="nc" id="L190">        return requiresSignature;</span>
+    }
+    
+    public void setRequiresSignature(Boolean requiresSignature) {
+<span class="nc" id="L194">        this.requiresSignature = requiresSignature;</span>
+<span class="nc" id="L195">    }</span>
+    
+    public Boolean getFragile() {
+<span class="nc" id="L198">        return fragile;</span>
+    }
+    
+    public void setFragile(Boolean fragile) {
+<span class="nc" id="L202">        this.fragile = fragile;</span>
+<span class="nc" id="L203">    }</span>
+    
+    // Helper methods
+    public boolean isHighPriority() {
+<span class="nc bnc" id="L207" title="All 4 branches missed.">        return &quot;EXPRESS&quot;.equals(priority) || &quot;OVERNIGHT&quot;.equals(priority);</span>
+    }
+    
+    public boolean hasSpecialHandlingRequirements() {
+<span class="nc bnc" id="L211" title="All 4 branches missed.">        return fragile || requiresSignature;</span>
+    }
+    
+    public double calculateDistance() {
+<span class="nc" id="L215">        return Math.sqrt(Math.pow(destX - originX, 2) + Math.pow(destY - originY, 2));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

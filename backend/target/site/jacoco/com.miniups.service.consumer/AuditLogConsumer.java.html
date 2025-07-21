@@ -37,13 +37,13 @@ import java.time.Instant;
  */
 @Service
 public class AuditLogConsumer {
-<span class="nc" id="L40">    private static final Logger log = LoggerFactory.getLogger(AuditLogConsumer.class);</span>
+<span class="fc" id="L40">    private static final Logger log = LoggerFactory.getLogger(AuditLogConsumer.class);</span>
 
     private final AuditLogRepository auditLogRepository;
     
-<span class="nc" id="L44">    public AuditLogConsumer(AuditLogRepository auditLogRepository) {</span>
-<span class="nc" id="L45">        this.auditLogRepository = auditLogRepository;</span>
-<span class="nc" id="L46">    }</span>
+<span class="fc" id="L44">    public AuditLogConsumer(AuditLogRepository auditLogRepository) {</span>
+<span class="fc" id="L45">        this.auditLogRepository = auditLogRepository;</span>
+<span class="fc" id="L46">    }</span>
 
     /**
      * Process audit log events from the queue

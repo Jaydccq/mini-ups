@@ -27,20 +27,29 @@ try {
 }
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
+class MockIntersectionObserver {
+  root = null
+  rootMargin = ''
+  thresholds: number[] = []
+  
+  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
   disconnect() {}
-  observe() {}
-  unobserve() {}
+  observe(_target: Element) {}
+  unobserve(_target: Element) {}
+  takeRecords(): IntersectionObserverEntry[] { return [] }
 }
 
+global.IntersectionObserver = MockIntersectionObserver as any
+
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  constructor() {}
+class MockResizeObserver {
+  constructor(_callback: ResizeObserverCallback) {}
   disconnect() {}
-  observe() {}
-  unobserve() {}
+  observe(_target: Element, _options?: ResizeObserverOptions) {}
+  unobserve(_target: Element) {}
 }
+
+global.ResizeObserver = MockResizeObserver as any
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {

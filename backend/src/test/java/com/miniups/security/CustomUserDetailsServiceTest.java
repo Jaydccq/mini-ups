@@ -158,6 +158,7 @@ class CustomUserDetailsServiceTest {
     void testLoadUserByUsername_DisabledUser() {
         // Given
         String username = "disableduser";
+        testUser.setUsername(username);
         testUser.setEnabled(false);
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
 

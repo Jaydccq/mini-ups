@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AmazonIntegrationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Mini UPS Backend</a> &gt; <a href="index.source.html" class="el_package">com.miniups.controller</a> &gt; <span class="el_source">AmazonIntegrationController.java</span></div><h1>AmazonIntegrationController.java</h1><pre class="source lang-java linenums">/**
+ * Amazon Integration API Controller
+ * 
+ * Features:
+ * - Provides REST API endpoints for receiving Amazon system messages
+ * - Handles various types of messages sent by Amazon
+ * - Returns standardized response format
+ * 
+ * API Endpoints:
+ * - POST /api/shipment - Receives ShipmentCreated messages
+ * - POST /api/shipment_loaded - Receives ShipmentLoaded messages
+ * - POST /api/shipment_status - Receives ShipmentStatusRequest messages
+ * - POST /api/address_change - Receives AddressChange messages
+ * 
+ * Message Processing Flow:
+ * 1. Receive HTTP request from Amazon
+ * 2. Validate message format and required fields
+ * 3. Call appropriate business service for processing
+ * 4. Return standardized response
+ * 5. Log processing results
+ * 
+ * @author Mini-UPS Team
+ * @version 1.0.0
+ */
+package com.miniups.controller;
+
+import com.miniups.model.dto.AmazonMessageDto;
+import com.miniups.model.dto.UpsResponseDto;
+import com.miniups.model.dto.common.ApiResponse;
+import com.miniups.service.AmazonIntegrationService;
+
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api&quot;)
+@CrossOrigin(origins = &quot;*&quot;)
+<span class="nc" id="L46">public class AmazonIntegrationController {</span>
+    
+<span class="nc" id="L48">    private static final Logger logger = LoggerFactory.getLogger(AmazonIntegrationController.class);</span>
+    
+    @Autowired
+    private AmazonIntegrationService amazonIntegrationService;
+    
+    /**
+     * Receives Amazon's ShipmentCreated message (Asynchronous Processing)
+     * 
+     * Amazon calls this endpoint to create new shipping orders.
+     * This endpoint now processes requests asynchronously for better performance
+     * and scalability. The request is quickly validated and queued for processing,
+     * with status updates sent via webhook when processing completes.
+     * 
+     * @param message Complete message body sent by Amazon
+     * @return UPS standard response with tracking information
+     */
+    @PostMapping(&quot;/shipment&quot;)
+    public ResponseEntity&lt;UpsResponseDto&gt; handleShipmentCreated(@Valid @RequestBody AmazonMessageDto message) {
+<span class="nc" id="L66">        logger.info(&quot;Received ShipmentCreated message from Amazon: {}&quot;, message.getPayload());</span>
+        
+        // Validate message type
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (!message.isShipmentCreated()) {</span>
+<span class="nc" id="L70">            UpsResponseDto errorResponse = UpsResponseDto.error(1000, </span>
+<span class="nc" id="L71">                &quot;Invalid message type. Expected 'ShipmentCreated', got: &quot; + message.getMessageType());</span>
+<span class="nc" id="L72">            return ResponseEntity.badRequest().body(errorResponse);</span>
+        }
+        
+        // Process the message asynchronously
+<span class="nc" id="L76">        UpsResponseDto response = amazonIntegrationService.handleShipmentCreatedAsync(message);</span>
+        
+        // Return appropriate HTTP status
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (response.isError()) {</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            return ResponseEntity.status(response.getCode() &gt;= 500 ? 500 : 400).body(response);</span>
+        }
+        
+<span class="nc" id="L83">        return ResponseEntity.accepted().body(response);</span>
+    }
+    
+    /**
+     * Receives Amazon's ShipmentLoaded message
+     * 
+     * Amazon calls this endpoint to notify that packages have been loaded onto truck
+     * 
+     * @param message Complete message body sent by Amazon
+     * @return UPS standard response
+     */
+    @PostMapping(&quot;/shipment_loaded&quot;)
+    public ResponseEntity&lt;UpsResponseDto&gt; handleShipmentLoaded(@Valid @RequestBody AmazonMessageDto message) {
+<span class="nc" id="L96">        logger.info(&quot;Received ShipmentLoaded message from Amazon: {}&quot;, message.getPayload());</span>
+        
+        // Validate message type
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (!message.isShipmentLoaded()) {</span>
+<span class="nc" id="L100">            UpsResponseDto errorResponse = UpsResponseDto.error(1000, </span>
+<span class="nc" id="L101">                &quot;Invalid message type. Expected 'ShipmentLoaded', got: &quot; + message.getMessageType());</span>
+<span class="nc" id="L102">            return ResponseEntity.badRequest().body(errorResponse);</span>
+        }
+        
+        // Process the message
+<span class="nc" id="L106">        UpsResponseDto response = amazonIntegrationService.handleShipmentLoaded(message);</span>
+        
+        // Return appropriate HTTP status
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (response.isError()) {</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">            return ResponseEntity.status(response.getCode() &gt;= 500 ? 500 : 400).body(response);</span>
+        }
+        
+<span class="nc" id="L113">        return ResponseEntity.ok(response);</span>
+    }
+    
+    /**
+     * Receives Amazon's ShipmentStatusRequest message
+     * 
+     * Amazon calls this endpoint to query shipping order status
+     * 
+     * @param message Complete message body sent by Amazon
+     * @return Response containing shipping status information
+     */
+    @PostMapping(&quot;/shipment_status&quot;)
+    public ResponseEntity&lt;UpsResponseDto&gt; handleShipmentStatusRequest(@Valid @RequestBody AmazonMessageDto message) {
+<span class="nc" id="L126">        logger.info(&quot;Received ShipmentStatusRequest message from Amazon: {}&quot;, message.getPayload());</span>
+        
+        // Validate message type
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (!message.isShipmentStatusRequest()) {</span>
+<span class="nc" id="L130">            UpsResponseDto errorResponse = UpsResponseDto.error(1000, </span>
+<span class="nc" id="L131">                &quot;Invalid message type. Expected 'ShipmentStatusRequest', got: &quot; + message.getMessageType());</span>
+<span class="nc" id="L132">            return ResponseEntity.badRequest().body(errorResponse);</span>
+        }
+        
+        // Process the message
+<span class="nc" id="L136">        UpsResponseDto response = amazonIntegrationService.handleShipmentStatusRequest(message);</span>
+        
+        // Return appropriate HTTP status
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (response.isError()) {</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">            return ResponseEntity.status(response.getCode() &gt;= 500 ? 500 : 400).body(response);</span>
+        }
+        
+<span class="nc" id="L143">        return ResponseEntity.ok(response);</span>
+    }
+    
+    /**
+     * Receives Amazon's AddressChange message
+     * 
+     * Amazon calls this endpoint to request delivery address changes
+     * 
+     * @param message Complete message body sent by Amazon
+     * @return UPS standard response
+     */
+    @PostMapping(&quot;/address_change&quot;)
+    public ResponseEntity&lt;UpsResponseDto&gt; handleAddressChange(@Valid @RequestBody AmazonMessageDto message) {
+<span class="nc" id="L156">        logger.info(&quot;Received AddressChange message from Amazon: {}&quot;, message.getPayload());</span>
+        
+        // Validate message type
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (!message.isAddressChange()) {</span>
+<span class="nc" id="L160">            UpsResponseDto errorResponse = UpsResponseDto.error(1000, </span>
+<span class="nc" id="L161">                &quot;Invalid message type. Expected 'AddressChange', got: &quot; + message.getMessageType());</span>
+<span class="nc" id="L162">            return ResponseEntity.badRequest().body(errorResponse);</span>
+        }
+        
+        // Process the message
+<span class="nc" id="L166">        UpsResponseDto response = amazonIntegrationService.handleAddressChange(message);</span>
+        
+        // Return appropriate HTTP status
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        if (response.isError()) {</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">            return ResponseEntity.status(response.getCode() &gt;= 500 ? 500 : 400).body(response);</span>
+        }
+        
+<span class="nc" id="L173">        return ResponseEntity.ok(response);</span>
+    }
+    
+    /**
+     * Generic message processing endpoint (backup)
+     * 
+     * Can handle any type of Amazon message, routing to appropriate handler based on message_type
+     */
+    @PostMapping(&quot;/amazon/message&quot;)
+    public ResponseEntity&lt;UpsResponseDto&gt; handleGenericMessage(@RequestBody Map&lt;String, Object&gt; rawMessage) {
+        // Convert to standard message format
+<span class="nc" id="L184">        AmazonMessageDto message = new AmazonMessageDto();</span>
+<span class="nc" id="L185">        message.setMessageType((String) rawMessage.get(&quot;message_type&quot;));</span>
+<span class="nc" id="L186">        message.setTimestamp(LocalDateTime.now()); // Use current time if not provided</span>
+        
+        // Safe cast with type checking
+<span class="nc" id="L189">        Object payloadObj = rawMessage.get(&quot;payload&quot;);</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        if (payloadObj instanceof Map) {</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L192">            Map&lt;String, Object&gt; payload = (Map&lt;String, Object&gt;) payloadObj;</span>
+<span class="nc" id="L193">            message.setPayload(payload);</span>
+<span class="nc" id="L194">        } else {</span>
+<span class="nc" id="L195">            message.setPayload(null);</span>
+        }
+        
+        // Route to appropriate handler
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        if (message.isShipmentCreated()) {</span>
+<span class="nc" id="L200">            return handleShipmentCreated(message);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        } else if (message.isShipmentLoaded()) {</span>
+<span class="nc" id="L202">            return handleShipmentLoaded(message);</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        } else if (message.isShipmentStatusRequest()) {</span>
+<span class="nc" id="L204">            return handleShipmentStatusRequest(message);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        } else if (message.isAddressChange()) {</span>
+<span class="nc" id="L206">            return handleAddressChange(message);</span>
+        } else {
+<span class="nc" id="L208">            UpsResponseDto errorResponse = UpsResponseDto.error(1000, </span>
+<span class="nc" id="L209">                &quot;Unsupported message type: &quot; + message.getMessageType());</span>
+<span class="nc" id="L210">            return ResponseEntity.badRequest().body(errorResponse);</span>
+        }
+    }
+    
+    /**
+     * Health check endpoint
+     * 
+     * Amazon can call this endpoint to check if UPS system is running normally
+     */
+    @GetMapping(&quot;/health&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; healthCheck() {
+<span class="nc" id="L221">        Map&lt;String, Object&gt; health = Map.of(</span>
+            &quot;status&quot;, &quot;UP&quot;,
+<span class="nc" id="L223">            &quot;timestamp&quot;, LocalDateTime.now(),</span>
+            &quot;service&quot;, &quot;UPS Integration API&quot;,
+            &quot;version&quot;, &quot;1.0.0&quot;
+        );
+        
+<span class="nc" id="L228">        return ResponseEntity.ok(health);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @Transactional
@@ -51,16 +52,17 @@ public class TrackingService {
     private ShipmentRepository shipmentRepository;
     
     private final Random random = new Random();
+    private final AtomicLong sequenceCounter = new AtomicLong(0);
     
     /**
      * Generate unique UPS tracking number
      * 
-     * Format: UPS + YYYYMMDDHHMMSS + 4-digit random number
-     * Example: UPS202401151030451234
+     * Format: UPS + YYYYMMDDHHMMSS + 4-digit sequence number
+     * Example: UPS202401151030450001
      * 
      * @return Unique tracking number
      */
-    public String generateTrackingNumber() {
+    public synchronized String generateTrackingNumber() {
         int attempts = 0;
         
         while (attempts < MAX_RETRY_ATTEMPTS) {
@@ -76,8 +78,8 @@ public class TrackingService {
             logger.warn("Tracking number collision, attempt {}: {}", attempts, trackingNumber);
         }
         
-        // If we still have collisions after max attempts, add system timestamp
-        String fallbackNumber = createTrackingNumber() + System.nanoTime() % 10000;
+        // If we still have collisions after max attempts, add nanosecond timestamp
+        String fallbackNumber = createTrackingNumber() + String.format("%04d", System.nanoTime() % 10000);
         logger.warn("Used fallback tracking number generation: {}", fallbackNumber);
         return fallbackNumber;
     }
@@ -216,10 +218,13 @@ public class TrackingService {
         // Get current timestamp
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         
-        // Generate 4-digit random number
-        int randomNum = 1000 + random.nextInt(9000);
+        // Use atomic counter for thread-safe sequence generation
+        long sequence = sequenceCounter.incrementAndGet() % 10000;
         
-        return TRACKING_PREFIX + timestamp + randomNum;
+        // Format sequence to 4 digits with leading zeros
+        String sequenceStr = String.format("%04d", sequence);
+        
+        return TRACKING_PREFIX + timestamp + sequenceStr;
     }
     
     private boolean isValidStatusTransition(ShipmentStatus fromStatus, ShipmentStatus toStatus) {

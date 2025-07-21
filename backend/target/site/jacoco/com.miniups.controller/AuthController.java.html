@@ -56,7 +56,7 @@ import java.util.Map;
 @RequestMapping(&quot;/api/auth&quot;)
 public class AuthController {
     
-<span class="nc" id="L59">    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);</span>
+<span class="fc" id="L59">    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);</span>
     
     private final AuthService authService;
     private final UserService userService;
@@ -64,12 +64,12 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     
     public AuthController(AuthService authService, UserService userService, 
-<span class="nc" id="L67">                         TokenBlacklistService tokenBlacklistService, JwtTokenProvider jwtTokenProvider) {</span>
-<span class="nc" id="L68">        this.authService = authService;</span>
-<span class="nc" id="L69">        this.userService = userService;</span>
-<span class="nc" id="L70">        this.tokenBlacklistService = tokenBlacklistService;</span>
-<span class="nc" id="L71">        this.jwtTokenProvider = jwtTokenProvider;</span>
-<span class="nc" id="L72">    }</span>
+<span class="fc" id="L67">                         TokenBlacklistService tokenBlacklistService, JwtTokenProvider jwtTokenProvider) {</span>
+<span class="fc" id="L68">        this.authService = authService;</span>
+<span class="fc" id="L69">        this.userService = userService;</span>
+<span class="fc" id="L70">        this.tokenBlacklistService = tokenBlacklistService;</span>
+<span class="fc" id="L71">        this.jwtTokenProvider = jwtTokenProvider;</span>
+<span class="fc" id="L72">    }</span>
     
     /**
      * User registration

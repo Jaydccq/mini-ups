@@ -2,6 +2,7 @@ package com.miniups.config;
 
 import com.miniups.service.WorldSimulatorService;
 import com.miniups.service.AmazonIntegrationService;
+import com.miniups.service.EventPublisherService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,13 @@ public class TestConfig {
      */
     @MockBean
     private AmazonIntegrationService amazonIntegrationService;
+
+    /**
+     * Mock Event Publisher Service for testing.
+     * This prevents actual RabbitMQ calls during tests.
+     */
+    @MockBean
+    private EventPublisherService eventPublisherService;
 
     /**
      * Password encoder bean for testing.

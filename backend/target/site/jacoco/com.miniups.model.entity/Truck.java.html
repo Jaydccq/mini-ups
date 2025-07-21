@@ -92,44 +92,44 @@ public class Truck extends BaseEntity {
     
     // Getters and Setters
     public Integer getTruckId() {
-<span class="fc" id="L95">        return truckId;</span>
+<span class="nc" id="L95">        return truckId;</span>
     }
     
     public void setTruckId(Integer truckId) {
-<span class="fc" id="L99">        this.truckId = truckId;</span>
-<span class="fc" id="L100">    }</span>
+<span class="nc" id="L99">        this.truckId = truckId;</span>
+<span class="nc" id="L100">    }</span>
     
     public TruckStatus getStatus() {
-<span class="fc" id="L103">        return status;</span>
+<span class="nc" id="L103">        return status;</span>
     }
     
     public void setStatus(TruckStatus status) {
-<span class="fc" id="L107">        this.status = status;</span>
-<span class="fc" id="L108">    }</span>
+<span class="nc" id="L107">        this.status = status;</span>
+<span class="nc" id="L108">    }</span>
     
     public Integer getCurrentX() {
-<span class="fc" id="L111">        return currentX;</span>
+<span class="nc" id="L111">        return currentX;</span>
     }
     
     public void setCurrentX(Integer currentX) {
-<span class="fc" id="L115">        this.currentX = currentX;</span>
-<span class="fc" id="L116">    }</span>
+<span class="nc" id="L115">        this.currentX = currentX;</span>
+<span class="nc" id="L116">    }</span>
     
     public Integer getCurrentY() {
-<span class="fc" id="L119">        return currentY;</span>
+<span class="nc" id="L119">        return currentY;</span>
     }
     
     public void setCurrentY(Integer currentY) {
-<span class="fc" id="L123">        this.currentY = currentY;</span>
-<span class="fc" id="L124">    }</span>
+<span class="nc" id="L123">        this.currentY = currentY;</span>
+<span class="nc" id="L124">    }</span>
     
     public Integer getCapacity() {
-<span class="fc" id="L127">        return capacity;</span>
+<span class="nc" id="L127">        return capacity;</span>
     }
     
     public void setCapacity(Integer capacity) {
-<span class="fc" id="L131">        this.capacity = capacity;</span>
-<span class="fc" id="L132">    }</span>
+<span class="nc" id="L131">        this.capacity = capacity;</span>
+<span class="nc" id="L132">    }</span>
     
     public Long getDriverId() {
 <span class="nc" id="L135">        return driverId;</span>
@@ -176,18 +176,18 @@ public class Truck extends BaseEntity {
     }
     
     public void setCurrentLoad(Double currentLoad) {
-<span class="fc" id="L179">        this.currentLoad = currentLoad;</span>
-<span class="fc" id="L180">    }</span>
+<span class="nc" id="L179">        this.currentLoad = currentLoad;</span>
+<span class="nc" id="L180">    }</span>
     
     
     // Helper methods
     public boolean isAvailable() {
-<span class="fc bfc" id="L185" title="All 2 branches covered.">        return status == TruckStatus.IDLE;</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        return status == TruckStatus.IDLE;</span>
     }
     
     public void updateLocation(Integer x, Integer y) {
-<span class="fc" id="L189">        this.currentX = x;</span>
-<span class="fc" id="L190">        this.currentY = y;</span>
-<span class="fc" id="L191">    }</span>
+<span class="nc" id="L189">        this.currentX = x;</span>
+<span class="nc" id="L190">        this.currentY = y;</span>
+<span class="nc" id="L191">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

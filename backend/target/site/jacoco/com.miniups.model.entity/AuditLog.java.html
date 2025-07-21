@@ -18,9 +18,9 @@ import java.time.Instant;
     @Index(name = &quot;idx_audit_result&quot;, columnList = &quot;operation_result&quot;),
     @Index(name = &quot;idx_audit_created_at&quot;, columnList = &quot;created_at&quot;)
 })
-<span class="nc" id="L21">@NoArgsConstructor</span>
-<span class="nc bnc" id="L22" title="All 200 branches missed.">@EqualsAndHashCode(callSuper = true)</span>
-public class AuditLog extends BaseEntity {
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+<span class="nc" id="L23">public class AuditLog extends BaseEntity {</span>
 
     @Column(name = &quot;event_id&quot;, nullable = false, unique = true, length = 50)
     private String eventId;

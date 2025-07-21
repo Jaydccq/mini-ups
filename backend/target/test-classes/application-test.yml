@@ -1,31 +1,47 @@
 spring:
   
-  # H2 Database for Fast Unit Tests
+  # Database Configuration for Tests
+  # Uses H2 for fast unit tests, PostgreSQL for CI integration tests
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
+    url: ${TEST_DATABASE_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    driver-class-name: ${TEST_DATABASE_DRIVER:org.h2.Driver}
+    username: ${TEST_DATABASE_USERNAME:sa}
+    password: ${TEST_DATABASE_PASSWORD:password}
   
   # JPA Configuration
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: ${TEST_DATABASE_DIALECT:org.hibernate.dialect.H2Dialect}
     hibernate:
       ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
         id:
           new_generator_mappings: false
         jdbc:
           batch_size: 25
+        hbm2ddl:
+          auto: create-drop
   
-  # Redis Configuration (Embedded for Testing)
+  # Redis Configuration for Testing
   redis:
-    host: localhost
-    port: 6370  # Different port for testing
+    host: ${TEST_REDIS_HOST:localhost}
+    port: ${TEST_REDIS_PORT:6370}  # Different port for local testing
     timeout: 2000ms
+  
+  # RabbitMQ Configuration (Disabled for Testing)
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  
+  # Auto-configuration exclusions for testing
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
   
   # Logging Configuration
   logging:

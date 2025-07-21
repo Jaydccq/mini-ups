@@ -37,12 +37,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @Transactional
-<span class="nc" id="L43">public class TrackingService {</span>
+<span class="fc" id="L44">public class TrackingService {</span>
     
-<span class="nc" id="L45">    private static final Logger logger = LoggerFactory.getLogger(TrackingService.class);</span>
+<span class="fc" id="L46">    private static final Logger logger = LoggerFactory.getLogger(TrackingService.class);</span>
     
     private static final String TRACKING_PREFIX = &quot;UPS&quot;;
     private static final int MAX_RETRY_ATTEMPTS = 5;
@@ -50,36 +51,37 @@ import java.util.Random;
     @Autowired
     private ShipmentRepository shipmentRepository;
     
-<span class="nc" id="L53">    private final Random random = new Random();</span>
+<span class="fc" id="L54">    private final Random random = new Random();</span>
+<span class="fc" id="L55">    private final AtomicLong sequenceCounter = new AtomicLong(0);</span>
     
     /**
      * Generate unique UPS tracking number
      * 
-     * Format: UPS + YYYYMMDDHHMMSS + 4-digit random number
-     * Example: UPS202401151030451234
+     * Format: UPS + YYYYMMDDHHMMSS + 4-digit sequence number
+     * Example: UPS202401151030450001
      * 
      * @return Unique tracking number
      */
-    public String generateTrackingNumber() {
-<span class="nc" id="L64">        int attempts = 0;</span>
+    public synchronized String generateTrackingNumber() {
+<span class="fc" id="L66">        int attempts = 0;</span>
         
-<span class="nc bnc" id="L66" title="All 2 branches missed.">        while (attempts &lt; MAX_RETRY_ATTEMPTS) {</span>
-<span class="nc" id="L67">            String trackingNumber = createTrackingNumber();</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        while (attempts &lt; MAX_RETRY_ATTEMPTS) {</span>
+<span class="fc" id="L69">            String trackingNumber = createTrackingNumber();</span>
             
             // Check if tracking number already exists
-<span class="nc bnc" id="L70" title="All 2 branches missed.">            if (!shipmentRepository.existsByUpsTrackingId(trackingNumber)) {</span>
-<span class="nc" id="L71">                logger.info(&quot;Generated tracking number: {}&quot;, trackingNumber);</span>
-<span class="nc" id="L72">                return trackingNumber;</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">            if (!shipmentRepository.existsByUpsTrackingId(trackingNumber)) {</span>
+<span class="fc" id="L73">                logger.info(&quot;Generated tracking number: {}&quot;, trackingNumber);</span>
+<span class="fc" id="L74">                return trackingNumber;</span>
             }
             
-<span class="nc" id="L75">            attempts++;</span>
-<span class="nc" id="L76">            logger.warn(&quot;Tracking number collision, attempt {}: {}&quot;, attempts, trackingNumber);</span>
-<span class="nc" id="L77">        }</span>
+<span class="nc" id="L77">            attempts++;</span>
+<span class="nc" id="L78">            logger.warn(&quot;Tracking number collision, attempt {}: {}&quot;, attempts, trackingNumber);</span>
+<span class="nc" id="L79">        }</span>
         
-        // If we still have collisions after max attempts, add system timestamp
-<span class="nc" id="L80">        String fallbackNumber = createTrackingNumber() + System.nanoTime() % 10000;</span>
-<span class="nc" id="L81">        logger.warn(&quot;Used fallback tracking number generation: {}&quot;, fallbackNumber);</span>
-<span class="nc" id="L82">        return fallbackNumber;</span>
+        // If we still have collisions after max attempts, add nanosecond timestamp
+<span class="nc" id="L82">        String fallbackNumber = createTrackingNumber() + String.format(&quot;%04d&quot;, System.nanoTime() % 10000);</span>
+<span class="nc" id="L83">        logger.warn(&quot;Used fallback tracking number generation: {}&quot;, fallbackNumber);</span>
+<span class="nc" id="L84">        return fallbackNumber;</span>
     }
     
     /**
@@ -90,11 +92,11 @@ import java.util.Random;
      */
     @Transactional(readOnly = true)
     public Optional&lt;Shipment&gt; findByTrackingNumber(String trackingNumber) {
-<span class="nc bnc" id="L93" title="All 4 branches missed.">        if (trackingNumber == null || trackingNumber.trim().isEmpty()) {</span>
-<span class="nc" id="L94">            return Optional.empty();</span>
+<span class="nc bnc" id="L95" title="All 4 branches missed.">        if (trackingNumber == null || trackingNumber.trim().isEmpty()) {</span>
+<span class="nc" id="L96">            return Optional.empty();</span>
         }
         
-<span class="nc" id="L97">        return shipmentRepository.findByUpsTrackingId(trackingNumber.trim());</span>
+<span class="nc" id="L99">        return shipmentRepository.findByUpsTrackingId(trackingNumber.trim());</span>
     }
     
     /**
@@ -107,50 +109,50 @@ import java.util.Random;
      */
     public boolean updateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String comment) {
         try {
-<span class="nc" id="L110">            Optional&lt;Shipment&gt; shipmentOpt = findByTrackingNumber(trackingNumber);</span>
+<span class="nc" id="L112">            Optional&lt;Shipment&gt; shipmentOpt = findByTrackingNumber(trackingNumber);</span>
             
-<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (shipmentOpt.isEmpty()) {</span>
-<span class="nc" id="L113">                logger.warn(&quot;Shipment not found for tracking number: {}&quot;, trackingNumber);</span>
-<span class="nc" id="L114">                return false;</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">            if (shipmentOpt.isEmpty()) {</span>
+<span class="nc" id="L115">                logger.warn(&quot;Shipment not found for tracking number: {}&quot;, trackingNumber);</span>
+<span class="nc" id="L116">                return false;</span>
             }
             
-<span class="nc" id="L117">            Shipment shipment = shipmentOpt.get();</span>
-<span class="nc" id="L118">            ShipmentStatus oldStatus = shipment.getStatus();</span>
+<span class="nc" id="L119">            Shipment shipment = shipmentOpt.get();</span>
+<span class="nc" id="L120">            ShipmentStatus oldStatus = shipment.getStatus();</span>
             
             // Validate status transition
-<span class="nc bnc" id="L121" title="All 2 branches missed.">            if (!isValidStatusTransition(oldStatus, newStatus)) {</span>
-<span class="nc" id="L122">                logger.warn(&quot;Invalid status transition from {} to {} for tracking number: {}&quot;, </span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (!isValidStatusTransition(oldStatus, newStatus)) {</span>
+<span class="nc" id="L124">                logger.warn(&quot;Invalid status transition from {} to {} for tracking number: {}&quot;, </span>
                            oldStatus, newStatus, trackingNumber);
-<span class="nc" id="L124">                return false;</span>
+<span class="nc" id="L126">                return false;</span>
             }
             
             // Update status
-<span class="nc" id="L128">            shipment.updateStatus(newStatus);</span>
+<span class="nc" id="L130">            shipment.updateStatus(newStatus);</span>
             
             // Add status history entry with comment
-<span class="nc" id="L131">            ShipmentStatusHistory history = new ShipmentStatusHistory();</span>
-<span class="nc" id="L132">            history.setShipment(shipment);</span>
-<span class="nc" id="L133">            history.setStatus(newStatus);</span>
-<span class="nc" id="L134">            history.setTimestamp(LocalDateTime.now());</span>
-<span class="nc" id="L135">            history.setNotes(comment);</span>
+<span class="nc" id="L133">            ShipmentStatusHistory history = new ShipmentStatusHistory();</span>
+<span class="nc" id="L134">            history.setShipment(shipment);</span>
+<span class="nc" id="L135">            history.setStatus(newStatus);</span>
+<span class="nc" id="L136">            history.setTimestamp(LocalDateTime.now());</span>
+<span class="nc" id="L137">            history.setNotes(comment);</span>
             
-<span class="nc" id="L137">            shipment.getStatusHistory().add(history);</span>
+<span class="nc" id="L139">            shipment.getStatusHistory().add(history);</span>
             
             // Update delivery time if delivered
-<span class="nc bnc" id="L140" title="All 2 branches missed.">            if (newStatus == ShipmentStatus.DELIVERED) {</span>
-<span class="nc" id="L141">                shipment.setActualDelivery(LocalDateTime.now());</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">            if (newStatus == ShipmentStatus.DELIVERED) {</span>
+<span class="nc" id="L143">                shipment.setActualDelivery(LocalDateTime.now());</span>
             }
             
-<span class="nc" id="L144">            shipmentRepository.save(shipment);</span>
+<span class="nc" id="L146">            shipmentRepository.save(shipment);</span>
             
-<span class="nc" id="L146">            logger.info(&quot;Updated shipment {} status from {} to {}&quot;, </span>
+<span class="nc" id="L148">            logger.info(&quot;Updated shipment {} status from {} to {}&quot;, </span>
                        trackingNumber, oldStatus, newStatus);
             
-<span class="nc" id="L149">            return true;</span>
+<span class="nc" id="L151">            return true;</span>
             
-<span class="nc" id="L151">        } catch (Exception e) {</span>
-<span class="nc" id="L152">            logger.error(&quot;Error updating shipment status for tracking number: &quot; + trackingNumber, e);</span>
-<span class="nc" id="L153">            return false;</span>
+<span class="nc" id="L153">        } catch (Exception e) {</span>
+<span class="nc" id="L154">            logger.error(&quot;Error updating shipment status for tracking number: &quot; + trackingNumber, e);</span>
+<span class="nc" id="L155">            return false;</span>
         }
     }
     
@@ -162,13 +164,13 @@ import java.util.Random;
      */
     @Transactional(readOnly = true)
     public List&lt;ShipmentStatusHistory&gt; getStatusHistory(String trackingNumber) {
-<span class="nc" id="L165">        Optional&lt;Shipment&gt; shipmentOpt = findByTrackingNumber(trackingNumber);</span>
+<span class="nc" id="L167">        Optional&lt;Shipment&gt; shipmentOpt = findByTrackingNumber(trackingNumber);</span>
         
-<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (shipmentOpt.isPresent()) {</span>
-<span class="nc" id="L168">            return shipmentOpt.get().getStatusHistory();</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        if (shipmentOpt.isPresent()) {</span>
+<span class="nc" id="L170">            return shipmentOpt.get().getStatusHistory();</span>
         }
         
-<span class="nc" id="L171">        return List.of();</span>
+<span class="nc" id="L173">        return List.of();</span>
     }
     
     /**
@@ -178,25 +180,25 @@ import java.util.Random;
      * @return Whether it's valid
      */
     public boolean isValidTrackingNumberFormat(String trackingNumber) {
-<span class="nc bnc" id="L181" title="All 4 branches missed.">        if (trackingNumber == null || trackingNumber.trim().isEmpty()) {</span>
-<span class="nc" id="L182">            return false;</span>
+<span class="pc bpc" id="L183" title="2 of 4 branches missed.">        if (trackingNumber == null || trackingNumber.trim().isEmpty()) {</span>
+<span class="nc" id="L184">            return false;</span>
         }
         
-<span class="nc" id="L185">        String trimmed = trackingNumber.trim();</span>
+<span class="fc" id="L187">        String trimmed = trackingNumber.trim();</span>
         
         // Check prefix
-<span class="nc bnc" id="L188" title="All 2 branches missed.">        if (!trimmed.startsWith(TRACKING_PREFIX)) {</span>
-<span class="nc" id="L189">            return false;</span>
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">        if (!trimmed.startsWith(TRACKING_PREFIX)) {</span>
+<span class="nc" id="L191">            return false;</span>
         }
         
         // Check minimum length (UPS + 14 digits + 4 random = 21 chars minimum)
-<span class="nc bnc" id="L193" title="All 2 branches missed.">        if (trimmed.length() &lt; 21) {</span>
-<span class="nc" id="L194">            return false;</span>
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        if (trimmed.length() &lt; 21) {</span>
+<span class="nc" id="L196">            return false;</span>
         }
         
         // Check that part after prefix contains only digits
-<span class="nc" id="L198">        String numberPart = trimmed.substring(TRACKING_PREFIX.length());</span>
-<span class="nc" id="L199">        return numberPart.matches(&quot;\\d+&quot;);</span>
+<span class="fc" id="L200">        String numberPart = trimmed.substring(TRACKING_PREFIX.length());</span>
+<span class="fc" id="L201">        return numberPart.matches(&quot;\\d+&quot;);</span>
     }
     
     /**
@@ -207,60 +209,63 @@ import java.util.Random;
      */
     @Transactional(readOnly = true)
     public List&lt;Shipment&gt; getUserShipments(Long userId) {
-<span class="nc" id="L210">        return shipmentRepository.findByUserIdOrderByCreatedAtDesc(userId);</span>
+<span class="nc" id="L212">        return shipmentRepository.findByUserIdOrderByCreatedAtDesc(userId);</span>
     }
     
     // Private helper methods
     
     private String createTrackingNumber() {
         // Get current timestamp
-<span class="nc" id="L217">        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(&quot;yyyyMMddHHmmss&quot;));</span>
+<span class="fc" id="L219">        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(&quot;yyyyMMddHHmmss&quot;));</span>
         
-        // Generate 4-digit random number
-<span class="nc" id="L220">        int randomNum = 1000 + random.nextInt(9000);</span>
+        // Use atomic counter for thread-safe sequence generation
+<span class="fc" id="L222">        long sequence = sequenceCounter.incrementAndGet() % 10000;</span>
         
-<span class="nc" id="L222">        return TRACKING_PREFIX + timestamp + randomNum;</span>
+        // Format sequence to 4 digits with leading zeros
+<span class="fc" id="L225">        String sequenceStr = String.format(&quot;%04d&quot;, sequence);</span>
+        
+<span class="fc" id="L227">        return TRACKING_PREFIX + timestamp + sequenceStr;</span>
     }
     
     private boolean isValidStatusTransition(ShipmentStatus fromStatus, ShipmentStatus toStatus) {
         // Define valid state transitions
-<span class="nc bnc" id="L227" title="All 9 branches missed.">        switch (fromStatus) {</span>
+<span class="nc bnc" id="L232" title="All 9 branches missed.">        switch (fromStatus) {</span>
             case CREATED:
-<span class="nc bnc" id="L229" title="All 4 branches missed.">                return toStatus == ShipmentStatus.PICKED_UP || toStatus == ShipmentStatus.CANCELLED;</span>
+<span class="nc bnc" id="L234" title="All 4 branches missed.">                return toStatus == ShipmentStatus.PICKED_UP || toStatus == ShipmentStatus.CANCELLED;</span>
                 
             case PICKED_UP:
-<span class="nc bnc" id="L232" title="All 4 branches missed.">                return toStatus == ShipmentStatus.IN_TRANSIT || toStatus == ShipmentStatus.CANCELLED;</span>
+<span class="nc bnc" id="L237" title="All 4 branches missed.">                return toStatus == ShipmentStatus.IN_TRANSIT || toStatus == ShipmentStatus.CANCELLED;</span>
                 
             case IN_TRANSIT:
-<span class="nc bnc" id="L235" title="All 6 branches missed.">                return toStatus == ShipmentStatus.OUT_FOR_DELIVERY || </span>
+<span class="nc bnc" id="L240" title="All 6 branches missed.">                return toStatus == ShipmentStatus.OUT_FOR_DELIVERY || </span>
                        toStatus == ShipmentStatus.CANCELLED ||
                        toStatus == ShipmentStatus.EXCEPTION;
                 
             case OUT_FOR_DELIVERY:
-<span class="nc bnc" id="L240" title="All 6 branches missed.">                return toStatus == ShipmentStatus.DELIVERED || </span>
+<span class="nc bnc" id="L245" title="All 6 branches missed.">                return toStatus == ShipmentStatus.DELIVERED || </span>
                        toStatus == ShipmentStatus.DELIVERY_ATTEMPTED ||
                        toStatus == ShipmentStatus.EXCEPTION;
                 
             case DELIVERY_ATTEMPTED:
-<span class="nc bnc" id="L245" title="All 6 branches missed.">                return toStatus == ShipmentStatus.OUT_FOR_DELIVERY || </span>
+<span class="nc bnc" id="L250" title="All 6 branches missed.">                return toStatus == ShipmentStatus.OUT_FOR_DELIVERY || </span>
                        toStatus == ShipmentStatus.DELIVERED ||
                        toStatus == ShipmentStatus.RETURNED;
                 
             case DELIVERED:
                 // Delivered is typically a final state, but allow for corrections
-<span class="nc bnc" id="L251" title="All 2 branches missed.">                return toStatus == ShipmentStatus.EXCEPTION;</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">                return toStatus == ShipmentStatus.EXCEPTION;</span>
                 
             case CANCELLED:
             case RETURNED:
                 // These are final states
-<span class="nc" id="L256">                return false;</span>
+<span class="nc" id="L261">                return false;</span>
                 
             case EXCEPTION:
                 // From exception, can go to most states depending on resolution
-<span class="nc bnc" id="L260" title="All 2 branches missed.">                return toStatus != ShipmentStatus.CREATED;</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">                return toStatus != ShipmentStatus.CREATED;</span>
                 
             default:
-<span class="nc" id="L263">                return false;</span>
+<span class="nc" id="L268">                return false;</span>
         }
     }
 }
