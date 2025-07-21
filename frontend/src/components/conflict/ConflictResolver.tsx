@@ -215,9 +215,9 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
         };
         break;
 
-      case 'merge_fields':
+      case 'merge_fields': {
         const mergedData = { ...conflict.serverState };
-        const mergedFields: Record<string, any> = {};
+        const mergedFields: Record<string, unknown> = {};
         
         Object.entries(selectedFields).forEach(([fieldName, source]) => {
           const value = source === 'ours' ? conflict.ourChanges[fieldName] : conflict.serverState[fieldName];
@@ -233,6 +233,7 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
           forceVersion: conflict.serverVersion,
         };
         break;
+      }
 
       default:
         throw new Error(`Unknown resolution type: ${resolutionType}`);

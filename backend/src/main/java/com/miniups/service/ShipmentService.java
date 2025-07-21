@@ -30,6 +30,10 @@ import com.miniups.model.enums.ShipmentStatus;
 import com.miniups.model.enums.UserRole;
 import com.miniups.repository.ShipmentRepository;
 import com.miniups.repository.UserRepository;
+import com.miniups.exception.ShipmentCreationException;
+import com.miniups.util.Constants;
+import com.miniups.util.SecurityUtils;
+import com.miniups.util.NameParsingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +98,7 @@ public class ShipmentService {
                 Truck assignedTruck = truckManagementService.assignOptimalTruck(
                     createShipmentDto.getOriginX(),
                     createShipmentDto.getOriginY(),
-                    1 // 默认包裹数量
+                    Constants.DEFAULT_PACKAGE_COUNT // 默认包裹数量
                 );
                 
                 if (assignedTruck != null) {
@@ -116,10 +120,13 @@ public class ShipmentService {
             logger.info("Successfully created shipment: {}", trackingNumber);
             return savedShipment;
             
+        } catch (ShipmentCreationException e) {
+            // 重新抛出业务异常，保持异常链
+            throw e;
         } catch (Exception e) {
             logger.error("Failed to create shipment for customer {}: {}", 
                 createShipmentDto.getCustomerName(), e.getMessage(), e);
-            throw new RuntimeException("Failed to create shipment: " + e.getMessage(), e);
+            throw ShipmentCreationException.forCustomer(createShipmentDto.getCustomerName(), e);
         }
     }
     
@@ -203,21 +210,37 @@ public class ShipmentService {
         }
         
         // 创建新用户
-        User newUser = new User();
-        newUser.setUsername(dto.getCustomerId() != null ? dto.getCustomerId() : 
-                          "customer_" + System.currentTimeMillis());
-        newUser.setEmail(dto.getCustomerEmail());
-        // 分离姓名为 firstName 和 lastName
-        String[] nameParts = dto.getCustomerName().split(" ", 2);
-        newUser.setFirstName(nameParts[0]);
-        if (nameParts.length > 1) {
-            newUser.setLastName(nameParts[1]);
+        try {
+            User newUser = new User();
+            newUser.setUsername(dto.getCustomerId() != null ? dto.getCustomerId() : 
+                              NameParsingUtils.generateUsernameFromName(dto.getCustomerName()));
+            newUser.setEmail(dto.getCustomerEmail());
+            
+            // 使用智能姓名解析
+            NameParsingUtils.ParsedName parsedName = NameParsingUtils.parseName(dto.getCustomerName());
+            newUser.setFirstName(parsedName.getFirstName());
+            newUser.setLastName(parsedName.getLastName());
+            
+            newUser.setRole(UserRole.USER);
+            
+            // 生成安全的临时密码并加密存储
+            String tempPassword = SecurityUtils.generateSecureTemporaryPassword();
+            newUser.setPassword(SecurityUtils.encodePassword(tempPassword));
+            
+            // 标记为需要重置密码的用户
+            newUser.setEnabled(true);
+            newUser.setCreatedAt(LocalDateTime.now());
+            
+            // 记录临时密码生成（实际应用中应发送邮件通知用户）
+            logger.info("Generated secure temporary password for new user: {} (Email: {})", 
+                       newUser.getUsername(), newUser.getEmail());
+            logger.warn("User {} must reset password on first login", newUser.getUsername());
+            
+            return userRepository.save(newUser);
+            
+        } catch (Exception e) {
+            logger.error("Failed to create new user for customer {}: {}", dto.getCustomerEmail(), e.getMessage());
+            throw ShipmentCreationException.userCreationFailed(dto.getCustomerEmail(), e);
         }
-        newUser.setRole(UserRole.USER);
-        newUser.setPassword("$2a$10$defaultPassword"); // 默认密码，需要用户重置
-        newUser.setEnabled(true);
-        newUser.setCreatedAt(LocalDateTime.now());
-        
-        return userRepository.save(newUser);
     }
 }

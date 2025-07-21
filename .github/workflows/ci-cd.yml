@@ -97,7 +97,6 @@ jobs:
         TEST_REDIS_PORT: 6379
         # JVM options for CI
         MAVEN_OPTS: "-Xmx1024m"
-      continue-on-error: true
 
     - name: List test results
       working-directory: ./backend
@@ -158,8 +157,7 @@ jobs:
       working-directory: ./frontend
       run: |
         echo "🔍 Running TypeScript type checking..."
-        npm run type-check:ci || echo "⚠️ Type errors found but continuing CI build"
-      continue-on-error: true
+        npm run type-check:ci
 
     - name: Run frontend linting
       working-directory: ./frontend
@@ -169,11 +167,10 @@ jobs:
       working-directory: ./frontend
       run: |
         echo "🧪 Running frontend tests..."
-        npm run test || echo "⚠️ Tests completed with warnings - build will continue"
+        npm run test
       env:
         CI: true
         NODE_ENV: test
-      continue-on-error: true
 
     - name: Upload frontend test results
       uses: actions/upload-artifact@v4
@@ -220,14 +217,12 @@ jobs:
         output: 'trivy-results.sarif'
         severity: 'HIGH,CRITICAL'
         exit-code: '0'
-      continue-on-error: true
 
     - name: Upload Trivy scan results to GitHub Security tab
       run: |
         echo "📋 Security scan completed"
         echo "Would upload SARIF results to GitHub Security tab"
         echo "(Code scanning not enabled in repository)"
-      continue-on-error: true
 
   # Docker Build and Push
   docker-build:

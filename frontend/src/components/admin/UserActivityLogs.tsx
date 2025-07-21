@@ -11,7 +11,7 @@
  * @author Mini-UPS Team
  * @version 1.0.0
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -68,7 +68,7 @@ export const UserActivityLogs: React.FC<UserActivityLogsProps> = ({
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -93,7 +93,7 @@ export const UserActivityLogs: React.FC<UserActivityLogsProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchActivities();
@@ -102,7 +102,7 @@ export const UserActivityLogs: React.FC<UserActivityLogsProps> = ({
     const interval = setInterval(fetchActivities, 30000);
     
     return () => clearInterval(interval);
-  }, [userId]);
+  }, [userId, fetchActivities]);
 
   // Filter activities based on search and filters
   useEffect(() => {

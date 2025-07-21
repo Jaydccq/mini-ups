@@ -25,11 +25,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Plus, 
-  Clock, 
-  User, 
-  AlertTriangle,
-  CheckCircle,
-  Edit,
   Trash2
 } from 'lucide-react';
 
@@ -71,11 +66,9 @@ export const DriverSchedulingCalendar: React.FC<DriverSchedulingCalendarProps> =
 }) => {
   const [schedules, setSchedules] = useState<DriverSchedule[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isAddScheduleDialogOpen, setIsAddScheduleDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<DriverSchedule | null>(null);
   const [isEditScheduleDialogOpen, setIsEditScheduleDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // Form state for schedule creation/editing
   const [scheduleForm, setScheduleForm] = useState({
@@ -95,7 +88,6 @@ export const DriverSchedulingCalendar: React.FC<DriverSchedulingCalendarProps> =
     const month = currentDate.getMonth();
     
     const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
     
@@ -120,7 +112,6 @@ export const DriverSchedulingCalendar: React.FC<DriverSchedulingCalendarProps> =
   // Fetch schedules from API
   const fetchSchedules = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/admin/schedules', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -135,8 +126,6 @@ export const DriverSchedulingCalendar: React.FC<DriverSchedulingCalendarProps> =
     } catch (error) {
       console.error('Error fetching schedules:', error);
       setSchedules(mockSchedules);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -288,7 +277,8 @@ export const DriverSchedulingCalendar: React.FC<DriverSchedulingCalendarProps> =
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <Card className={className}>
+    <>
+      <Card className={className}>
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">
@@ -467,104 +457,113 @@ export const DriverSchedulingCalendar: React.FC<DriverSchedulingCalendarProps> =
           </div>
         </div>
 
-        {/* Edit Schedule Dialog */}
-        <Dialog open={isEditScheduleDialogOpen} onOpenChange={setIsEditScheduleDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Edit Schedule</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="editDriver">Driver</Label>
-                <Select value={scheduleForm.driverId} onValueChange={(value) => 
-                  setScheduleForm(prev => ({ ...prev, driverId: value }))
-                }>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select driver" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {drivers.map(driver => (
-                      <SelectItem key={driver.id} value={driver.id}>
-                        {driver.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="editDate">Date</Label>
-                <Input 
-                  id="editDate" 
-                  type="date" 
-                  value={scheduleForm.date}
-                  onChange={(e) => setScheduleForm(prev => ({ ...prev, date: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="editShift">Shift</Label>
-                <Select value={scheduleForm.shift} onValueChange={(value: any) => 
-                  setScheduleForm(prev => ({ ...prev, shift: value }))
-                }>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MORNING">Morning (8:00 - 16:00)</SelectItem>
-                    <SelectItem value="AFTERNOON">Afternoon (16:00 - 24:00)</SelectItem>
-                    <SelectItem value="NIGHT">Night (00:00 - 8:00)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="editStartTime">Start Time</Label>
-                  <Input 
-                    id="editStartTime" 
-                    type="time" 
-                    value={scheduleForm.startTime}
-                    onChange={(e) => setScheduleForm(prev => ({ ...prev, startTime: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="editEndTime">End Time</Label>
-                  <Input 
-                    id="editEndTime" 
-                    type="time" 
-                    value={scheduleForm.endTime}
-                    onChange={(e) => setScheduleForm(prev => ({ ...prev, endTime: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="editRoute">Route (Optional)</Label>
-                <Input 
-                  id="editRoute" 
-                  placeholder="e.g., Downtown - Airport" 
-                  value={scheduleForm.route}
-                  onChange={(e) => setScheduleForm(prev => ({ ...prev, route: e.target.value }))}
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={() => editingSchedule && handleDeleteSchedule(editingSchedule.id)}
-                >
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  Delete
-                </Button>
-                <div className="flex space-x-2">
-                  <Button variant="outline" onClick={() => setIsEditScheduleDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleUpdateSchedule}>Update Schedule</Button>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </CardContent>
     </Card>
+    
+    {/* Edit Schedule Dialog */}
+    <Dialog open={isEditScheduleDialogOpen} onOpenChange={setIsEditScheduleDialogOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Schedule</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="editDriver">Driver</Label>
+            <Select value={scheduleForm.driverId} onValueChange={(value) => 
+              setScheduleForm(prev => ({ ...prev, driverId: value }))
+            }>
+              <SelectTrigger>
+                <SelectValue placeholder="Select driver" />
+              </SelectTrigger>
+              <SelectContent>
+                {drivers.map(driver => (
+                  <SelectItem key={driver.id} value={driver.id}>
+                    {driver.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="editDate">Date</Label>
+            <Input
+              id="editDate"
+              type="date"
+              value={scheduleForm.date}
+              onChange={(e) => setScheduleForm(prev => ({ ...prev, date: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="editShift">Shift</Label>
+            <Select value={scheduleForm.shift} onValueChange={(value: 'MORNING' | 'AFTERNOON' | 'NIGHT') => 
+              setScheduleForm(prev => ({ ...prev, shift: value }))
+            }>
+              <SelectTrigger>
+                <SelectValue placeholder="Select shift" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MORNING">Morning (8:00 - 16:00)</SelectItem>
+                <SelectItem value="AFTERNOON">Afternoon (16:00 - 24:00)</SelectItem>
+                <SelectItem value="NIGHT">Night (00:00 - 8:00)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="editStartTime">Start Time</Label>
+              <Input
+                id="editStartTime"
+                type="time"
+                value={scheduleForm.startTime}
+                onChange={(e) => setScheduleForm(prev => ({ ...prev, startTime: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="editEndTime">End Time</Label>
+              <Input
+                id="editEndTime"
+                type="time"
+                value={scheduleForm.endTime}
+                onChange={(e) => setScheduleForm(prev => ({ ...prev, endTime: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="editRoute">Route (Optional)</Label>
+            <Input
+              id="editRoute"
+              type="text"
+              placeholder="e.g., Warehouse - City Center"
+              value={scheduleForm.route}
+              onChange={(e) => setScheduleForm(prev => ({ ...prev, route: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="editNotes">Notes (Optional)</Label>
+            <Input
+              id="editNotes"
+              type="text"
+              placeholder="Additional notes..."
+              value={scheduleForm.notes}
+              onChange={(e) => setScheduleForm(prev => ({ ...prev, notes: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditScheduleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateSchedule}>Update Schedule</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
@@ -593,3 +592,4 @@ const mockSchedules: DriverSchedule[] = [
     route: 'Warehouse - City Center'
   }
 ];
+

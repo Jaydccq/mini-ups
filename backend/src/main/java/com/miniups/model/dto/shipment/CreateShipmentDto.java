@@ -29,18 +29,19 @@ package com.miniups.model.dto.shipment;
 
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
+import com.miniups.util.Constants;
 
 public class CreateShipmentDto {
     
-    @Size(max = 50, message = "Shipment ID must not exceed 50 characters")
+    @Size(max = Constants.MAX_SHIPMENT_ID_LENGTH, message = "Shipment ID must not exceed " + Constants.MAX_SHIPMENT_ID_LENGTH + " characters")
     private String shipmentId;
     
     @NotBlank(message = "Customer ID cannot be blank")
-    @Size(max = 50, message = "Customer ID must not exceed 50 characters")
+    @Size(max = Constants.MAX_USERNAME_LENGTH, message = "Customer ID must not exceed " + Constants.MAX_USERNAME_LENGTH + " characters")
     private String customerId;
     
     @NotBlank(message = "Customer name cannot be blank")
-    @Size(max = 100, message = "Customer name must not exceed 100 characters")
+    @Size(max = Constants.MAX_CUSTOMER_NAME_LENGTH, message = "Customer name must not exceed " + Constants.MAX_CUSTOMER_NAME_LENGTH + " characters")
     private String customerName;
     
     @Email(message = "Invalid email format")
@@ -48,34 +49,34 @@ public class CreateShipmentDto {
     private String customerEmail;
     
     @NotNull(message = "Origin X coordinate is required")
-    @Min(value = 0, message = "Origin X coordinate must be non-negative")
-    @Max(value = 1000, message = "Origin X coordinate must not exceed 1000")
+    @Min(value = Constants.MIN_COORDINATE, message = "Origin X coordinate must be non-negative")
+    @Max(value = Constants.MAX_COORDINATE_X, message = "Origin X coordinate must not exceed " + Constants.MAX_COORDINATE_X)
     private Integer originX;
     
     @NotNull(message = "Origin Y coordinate is required")
-    @Min(value = 0, message = "Origin Y coordinate must be non-negative")
-    @Max(value = 1000, message = "Origin Y coordinate must not exceed 1000")
+    @Min(value = Constants.MIN_COORDINATE, message = "Origin Y coordinate must be non-negative")
+    @Max(value = Constants.MAX_COORDINATE_Y, message = "Origin Y coordinate must not exceed " + Constants.MAX_COORDINATE_Y)
     private Integer originY;
     
     @NotNull(message = "Destination X coordinate is required")
-    @Min(value = 0, message = "Destination X coordinate must be non-negative")
-    @Max(value = 1000, message = "Destination X coordinate must not exceed 1000")
+    @Min(value = Constants.MIN_COORDINATE, message = "Destination X coordinate must be non-negative")
+    @Max(value = Constants.MAX_COORDINATE_X, message = "Destination X coordinate must not exceed " + Constants.MAX_COORDINATE_X)
     private Integer destX;
     
     @NotNull(message = "Destination Y coordinate is required")
-    @Min(value = 0, message = "Destination Y coordinate must be non-negative")
-    @Max(value = 1000, message = "Destination Y coordinate must not exceed 1000")
+    @Min(value = Constants.MIN_COORDINATE, message = "Destination Y coordinate must be non-negative")
+    @Max(value = Constants.MAX_COORDINATE_Y, message = "Destination Y coordinate must not exceed " + Constants.MAX_COORDINATE_Y)
     private Integer destY;
     
     @NotNull(message = "Weight is required")
-    @DecimalMin(value = "0.1", message = "Weight must be at least 0.1 kg")
-    @DecimalMax(value = "50.0", message = "Weight cannot exceed 50 kg")
+    @DecimalMin(value = "" + Constants.MIN_PACKAGE_WEIGHT, message = "Weight must be at least " + Constants.MIN_PACKAGE_WEIGHT + " kg")
+    @DecimalMax(value = "" + Constants.MAX_PACKAGE_WEIGHT, message = "Weight cannot exceed " + Constants.MAX_PACKAGE_WEIGHT + " kg")
     private BigDecimal weight;
     
-    @Pattern(regexp = "STANDARD|EXPRESS|OVERNIGHT", message = "Invalid priority")
-    private String priority = "STANDARD";
+    @Pattern(regexp = Constants.PRIORITY_REGEX, message = "Invalid priority")
+    private String priority = Constants.DEFAULT_PRIORITY;
     
-    @Size(max = 500, message = "Special instructions must not exceed 500 characters")
+    @Size(max = Constants.MAX_SPECIAL_INSTRUCTIONS_LENGTH, message = "Special instructions must not exceed " + Constants.MAX_SPECIAL_INSTRUCTIONS_LENGTH + " characters")
     private String specialInstructions;
     
     private Boolean requiresSignature = false;

@@ -4,7 +4,7 @@ import React from 'react';
 // In a real implementation, you would import these from 'recharts'
 
 export interface ChartData {
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface LineChartProps {
@@ -153,11 +153,11 @@ export const PieChart: React.FC<PieChartProps> = ({
 };
 
 // Simple chart component props
-export const XAxis: React.FC<{ dataKey: string }> = ({ dataKey }) => null;
-export const YAxis: React.FC<{}> = () => null;
+export const XAxis: React.FC<{ dataKey: string }> = () => null;
+export const YAxis: React.FC<Record<string, never>> = () => null;
 export const CartesianGrid: React.FC<{ strokeDasharray?: string }> = () => null;
-export const Tooltip: React.FC<{}> = () => null;
-export const Legend: React.FC<{}> = () => null;
+export const Tooltip: React.FC<Record<string, never>> = () => null;
+export const Legend: React.FC<Record<string, never>> = () => null;
 export const Line: React.FC<{ type?: string; dataKey: string; stroke: string; strokeWidth?: number }> = () => null;
 export const Bar: React.FC<{ dataKey: string; fill: string }> = () => null;
 export const Cell: React.FC<{ fill: string }> = () => null;

@@ -59,6 +59,8 @@ export function useAddShipmentComment() {
 
 // Medium-risk: Updating shipment preferences (optimistic with careful rollback)
 export function useUpdateShipmentPreferences() {
+  const queryClient = useQueryClient();
+  
   return useOptimisticMutation({
     mutationFn: ({ shipmentId, preferences }: { 
       shipmentId: string; 
@@ -74,8 +76,6 @@ export function useUpdateShipmentPreferences() {
     ],
 
     onMutate: async (variables) => {
-      const queryClient = useQueryClient();
-      
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['shipment', variables.shipmentId] });
       
@@ -92,7 +92,6 @@ export function useUpdateShipmentPreferences() {
     },
 
     rollback: (variables, context) => {
-      const queryClient = useQueryClient();
       if (context?.previousShipment) {
         queryClient.setQueryData(['shipment', variables.shipmentId], context.previousShipment);
       }

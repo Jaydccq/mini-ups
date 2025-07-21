@@ -114,16 +114,11 @@ export const useConflictResolution = () => {
   ) => {
     setIsResolving(true);
     
-    try {
-      await resolveMutation.mutateAsync({
-        conflictId,
-        resolution,
-        originalMutationFn,
-      });
-    } catch (error) {
-      // Error handling is done in the mutation
-      throw error;
-    }
+    await resolveMutation.mutateAsync({
+      conflictId,
+      resolution,
+      originalMutationFn,
+    });
   }, [resolveMutation]);
 
   const cancelConflictResolution = useCallback((conflictId: string) => {
