@@ -15,6 +15,7 @@ interface AddressValidationProps {
   placeholder?: string;
   error?: boolean;
   id?: string;
+  className?: string;
 }
 
 interface AddressSuggestion {
@@ -80,6 +81,7 @@ export const AddressValidation: React.FC<AddressValidationProps> = ({
   placeholder = 'Enter address...',
   error = false,
   id,
+  className,
 }) => {
   const [inputValue, setInputValue] = useState(address);
   const [isValidating, setIsValidating] = useState(false);
@@ -150,15 +152,14 @@ export const AddressValidation: React.FC<AddressValidationProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${className || ''}`}>
       <div className="relative">
         <Input
           id={id}
           value={inputValue}
           onChange={handleInputChange}
           placeholder={placeholder}
-          error={error}
-          className="pr-10"
+          className={`pr-10 ${error ? 'border-red-500' : ''}`}
         />
         <div className="absolute right-3 top-3">
           {getValidationIcon()}

@@ -14,7 +14,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { queryClient } from '@/lib/queryClient';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuthStore } from '@/stores/auth-store';
 import { socketService } from '@/services/socketService';
 import { useNotificationSync } from '@/hooks/useNotificationSync';
 import { useGlobalConflictState } from '@/hooks/useConflictResolution';

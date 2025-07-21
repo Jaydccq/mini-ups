@@ -210,7 +210,7 @@ export const ProfilePage: React.FC = () => {
                   <Input
                     id="name"
                     {...profileForm.register('name')}
-                    error={!!profileForm.formState.errors.name}
+                    className={profileForm.formState.errors.name ? 'border-red-500' : ''}
                   />
                   {profileForm.formState.errors.name && (
                     <p className="text-sm text-red-600">{profileForm.formState.errors.name.message}</p>
@@ -226,7 +226,7 @@ export const ProfilePage: React.FC = () => {
                     id="email"
                     type="email"
                     {...profileForm.register('email')}
-                    error={!!profileForm.formState.errors.email}
+                    className={profileForm.formState.errors.email ? 'border-red-500' : ''}
                   />
                   {profileForm.formState.errors.email && (
                     <p className="text-sm text-red-600">{profileForm.formState.errors.email.message}</p>
@@ -242,7 +242,7 @@ export const ProfilePage: React.FC = () => {
                     id="phone"
                     {...profileForm.register('phone')}
                     placeholder="+1 (555) 123-4567"
-                    error={!!profileForm.formState.errors.phone}
+                    className={profileForm.formState.errors.phone ? 'border-red-500' : ''}
                   />
                   {profileForm.formState.errors.phone && (
                     <p className="text-sm text-red-600">{profileForm.formState.errors.phone.message}</p>
@@ -258,7 +258,7 @@ export const ProfilePage: React.FC = () => {
                     id="address"
                     {...profileForm.register('address')}
                     placeholder="123 Main St, City, State, ZIP"
-                    error={!!profileForm.formState.errors.address}
+                    className={profileForm.formState.errors.address ? 'border-red-500' : ''}
                   />
                   {profileForm.formState.errors.address && (
                     <p className="text-sm text-red-600">{profileForm.formState.errors.address.message}</p>
@@ -307,7 +307,7 @@ export const ProfilePage: React.FC = () => {
                     id="currentPassword"
                     type="password"
                     {...passwordForm.register('currentPassword')}
-                    error={!!passwordForm.formState.errors.currentPassword}
+                    className={passwordForm.formState.errors.currentPassword ? 'border-red-500' : ''}
                   />
                   {passwordForm.formState.errors.currentPassword && (
                     <p className="text-sm text-red-600">{passwordForm.formState.errors.currentPassword.message}</p>
@@ -320,7 +320,7 @@ export const ProfilePage: React.FC = () => {
                     id="newPassword"
                     type="password"
                     {...passwordForm.register('newPassword')}
-                    error={!!passwordForm.formState.errors.newPassword}
+                    className={passwordForm.formState.errors.newPassword ? 'border-red-500' : ''}
                   />
                   {passwordForm.formState.errors.newPassword && (
                     <p className="text-sm text-red-600">{passwordForm.formState.errors.newPassword.message}</p>
@@ -333,7 +333,7 @@ export const ProfilePage: React.FC = () => {
                     id="confirmPassword"
                     type="password"
                     {...passwordForm.register('confirmPassword')}
-                    error={!!passwordForm.formState.errors.confirmPassword}
+                    className={passwordForm.formState.errors.confirmPassword ? 'border-red-500' : ''}
                   />
                   {passwordForm.formState.errors.confirmPassword && (
                     <p className="text-sm text-red-600">{passwordForm.formState.errors.confirmPassword.message}</p>

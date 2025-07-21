@@ -50,7 +50,6 @@ import java.util.Map;
  * @version 1.0
  * @since 2024
  */
-@Slf4j
 @Service
 public class AsyncAuditService {
     private static final Logger log = LoggerFactory.getLogger(AsyncAuditService.class);

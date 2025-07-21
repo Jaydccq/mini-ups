@@ -85,7 +85,7 @@ export const PackageDetailsStep: React.FC<PackageDetailsStepProps> = ({ form }) 
           id="packageDescription"
           {...register('packageDescription')}
           placeholder="Describe the contents (e.g., Electronics, Books, Clothing)"
-          error={!!errors.packageDescription}
+          className={errors.packageDescription ? 'border-red-500' : ''}
         />
         {errors.packageDescription && (
           <p className="text-sm text-red-600">{errors.packageDescription.message}</p>
@@ -117,7 +117,7 @@ export const PackageDetailsStep: React.FC<PackageDetailsStepProps> = ({ form }) 
                 placeholder="1.0"
                 min="0.1"
                 step="0.1"
-                error={!!errors.packageWeight}
+                className={errors.packageWeight ? 'border-red-500' : ''}
               />
               {errors.packageWeight && (
                 <p className="text-sm text-red-600">{errors.packageWeight.message}</p>
@@ -138,7 +138,7 @@ export const PackageDetailsStep: React.FC<PackageDetailsStepProps> = ({ form }) 
                 placeholder="10"
                 min="1"
                 step="0.1"
-                error={!!errors.packageLength}
+                className={errors.packageLength ? 'border-red-500' : ''}
               />
               {errors.packageLength && (
                 <p className="text-sm text-red-600">{errors.packageLength.message}</p>
@@ -156,7 +156,7 @@ export const PackageDetailsStep: React.FC<PackageDetailsStepProps> = ({ form }) 
                 placeholder="10"
                 min="1"
                 step="0.1"
-                error={!!errors.packageWidth}
+                className={errors.packageWidth ? 'border-red-500' : ''}
               />
               {errors.packageWidth && (
                 <p className="text-sm text-red-600">{errors.packageWidth.message}</p>
@@ -174,7 +174,7 @@ export const PackageDetailsStep: React.FC<PackageDetailsStepProps> = ({ form }) 
                 placeholder="10"
                 min="1"
                 step="0.1"
-                error={!!errors.packageHeight}
+                className={errors.packageHeight ? 'border-red-500' : ''}
               />
               {errors.packageHeight && (
                 <p className="text-sm text-red-600">{errors.packageHeight.message}</p>
@@ -213,7 +213,7 @@ export const PackageDetailsStep: React.FC<PackageDetailsStepProps> = ({ form }) 
           placeholder="0.00"
           min="0"
           step="0.01"
-          error={!!errors.packageValue}
+          className={errors.packageValue ? 'border-red-500' : ''}
         />
         {errors.packageValue && (
           <p className="text-sm text-red-600">{errors.packageValue.message}</p>

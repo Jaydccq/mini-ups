@@ -17,9 +17,12 @@
  */
 package com.miniups.exception;
 
+import com.miniups.model.enums.ExceptionSeverity;
+
 public class ShipmentCreationException extends BaseBusinessException {
     
     private static final String DEFAULT_MESSAGE = "Failed to create shipment";
+    private static final String ERROR_CODE = "SHIPMENT_CREATION_ERROR";
     
     /**
      * 创建运单创建异常
@@ -27,7 +30,7 @@ public class ShipmentCreationException extends BaseBusinessException {
      * @param message 异常消息
      */
     public ShipmentCreationException(String message) {
-        super(message);
+        super(ERROR_CODE, message, ExceptionSeverity.MEDIUM);
     }
     
     /**
@@ -37,7 +40,7 @@ public class ShipmentCreationException extends BaseBusinessException {
      * @param cause 原始异常
      */
     public ShipmentCreationException(String message, Throwable cause) {
-        super(message, cause);
+        super(ERROR_CODE, message, ExceptionSeverity.MEDIUM, cause);
     }
     
     /**
@@ -46,7 +49,7 @@ public class ShipmentCreationException extends BaseBusinessException {
      * @param cause 原始异常
      */
     public ShipmentCreationException(Throwable cause) {
-        super(DEFAULT_MESSAGE, cause);
+        super(ERROR_CODE, DEFAULT_MESSAGE, ExceptionSeverity.MEDIUM, cause);
     }
     
     /**

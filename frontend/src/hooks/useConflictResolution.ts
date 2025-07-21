@@ -185,7 +185,7 @@ export const useConflictAwareMutation = <TData, TVariables>(
         // Store the original mutation function for resolution
         (window as any).__conflictResolutionMutations = {
           ...(window as any).__conflictResolutionMutations,
-          [conflictId]: mutationFn,
+          [String(conflictId)]: mutationFn,
         };
       }
     },

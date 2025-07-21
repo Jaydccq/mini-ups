@@ -48,7 +48,7 @@ import {
   SheetHeader, 
   SheetTitle 
 } from '@/components/ui/sheet';
-import { Notification, NotificationType, NotificationPriority } from '@/types/notification';
+import { type Notification, NotificationType, NotificationPriority } from '@/types/notification';
 import { formatRelativeTime } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';

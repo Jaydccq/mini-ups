@@ -15,7 +15,7 @@ export function useAddShipmentComment() {
   
   return useOptimisticMutation({
     mutationFn: ({ shipmentId, comment }: { shipmentId: string; comment: string }) =>
-      shipmentApi.addComment(shipmentId, comment),
+      shipmentApi.addComment(shipmentId, { comment }),
     
     successMessage: 'Comment added successfully',
     errorMessage: 'Failed to add comment',
@@ -232,7 +232,7 @@ export function useUpdateShipmentAddress() {
       trackingNumber: string; 
       newAddress: any; 
       version: number;
-    }) => shipmentApi.updateAddress(trackingNumber, newAddress, version),
+    }) => shipmentApi.updateAddress(trackingNumber, newAddress),
     
     successMessage: 'Delivery address updated successfully',
     

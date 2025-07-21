@@ -23,6 +23,7 @@ export interface Shipment {
   actual_delivery: string | null
   pickup_time: string | null
   truck?: TruckInfo
+  preferences?: any
 }
 
 export interface ShipmentStatusHistory {
@@ -77,6 +78,36 @@ export interface CreateShipmentResponse {
   status: string
   estimated_delivery: string
   created_at: string
+}
+
+export interface UpdateShipmentRequest {
+  recipient_name?: string
+  recipient_email?: string
+  recipient_phone?: string
+  recipient_address?: string
+  destination_x?: number
+  destination_y?: number
+  package_description?: string
+  package_weight?: number
+  package_dimensions?: {
+    length: number
+    width: number
+    height: number
+  }
+  package_value?: number
+  delivery_speed?: 'STANDARD' | 'EXPRESS' | 'OVERNIGHT'
+  special_instructions?: string
+}
+
+export interface AddCommentRequest {
+  comment: string
+  is_internal?: boolean
+}
+
+export interface UpdateAddressRequest {
+  address: string
+  x: number
+  y: number
 }
 
 export const shipmentApi = {
@@ -135,5 +166,40 @@ export const shipmentApi = {
       pending_shipments,
       recent_shipments
     }
+  },
+
+  // 添加运单评论
+  addComment: (trackingNumber: string, commentData: AddCommentRequest): Promise<{ success: boolean }> => {
+    return api.post(`/shipments/${trackingNumber}/comments`, commentData).then(res => res.data.data)
+  },
+
+  // 更新运单偏好设置
+  updatePreferences: (trackingNumber: string, preferences: any): Promise<Shipment> => {
+    return api.put(`/shipments/${trackingNumber}/preferences`, preferences).then(res => res.data.data)
+  },
+
+  // 更新运单状态
+  updateStatus: (trackingNumber: string, status: string, comment?: string): Promise<{ tracking_number: string; new_status: string }> => {
+    return api.put(`/shipments/${trackingNumber}/status`, { status, comment }).then(res => res.data.data)
+  },
+
+  // 标记为已送达
+  markDelivered: (trackingNumber: string, deliveryInfo?: any): Promise<{ success: boolean }> => {
+    return api.post(`/shipments/${trackingNumber}/deliver`, deliveryInfo || {}).then(res => res.data.data)
+  },
+
+  // 取消运单
+  cancelShipment: (trackingNumber: string, reason?: string): Promise<{ success: boolean }> => {
+    return api.post(`/shipments/${trackingNumber}/cancel`, { reason }).then(res => res.data.data)
+  },
+
+  // 更新送货地址
+  updateAddress: (trackingNumber: string, addressData: UpdateAddressRequest): Promise<Shipment> => {
+    return api.put(`/shipments/${trackingNumber}/address`, addressData).then(res => res.data.data)
+  },
+
+  // 更新送货地址（别名方法）
+  updateDeliveryAddress: (trackingNumber: string, addressData: UpdateAddressRequest): Promise<Shipment> => {
+    return api.put(`/shipments/${trackingNumber}/delivery-address`, addressData).then(res => res.data.data)
   }
 }
