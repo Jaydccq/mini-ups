@@ -138,6 +138,14 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
 
+# Rate Limiting Configuration
+rate-limiting:
+  enabled: ${RATE_LIMITING_ENABLED:true}
+  shipment-creation:
+    requests-per-minute: ${RATE_LIMITING_SHIPMENT_CREATION_RPM:10}
+  general-api:
+    requests-per-minute: ${RATE_LIMITING_GENERAL_API_RPM:60}
+
 # Application-specific Configuration
 app:
   cors:

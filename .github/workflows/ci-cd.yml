@@ -99,6 +99,7 @@ jobs:
         mvn -version | head -10
         echo ""
         echo "Running tests with Java ${{ env.JAVA_VERSION }}..."
+        # Use the same approach as local test-java17.sh script
         mvn clean test -Dspring.profiles.active=test -DfailIfNoTests=false
       env:
         # Ensure Java 17 is used (actions/setup-java@v4 sets this)

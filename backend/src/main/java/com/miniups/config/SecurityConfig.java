@@ -105,6 +105,7 @@ package com.miniups.config;
 
 import com.miniups.security.JwtAuthenticationEntryPoint;
 import com.miniups.security.JwtAuthenticationFilter;
+import com.miniups.security.RateLimitingFilter;
 import com.miniups.security.WebhookAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,6 +146,9 @@ public class SecurityConfig {
     
     @Autowired
     private WebhookAuthenticationFilter webhookAuthenticationFilter;
+    
+    @Autowired
+    private RateLimitingFilter rateLimitingFilter;
     
     @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
     private String allowedOrigins;
@@ -208,8 +212,9 @@ public class SecurityConfig {
             );
         
         http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(webhookAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterBefore(webhookAuthenticationFilter, JwtAuthenticationFilter.class);
         
         return http.build();
     }

@@ -222,10 +222,9 @@ const FleetManagementPage: React.FC = () => {
             id: newTruck.id.toString(),
             plateNumber: newTruck.plateNumber,
             capacity: newTruck.capacity,
-            status: 'AVAILABLE',
+            status: 'AVAILABLE' as const,
             currentLocation: newTruck.location,
-            lastMaintenance: new Date().toISOString(),
-            totalDeliveries: 0
+            lastUpdated: new Date().toISOString()
           }],
           totalTrucks: prev.totalTrucks + 1
         };

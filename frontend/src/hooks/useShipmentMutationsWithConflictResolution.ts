@@ -19,7 +19,7 @@ export const useUpdateShipmentStatusWithConflictResolution = () => {
       status: string;
       version: number;
       comment?: string;
-    }) => shipmentApi.updateStatus(trackingNumber, status, version, comment),
+    }) => shipmentApi.updateStatus(trackingNumber, status, comment),
     {
       entityType: 'shipment',
       entityIdExtractor: (variables) => variables.trackingNumber,
@@ -38,7 +38,7 @@ export const useUpdateDeliveryAddressWithConflictResolution = () => {
       trackingNumber: string;
       address: any;
       version: number;
-    }) => shipmentApi.updateDeliveryAddress(trackingNumber, version, address),
+    }) => shipmentApi.updateDeliveryAddress(trackingNumber, address),
     {
       entityType: 'shipment',
       entityIdExtractor: (variables) => variables.trackingNumber,
@@ -65,9 +65,9 @@ export const useUpdateDeliveryAddressWithConflictResolution = () => {
     requiresConfirmation: true,
     loadingMessage: 'Updating delivery address...',
     
-    invalidateQueries: (variables: any) => [
-      queryKeys.shipment.detail(variables.trackingNumber),
-      queryKeys.shipment.tracking(variables.trackingNumber),
+    invalidateQueries: [
+      ['shipments', 'detail'],
+      ['shipments', 'tracking'],
     ],
   });
 };
@@ -78,7 +78,7 @@ export const useAddShipmentCommentWithOptimisticUpdates = () => {
   
   const conflictAwareMutation = useConflictAwareMutation(
     ({ shipmentId, comment }: { shipmentId: string; comment: string }) =>
-      shipmentApi.addComment({ shipmentId, comment } as any),
+      shipmentApi.addComment(shipmentId, { comment }),
     {
       entityType: 'shipment_comment',
       entityIdExtractor: (variables) => variables.shipmentId,
@@ -96,9 +96,9 @@ export const useAddShipmentCommentWithOptimisticUpdates = () => {
       return 'Failed to add comment';
     },
     
-    invalidateQueries: (variables: any) => [
-      queryKeys.shipment.comments(variables.shipmentId),
-      queryKeys.shipment.detail(variables.shipmentId),
+    invalidateQueries: [
+      ['shipments', 'comments'],
+      ['shipments', 'detail'],
     ],
 
     onMutate: async (variables) => {

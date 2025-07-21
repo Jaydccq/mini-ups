@@ -25,6 +25,7 @@ package com.miniups.util;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public final class NameParsingUtils {
     
@@ -150,15 +151,15 @@ public final class NameParsingUtils {
                 username.append(parsed.getLastName().toLowerCase().charAt(0));
             }
             
-            // 如果用户名太短，添加时间戳
+            // 如果用户名太短，添加随机后缀
             if (username.length() < 3) {
-                username.append(System.currentTimeMillis() % 1000);
+                username.append(UUID.randomUUID().toString().substring(0, 4));
             }
             
             return username.toString();
         } catch (Exception e) {
             // 如果解析失败，生成通用用户名
-            return "customer_" + System.currentTimeMillis();
+            return "customer_" + UUID.randomUUID().toString().substring(0, 8);
         }
     }
     

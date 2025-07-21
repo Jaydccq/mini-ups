@@ -232,11 +232,14 @@ public class ShipmentService {
             newUser.setCreatedAt(LocalDateTime.now());
             
             // 记录临时密码生成（实际应用中应发送邮件通知用户）
-            logger.info("Generated secure temporary password for new user: {} (Email: {})", 
-                       newUser.getUsername(), newUser.getEmail());
-            logger.warn("User {} must reset password on first login", newUser.getUsername());
+            // Save user first to get the ID
+            User savedUser = userRepository.save(newUser);
+            logger.info("Created new user with ID: {}", savedUser.getId());
+            logger.debug("Generated secure temporary password for user: {} (Email: {})", 
+                       savedUser.getUsername(), savedUser.getEmail());
+            logger.warn("User with ID {} must reset password on first login", savedUser.getId());
             
-            return userRepository.save(newUser);
+            return savedUser;
             
         } catch (Exception e) {
             logger.error("Failed to create new user for customer {}: {}", dto.getCustomerEmail(), e.getMessage());

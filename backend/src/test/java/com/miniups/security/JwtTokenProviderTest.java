@@ -182,21 +182,17 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("Should generate different tokens for same user at different times")
-    void testGenerateToken_DifferentTimes() {
+    void testGenerateToken_DifferentTimes() throws InterruptedException {
         // Given
         String username = "testuser";
-        long baseTime = System.currentTimeMillis();
-        long laterTime = baseTime + 1000; // 1 second later
 
-        // When - Mock different timestamps
-        String token1, token2;
-        try (MockedStatic<System> systemMock = Mockito.mockStatic(System.class)) {
-            systemMock.when(System::currentTimeMillis).thenReturn(baseTime);
-            token1 = jwtTokenProvider.generateToken(username);
-            
-            systemMock.when(System::currentTimeMillis).thenReturn(laterTime);
-            token2 = jwtTokenProvider.generateToken(username);
-        }
+        // When - Generate tokens with a small time gap
+        String token1 = jwtTokenProvider.generateToken(username);
+        
+        // Sleep for a short time to ensure different timestamp
+        Thread.sleep(10);
+        
+        String token2 = jwtTokenProvider.generateToken(username);
 
         // Then
         assertThat(token1).isNotEqualTo(token2);

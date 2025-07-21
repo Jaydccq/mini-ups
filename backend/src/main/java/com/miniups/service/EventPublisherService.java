@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 
 /**
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
  * @since 2024
  */
 @Service
+@ConditionalOnClass(RabbitTemplate.class)
 public class EventPublisherService {
     private static final Logger log = LoggerFactory.getLogger(EventPublisherService.class);
     private final RabbitTemplate rabbitTemplate;
