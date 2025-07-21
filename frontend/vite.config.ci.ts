@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [
     react({
       // Basic React plugin without complex babel config
-      fastRefresh: false,
     }),
   ],
   

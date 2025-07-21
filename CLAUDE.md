@@ -89,6 +89,36 @@ cd frontend && ./run-local.sh
 # - Redis: localhost:6380
 ```
 
+### 🧪 Testing & CI/CD
+
+#### **Running Tests with Java 17** (Recommended)
+```bash
+# Use the dedicated test script (ensures Java 17 compatibility)
+./scripts/test-java17.sh
+
+# Simulate CI environment locally
+./scripts/simulate-ci.sh
+
+# Or manually set JAVA_HOME and run tests
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean test -Dspring.profiles.active=test
+
+# Quick compilation check
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -DskipTests=true
+```
+
+**⚠️ Java Version Compatibility Notes:**
+- Project requires Java 17 (configured in pom.xml)
+- GitHub Actions CI/CD is configured to use Java 17 automatically
+- If you have multiple Java versions installed, Maven might use a different version than your default `java` command
+- Check Maven's Java version: `mvn -version`
+- Both test scripts automatically set JAVA_HOME to Java 17 to avoid compatibility issues
+
+**🚀 GitHub Actions CI/CD:**
+- ✅ Configured for Java 17 (Eclipse Temurin distribution)
+- ✅ Automatic Java version verification in CI
+- ✅ Docker builds use Java 17 (maven:3.9.6-eclipse-temurin-17 and eclipse-temurin:17-jre-alpine)
+- ✅ Compatible with JaCoCo code coverage and Mockito testing framework
+
 ### 🗄️ Database Management
 
 #### **UPS Database Setup**

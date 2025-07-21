@@ -22,7 +22,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable, Column } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -282,11 +282,11 @@ const OrderManagementPage: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const orderColumns = [
+  const orderColumns: Column<OrderData>[] = [
     {
-      header: 'Select',
-      accessor: 'id' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'select',
+      title: 'Select',
+      render: (value: any, order: OrderData) => (
         <Checkbox
           checked={selectedOrders.includes(order.id)}
           onCheckedChange={(checked) => {
@@ -300,16 +300,16 @@ const OrderManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Tracking ID',
-      accessor: 'upsTrackingId' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'upsTrackingId',
+      title: 'Tracking ID',
+      render: (value: any, order: OrderData) => (
         <div className="font-medium">{order.upsTrackingId}</div>
       )
     },
     {
-      header: 'Status',
-      accessor: 'status' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'status',
+      title: 'Status',
+      render: (value: any, order: OrderData) => (
         <Badge className={getStatusColor(order.status)}>
           {getStatusIcon(order.status)}
           <span className="ml-1">{order.status}</span>
@@ -317,18 +317,18 @@ const OrderManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Priority',
-      accessor: 'priority' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'priority',
+      title: 'Priority',
+      render: (value: any, order: OrderData) => (
         <Badge variant="outline" className={getPriorityColor(order.priority)}>
           {order.priority}
         </Badge>
       )
     },
     {
-      header: 'Sender',
-      accessor: 'senderName' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'senderName',
+      title: 'Sender',
+      render: (value: any, order: OrderData) => (
         <div>
           <div className="font-medium">{order.senderName}</div>
           <div className="text-sm text-gray-500">→ {order.recipientName}</div>
@@ -336,9 +336,9 @@ const OrderManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Destination',
-      accessor: 'destination' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'destination',
+      title: 'Destination',
+      render: (value: any, order: OrderData) => (
         <div className="flex items-center">
           <MapPin className="w-4 h-4 mr-1 text-gray-500" />
           {order.destination}
@@ -346,25 +346,25 @@ const OrderManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Value',
-      accessor: 'value' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'value',
+      title: 'Value',
+      render: (value: any, order: OrderData) => (
         <div className="font-medium">${order.value}</div>
       )
     },
     {
-      header: 'Created',
-      accessor: 'createdAt' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'createdAt',
+      title: 'Created',
+      render: (value: any, order: OrderData) => (
         <div className="text-sm">
           {new Date(order.createdAt).toLocaleDateString()}
         </div>
       )
     },
     {
-      header: 'Actions',
-      accessor: 'id' as keyof OrderData,
-      cell: (order: OrderData) => (
+      key: 'actions',
+      title: 'Actions',
+      render: (value: any, order: OrderData) => (
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Eye className="w-4 h-4" />
@@ -628,7 +628,12 @@ const OrderManagementPage: React.FC = () => {
             data={filteredOrders}
             columns={orderColumns}
             searchable={false}
-            pagination
+            pagination={{
+              current: 1,
+              pageSize: 10,
+              total: filteredOrders.length,
+              onChange: (page, pageSize) => {}
+            }}
           />
         </CardContent>
       </Card>

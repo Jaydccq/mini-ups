@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { StatsCard } from '@/components/ui/stats-card';
-import { SimpleChart } from '@/components/charts/SimpleChart';
+import { LineChart, ChartData } from '@/components/charts/SimpleChart';
 import { FlashOnUpdate } from '@/components/ui/flash-on-update';
 import { RealTimeFleetMap } from '@/components/admin/RealTimeFleetMap';
 import { EmergencyIssuesPanel } from '@/components/admin/EmergencyIssuesPanel';
@@ -326,31 +326,31 @@ const AdminDashboardPage: React.FC = () => {
 
       {/* KPI Statistics */}
       {statistics && (
-        <FlashOnUpdate dependencies={[statistics]}>
+        <FlashOnUpdate trigger={statistics}>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatsCard
               title="Total Orders"
               value={statistics.orders.total}
-              icon={<Package className="w-6 h-6" />}
-              trend={{ value: statistics.orders.completionRate, label: 'Completion Rate' }}
+              icon={Package}
+              trend={{ value: statistics.orders.completionRate, label: 'Completion Rate', type: 'positive' }}
             />
             <StatsCard
               title="Active Fleet"
               value={statistics.fleet.inTransit}
-              icon={<Truck className="w-6 h-6" />}
-              trend={{ value: statistics.fleet.utilizationRate, label: 'Utilization Rate' }}
+              icon={Truck}
+              trend={{ value: statistics.fleet.utilizationRate, label: 'Utilization Rate', type: 'positive' }}
             />
             <StatsCard
               title="Total Users"
               value={statistics.users.total}
-              icon={<Users className="w-6 h-6" />}
-              trend={{ value: statistics.users.admins, label: 'Admins' }}
+              icon={Users}
+              trend={{ value: statistics.users.admins, label: 'Admins', type: 'neutral' }}
             />
             <StatsCard
               title="Daily Revenue"
               value={`$${statistics.revenue.today.toLocaleString()}`}
-              icon={<DollarSign className="w-6 h-6" />}
-              trend={{ value: statistics.revenue.growth, label: 'Growth' }}
+              icon={DollarSign}
+              trend={{ value: statistics.revenue.growth, label: 'Growth', type: 'positive' }}
             />
           </div>
         </FlashOnUpdate>

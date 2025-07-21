@@ -22,12 +22,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable, Column } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { adminService } from '@/services/admin';
+import { adminApi } from '@/services/admin';
 import { DriverSchedulingCalendar } from '@/components/admin/DriverSchedulingCalendar';
 import { VehicleLocationMap } from '@/components/admin/VehicleLocationMap';
 import { 
@@ -207,7 +207,7 @@ const FleetManagementPage: React.FC = () => {
   // CRUD Operations
   const handleCreateTruck = async () => {
     try {
-      const newTruck = await adminService.createTruck({
+      const newTruck = await adminApi.createTruck({
         plateNumber: truckForm.plateNumber,
         capacity: parseInt(truckForm.capacity),
         location: truckForm.location
@@ -244,7 +244,7 @@ const FleetManagementPage: React.FC = () => {
     if (!editingTruck) return;
     
     try {
-      const updatedTruck = await adminService.updateTruck(parseInt(editingTruck.id), {
+      const updatedTruck = await adminApi.updateTruck(parseInt(editingTruck.id), {
         plateNumber: truckForm.plateNumber,
         capacity: parseInt(truckForm.capacity),
         location: truckForm.location
@@ -277,7 +277,7 @@ const FleetManagementPage: React.FC = () => {
     if (!confirm('Are you sure you want to delete this truck?')) return;
     
     try {
-      await adminService.deleteTruck(parseInt(truckId));
+      await adminApi.deleteTruck(parseInt(truckId));
       
       // Update local state
       setFleetOverview(prev => {
@@ -296,7 +296,7 @@ const FleetManagementPage: React.FC = () => {
 
   const handleCreateDriver = async () => {
     try {
-      const newDriver = await adminService.createDriver({
+      const newDriver = await adminApi.createDriver({
         name: driverForm.name,
         email: driverForm.email,
         phone: driverForm.phone,
@@ -328,7 +328,7 @@ const FleetManagementPage: React.FC = () => {
     if (!editingDriver) return;
     
     try {
-      const updatedDriver = await adminService.updateDriver(parseInt(editingDriver.id), {
+      const updatedDriver = await adminApi.updateDriver(parseInt(editingDriver.id), {
         name: driverForm.name,
         email: driverForm.email,
         phone: driverForm.phone,
@@ -356,7 +356,7 @@ const FleetManagementPage: React.FC = () => {
     if (!confirm('Are you sure you want to delete this driver?')) return;
     
     try {
-      await adminService.deleteDriver(parseInt(driverId));
+      await adminApi.deleteDriver(parseInt(driverId));
       
       // Update local state
       setDrivers(prev => prev.filter(driver => driver.id !== driverId));
@@ -429,18 +429,18 @@ const FleetManagementPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   }) || [];
 
-  const truckColumns = [
+  const truckColumns: Column<TruckData>[] = [
     {
-      header: 'Plate Number',
-      accessor: 'plateNumber' as keyof TruckData,
-      cell: (truck: TruckData) => (
+      key: 'plateNumber',
+      title: 'Plate Number',
+      render: (value: any, truck: TruckData) => (
         <div className="font-medium">{truck.plateNumber}</div>
       )
     },
     {
-      header: 'Status',
-      accessor: 'status' as keyof TruckData,
-      cell: (truck: TruckData) => (
+      key: 'status',
+      title: 'Status',
+      render: (value: any, truck: TruckData) => (
         <Badge className={getStatusColor(truck.status)}>
           {getStatusIcon(truck.status)}
           <span className="ml-1">{truck.status}</span>
@@ -448,9 +448,9 @@ const FleetManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Location',
-      accessor: 'currentLocation' as keyof TruckData,
-      cell: (truck: TruckData) => (
+      key: 'currentLocation',
+      title: 'Location',
+      render: (value: any, truck: TruckData) => (
         <div className="flex items-center">
           <MapPin className="w-4 h-4 mr-1 text-gray-500" />
           {truck.currentLocation}
@@ -458,16 +458,16 @@ const FleetManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Capacity',
-      accessor: 'capacity' as keyof TruckData,
-      cell: (truck: TruckData) => (
+      key: 'capacity',
+      title: 'Capacity',
+      render: (value: any, truck: TruckData) => (
         <div>{truck.capacity} kg</div>
       )
     },
     {
-      header: 'Actions',
-      accessor: 'id' as keyof TruckData,
-      cell: (truck: TruckData) => (
+      key: 'actions',
+      title: 'Actions',
+      render: (value: any, truck: TruckData) => (
         <div className="flex space-x-2">
           <Button
             variant="outline"
@@ -489,11 +489,11 @@ const FleetManagementPage: React.FC = () => {
     }
   ];
 
-  const driverColumns = [
+  const driverColumns: Column<DriverData>[] = [
     {
-      header: 'Name',
-      accessor: 'name' as keyof DriverData,
-      cell: (driver: DriverData) => (
+      key: 'name',
+      title: 'Name',
+      render: (value: any, driver: DriverData) => (
         <div>
           <div className="font-medium">{driver.name}</div>
           <div className="text-sm text-gray-500">{driver.email}</div>
@@ -501,9 +501,9 @@ const FleetManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Status',
-      accessor: 'status' as keyof DriverData,
-      cell: (driver: DriverData) => (
+      key: 'status',
+      title: 'Status',
+      render: (value: any, driver: DriverData) => (
         <Badge className={getStatusColor(driver.status)}>
           {getStatusIcon(driver.status)}
           <span className="ml-1">{driver.status}</span>
@@ -511,23 +511,23 @@ const FleetManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Phone',
-      accessor: 'phone' as keyof DriverData,
-      cell: (driver: DriverData) => (
+      key: 'phone',
+      title: 'Phone',
+      render: (value: any, driver: DriverData) => (
         <div>{driver.phone}</div>
       )
     },
     {
-      header: 'Assigned Truck',
-      accessor: 'assignedTruck' as keyof DriverData,
-      cell: (driver: DriverData) => (
+      key: 'assignedTruck',
+      title: 'Assigned Truck',
+      render: (value: any, driver: DriverData) => (
         <div>{driver.assignedTruck || 'None'}</div>
       )
     },
     {
-      header: 'Performance',
-      accessor: 'rating' as keyof DriverData,
-      cell: (driver: DriverData) => (
+      key: 'rating',
+      title: 'Performance',
+      render: (value: any, driver: DriverData) => (
         <div>
           <div className="text-sm">⭐ {driver.rating.toFixed(1)}</div>
           <div className="text-xs text-gray-500">{driver.totalDeliveries} deliveries</div>
@@ -535,9 +535,9 @@ const FleetManagementPage: React.FC = () => {
       )
     },
     {
-      header: 'Actions',
-      accessor: 'id' as keyof DriverData,
-      cell: (driver: DriverData) => (
+      key: 'actions',
+      title: 'Actions',
+      render: (value: any, driver: DriverData) => (
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Edit className="w-4 h-4" />
@@ -739,7 +739,12 @@ const FleetManagementPage: React.FC = () => {
                 data={filteredTrucks}
                 columns={truckColumns}
                 searchable={false}
-                pagination
+                pagination={{
+                  current: 1,
+                  pageSize: 10,
+                  total: filteredTrucks.length,
+                  onChange: (page, pageSize) => {}
+                }}
               />
             </CardContent>
           </Card>
@@ -863,7 +868,12 @@ const FleetManagementPage: React.FC = () => {
                 data={drivers}
                 columns={driverColumns}
                 searchable={true}
-                pagination
+                pagination={{
+                  current: 1,
+                  pageSize: 10,
+                  total: drivers.length,
+                  onChange: (page, pageSize) => {}
+                }}
               />
             </CardContent>
           </Card>

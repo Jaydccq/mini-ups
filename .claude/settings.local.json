@@ -105,7 +105,17 @@
       "Bash(node:*)",
       "Bash(npx eslint:*)",
       "Bash(npx tsc:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh api:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean test -Dspring.profiles.active=test -DfailIfNoTests=false)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -DskipTests=true)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ExceptionMetricsConfigTest)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 ./scripts/test-java17.sh -Dtest=ExceptionMetricsConfigTest)",
+      "Bash(./scripts/simulate-ci.sh:*)",
+      "Bash(source:*)",
+      "Bash(sudo rm:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }
