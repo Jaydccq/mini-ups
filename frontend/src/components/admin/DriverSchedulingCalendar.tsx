@@ -24,8 +24,7 @@ import {
   Calendar, 
   ChevronLeft, 
   ChevronRight, 
-  Plus, 
-  Trash2
+  Plus
 } from 'lucide-react';
 
 interface DriverSchedule {

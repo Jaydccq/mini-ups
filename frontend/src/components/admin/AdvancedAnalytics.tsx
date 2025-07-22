@@ -275,36 +275,6 @@ export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({ className 
     return metrics.filter(m => m.category === category);
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'revenue':
-        return <DollarSign className="w-5 h-5" />;
-      case 'operations':
-        return <Truck className="w-5 h-5" />;
-      case 'efficiency':
-        return <Zap className="w-5 h-5" />;
-      case 'satisfaction':
-        return <Users className="w-5 h-5" />;
-      default:
-        return <Activity className="w-5 h-5" />;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'revenue':
-        return 'text-green-600';
-      case 'operations':
-        return 'text-blue-600';
-      case 'efficiency':
-        return 'text-yellow-600';
-      case 'satisfaction':
-        return 'text-purple-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
-
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'up':

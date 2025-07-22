@@ -7,6 +7,10 @@ spring:
     driver-class-name: ${TEST_DATABASE_DRIVER:org.h2.Driver}
     username: ${TEST_DATABASE_USERNAME:sa}
     password: ${TEST_DATABASE_PASSWORD:password}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 1
+      connection-timeout: 30000
   
   # JPA Configuration
   jpa:
@@ -16,7 +20,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: ${TEST_DATABASE_DIALECT:org.hibernate.dialect.H2Dialect}
         format_sql: false
         id:
           new_generator_mappings: false
@@ -24,11 +28,14 @@ spring:
           batch_size: 25
         hbm2ddl:
           auto: create-drop
+        globally_quoted_identifiers: false
+    defer-datasource-initialization: true
+    generate-ddl: true
   
   # Redis Configuration for Testing
   redis:
     host: ${TEST_REDIS_HOST:localhost}
-    port: ${TEST_REDIS_PORT:6370}  # Different port for local testing
+    port: ${TEST_REDIS_PORT:6379}  # Aligned with standard Redis and CI service port
     timeout: 2000ms
   
   # RabbitMQ Configuration (Disabled for Testing)
@@ -40,8 +47,7 @@ spring:
   
   # Auto-configuration exclusions for testing
   autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+    exclude: ${TEST_RABBITMQ_EXCLUDE:org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration}
   
   # Logging Configuration
   logging:

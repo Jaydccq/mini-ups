@@ -127,7 +127,7 @@ export default defineConfig(({ command, mode }) => {
               }
               
               // Socket.io and real-time libraries
-              if (id.includes('socket.io') || id.includes('ws')) {
+              if (id.includes('node_modules/socket.io') || id.includes('node_modules/ws/')) {
                 return 'realtime-vendor'
               }
               

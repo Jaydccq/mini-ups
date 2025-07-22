@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { MapPin, Truck, Package } from 'lucide-react';
+import { MapPin, Truck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { calculateDistance } from '@/lib/utils';

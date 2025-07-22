@@ -119,7 +119,9 @@
       "Bash(./scripts/test-java17.sh:*)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test)",
       "Bash(./scripts/test-java17.sh:*)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile -Dspring.profiles.active=test)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile -Dspring.profiles.active=test)",
+      "Bash(TEST_RABBITMQ_EXCLUDE=\"\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test)",
+      "Bash(TEST_RABBITMQ_EXCLUDE=\"\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -f backend/pom.xml)"
     ],
     "deny": []
   }

@@ -15,7 +15,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Truck, MapPin, Navigation, RefreshCw, Activity } from 'lucide-react';
+import { Truck, MapPin, RefreshCw, Activity } from 'lucide-react';
 
 interface TruckLocation {
   id: number;

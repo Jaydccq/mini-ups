@@ -19,17 +19,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Activity, 
-  Clock, 
   User, 
   Package, 
   Shield, 
   LogIn, 
   LogOut,
   Edit,
-  Trash2,
   RefreshCw,
   Download,
-  Filter,
   Search
 } from 'lucide-react';
 
