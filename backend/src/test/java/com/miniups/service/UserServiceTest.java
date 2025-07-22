@@ -236,7 +236,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("测试启用用户")
+    @DisplayName("测试1启用用户")
     void testEnableUser_Success() {
         testUser.setEnabled(false); // 设置为禁用状态
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
