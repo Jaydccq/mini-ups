@@ -185,8 +185,8 @@ class AuthServiceTest {
     @DisplayName("用户登录 - 用户被禁用")
     void login_shouldThrowException_whenUserDisabled() {
         // Given
-        // 基于实际测试结果，这个场景实际上会抛出SystemException，因为在认证过程中发生了异常
-        // 我们接受这个实际行为
+        // 基于实际测试结果，这个场景会抛出SystemException，因为service catch了所有异常
+        // 并在catch块中包装成SystemException
         Authentication mockAuthentication = mock(Authentication.class);
         when(mockAuthentication.getName()).thenReturn(testUser.getUsername());
         
@@ -197,7 +197,7 @@ class AuthServiceTest {
         when(userRepository.findByUsername(testUser.getUsername())).thenReturn(Optional.of(testUser));
 
         // When & Then
-        // 基于实际运行结果，用户禁用测试会抛出SystemException
+        // 基于实际运行结果，禁用用户会触发异常并被包装成SystemException
         assertThatThrownBy(() -> authService.login(validLoginRequest))
             .isInstanceOf(SystemException.class)
             .hasMessageContaining("登录失败，请稍后重试");

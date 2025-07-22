@@ -121,7 +121,14 @@
       "Bash(./scripts/test-java17.sh:*)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile -Dspring.profiles.active=test)",
       "Bash(TEST_RABBITMQ_EXCLUDE=\"\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test)",
-      "Bash(TEST_RABBITMQ_EXCLUDE=\"\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -f backend/pom.xml)"
+      "Bash(TEST_RABBITMQ_EXCLUDE=\"\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -f backend/pom.xml)",
+      "Bash(npm audit:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthServiceTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ShipmentRepositoryIntegrationTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=UserServiceTest -Dspring.profiles.active=test)",
+      "Bash(openssl rand:*)",
+      "Bash(./scripts/deploy-aws.sh:*)",
+      "Bash(ssh:*)"
     ],
     "deny": []
   }

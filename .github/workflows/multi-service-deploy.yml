@@ -1,0 +1,517 @@
+name: Multi-Service Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+  workflow_dispatch:
+    inputs:
+      deploy_to_aws:
+        description: 'Deploy to AWS EC2'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+        - 'true'
+        - 'false'
+      force_rebuild:
+        description: 'Force rebuild all Docker images'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.9'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # Test UPS Services
+  ups-test:
+    name: Test UPS Services
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: abc123
+          POSTGRES_USER: postgres
+          POSTGRES_DB: ups_db_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+
+    - name: Set up Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('backend/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-node-
+
+    - name: Test backend
+      working-directory: ./backend
+      run: |
+        echo "🧪 Testing UPS Backend..."
+        mvn clean test -Dspring.profiles.active=test -DfailIfNoTests=false
+      env:
+        TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/ups_db_test
+        TEST_DATABASE_USERNAME: postgres
+        TEST_DATABASE_PASSWORD: abc123
+        TEST_REDIS_HOST: localhost
+        TEST_REDIS_PORT: 6379
+        MAVEN_OPTS: "-Xmx1024m -XX:+UseG1GC"
+
+    - name: Test and build frontend
+      working-directory: ./frontend
+      run: |
+        echo "🧪 Testing UPS Frontend..."
+        npm ci --legacy-peer-deps --prefer-offline --no-audit
+        npm run type-check:ci
+        npm run test
+        npm run build:ci
+      env:
+        CI: true
+        VITE_API_BASE_URL: http://localhost:8081
+        VITE_APP_VERSION: ${{ github.sha }}
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ups-test-results
+        path: |
+          backend/target/surefire-reports/
+          frontend/coverage/
+        retention-days: 7
+
+  # Validate Amazon and World Simulator Services
+  external-services-validate:
+    name: Validate External Services
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Validate Amazon service structure
+      run: |
+        echo "🔍 Validating Amazon service..."
+        ls -la knowledge/amazon/
+        test -f knowledge/amazon/Dockerfile
+        test -f knowledge/amazon/requirements.txt
+        test -f knowledge/amazon/app/__init__.py
+        echo "✅ Amazon service structure validated"
+
+    - name: Validate World Simulator structure
+      run: |
+        echo "🔍 Validating World Simulator..."
+        ls -la knowledge/world_simulator_exec/docker_deploy/
+        test -f knowledge/world_simulator_exec/docker_deploy/Dockerfile
+        test -f knowledge/world_simulator_exec/docker_deploy/docker-compose.yml
+        test -f knowledge/world_simulator_exec/docker_deploy/server
+        echo "✅ World Simulator structure validated"
+
+    - name: Test Amazon service dependencies
+      working-directory: ./knowledge/amazon
+      run: |
+        echo "🔍 Testing Amazon dependencies..."
+        pip install -r requirements.txt
+        python -c "import flask; print('Flask version:', flask.__version__)"
+        python -c "import psycopg2; print('PostgreSQL driver ready')"
+        echo "✅ Amazon dependencies validated"
+
+  # Build Docker Images
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [ups-test, external-services-validate]
+    if: success()
+    
+    outputs:
+      ups-backend-tag: ${{ steps.meta.outputs.ups-backend-tag }}
+      ups-frontend-tag: ${{ steps.meta.outputs.ups-frontend-tag }}
+      amazon-tag: ${{ steps.meta.outputs.amazon-tag }}
+      world-sim-tag: ${{ steps.meta.outputs.world-sim-tag }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub (optional)
+      if: github.ref == 'refs/heads/main' && github.event.inputs.deploy_to_aws == 'true'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Generate image metadata
+      id: meta
+      run: |
+        TIMESTAMP=$(date +%Y%m%d%H%M%S)
+        SHORT_SHA=${GITHUB_SHA:0:8}
+        
+        echo "ups-backend-tag=mini-ups-backend:${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "ups-frontend-tag=mini-ups-frontend:${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "amazon-tag=mini-amazon:${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "world-sim-tag=mini-world-sim:${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+    - name: Build UPS Backend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        push: false
+        tags: ${{ steps.meta.outputs.ups-backend-tag }}
+        cache-from: type=gha,scope=ups-backend
+        cache-to: type=gha,mode=max,scope=ups-backend
+
+    - name: Build UPS Frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: false
+        tags: ${{ steps.meta.outputs.ups-frontend-tag }}
+        cache-from: type=gha,scope=ups-frontend
+        cache-to: type=gha,mode=max,scope=ups-frontend
+
+    - name: Build Amazon Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./knowledge/amazon
+        file: ./knowledge/amazon/Dockerfile
+        push: false
+        tags: ${{ steps.meta.outputs.amazon-tag }}
+        cache-from: type=gha,scope=amazon
+        cache-to: type=gha,mode=max,scope=amazon
+
+    - name: Build World Simulator
+      uses: docker/build-push-action@v5
+      with:
+        context: ./knowledge/world_simulator_exec/docker_deploy
+        file: ./knowledge/world_simulator_exec/docker_deploy/Dockerfile
+        push: false
+        tags: ${{ steps.meta.outputs.world-sim-tag }}
+        cache-from: type=gha,scope=world-sim
+        cache-to: type=gha,mode=max,scope=world-sim
+
+    - name: Save Docker images as artifacts
+      run: |
+        echo "💾 Saving Docker images..."
+        docker save ${{ steps.meta.outputs.ups-backend-tag }} | gzip > ups-backend.tar.gz
+        docker save ${{ steps.meta.outputs.ups-frontend-tag }} | gzip > ups-frontend.tar.gz
+        docker save ${{ steps.meta.outputs.amazon-tag }} | gzip > amazon.tar.gz
+        docker save ${{ steps.meta.outputs.world-sim-tag }} | gzip > world-sim.tar.gz
+        ls -lh *.tar.gz
+
+    - name: Upload Docker images
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-images
+        path: |
+          ups-backend.tar.gz
+          ups-frontend.tar.gz
+          amazon.tar.gz
+          world-sim.tar.gz
+        retention-days: 1
+
+  # Integration Test
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: success()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Docker images
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-images
+
+    - name: Load Docker images
+      run: |
+        echo "📦 Loading Docker images..."
+        docker load < ups-backend.tar.gz
+        docker load < ups-frontend.tar.gz
+        docker load < amazon.tar.gz
+        docker load < world-sim.tar.gz
+        docker images
+
+    - name: Create test environment file
+      run: |
+        cp .env.production .env.test
+        echo "UPS_BACKEND_IMAGE=${{ needs.build-images.outputs.ups-backend-tag }}" >> .env.test
+        echo "UPS_FRONTEND_IMAGE=${{ needs.build-images.outputs.ups-frontend-tag }}" >> .env.test
+
+    - name: Start multi-service stack
+      run: |
+        echo "🚀 Starting all services..."
+        docker-compose -f docker-compose.production.yml --env-file .env.test up -d
+        
+        # Wait for services to be ready
+        echo "⏳ Waiting for services to start..."
+        sleep 60
+
+    - name: Run integration tests
+      run: |
+        echo "🧪 Running integration tests..."
+        
+        # Health checks
+        echo "Testing UPS Backend health..."
+        curl -f http://localhost:8081/actuator/health || exit 1
+        
+        echo "Testing UPS Frontend..."
+        curl -f http://localhost:3000 || exit 1
+        
+        echo "Testing Amazon service..."
+        curl -f http://localhost:8080 || exit 1
+        
+        # Database connectivity
+        echo "Testing database connections..."
+        docker exec mini-ups-postgres pg_isready -U postgres || exit 1
+        docker exec mini-amazon-db pg_isready -U postgres || exit 1
+        docker exec world-simulator-db pg_isready -U postgres || exit 1
+        
+        # Redis connectivity
+        echo "Testing Redis connection..."
+        docker exec mini-ups-redis redis-cli ping || exit 1
+        
+        echo "✅ All integration tests passed!"
+
+    - name: Check service logs
+      if: failure()
+      run: |
+        echo "📋 Service logs for troubleshooting..."
+        docker-compose -f docker-compose.production.yml --env-file .env.test logs --tail=50
+
+    - name: Cleanup test environment
+      if: always()
+      run: |
+        docker-compose -f docker-compose.production.yml --env-file .env.test down -v
+        docker system prune -f
+
+  # Deploy to AWS EC2
+  deploy-aws:
+    name: Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    needs: [integration-test]
+    if: |
+      github.ref == 'refs/heads/main' && 
+      (github.event.inputs.deploy_to_aws == 'true' || github.event_name == 'push')
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Docker images
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-images
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.AWS_EC2_HOST }}
+        username: ${{ secrets.AWS_EC2_USER }}
+        key: ${{ secrets.AWS_EC2_SSH_KEY }}
+        timeout: 300s
+        script: |
+          set -e
+          
+          echo "🚀 Starting deployment to AWS EC2..."
+          
+          # Navigate to application directory
+          cd /home/ubuntu/mini-ups || { 
+            echo "Creating application directory..."
+            mkdir -p /home/ubuntu/mini-ups
+            cd /home/ubuntu/mini-ups
+          }
+          
+          # Update code (if needed)
+          if [ -d ".git" ]; then
+            echo "📥 Updating code..."
+            git pull origin main
+          else
+            echo "📥 Cloning repository..."
+            git clone https://github.com/${{ github.repository }}.git .
+          fi
+          
+          # Stop existing services
+          echo "⏹️  Stopping existing services..."
+          docker-compose -f docker-compose.production.yml down || true
+          
+          # Create production environment
+          echo "⚙️  Setting up production environment..."
+          cp .env.production .env.production.deploy
+          echo "UPS_BACKEND_IMAGE=${{ needs.build-images.outputs.ups-backend-tag }}" >> .env.production.deploy
+          echo "UPS_FRONTEND_IMAGE=${{ needs.build-images.outputs.ups-frontend-tag }}" >> .env.production.deploy
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.production.deploy
+          echo "AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}" >> .env.production.deploy
+          
+          # Create log directories
+          sudo mkdir -p /var/log/mini-ups
+          sudo chown ubuntu:ubuntu /var/log/mini-ups
+          
+          # Start services
+          echo "🔄 Starting services..."
+          docker-compose -f docker-compose.production.yml --env-file .env.production.deploy up -d --remove-orphans
+          
+          # Wait for services to be ready
+          echo "⏳ Waiting for services to be ready..."
+          sleep 120
+          
+          # Health checks
+          echo "🔍 Running health checks..."
+          
+          # Check UPS Backend
+          for i in {1..20}; do
+            if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
+              echo "✅ UPS Backend is healthy!"
+              break
+            fi
+            echo "⏳ Waiting for UPS Backend... (Attempt $i/20)"
+            sleep 10
+          done
+          
+          # Check UPS Frontend
+          curl -f http://localhost:3000 || { echo "❌ UPS Frontend not responding"; exit 1; }
+          echo "✅ UPS Frontend is healthy!"
+          
+          # Check Amazon Service
+          curl -f http://localhost:8080 || { echo "❌ Amazon service not responding"; exit 1; }
+          echo "✅ Amazon service is healthy!"
+          
+          # Check databases
+          docker exec mini-ups-postgres pg_isready -U postgres || { echo "❌ UPS Database not ready"; exit 1; }
+          docker exec mini-amazon-db pg_isready -U postgres || { echo "❌ Amazon Database not ready"; exit 1; }
+          docker exec world-simulator-db pg_isready -U postgres || { echo "❌ World Simulator Database not ready"; exit 1; }
+          echo "✅ All databases are ready!"
+          
+          # Check Redis
+          docker exec mini-ups-redis redis-cli ping || { echo "❌ Redis not responding"; exit 1; }
+          echo "✅ Redis is healthy!"
+          
+          echo "🎉 Deployment completed successfully!"
+          echo "📍 Access URLs:"
+          echo "   UPS Frontend: http://${{ secrets.AWS_EC2_HOST }}:3000"
+          echo "   Amazon Service: http://${{ secrets.AWS_EC2_HOST }}:8080"
+          echo "   UPS API: http://${{ secrets.AWS_EC2_HOST }}:8081"
+
+    - name: Copy Docker images to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.AWS_EC2_HOST }}
+        username: ${{ secrets.AWS_EC2_USER }}
+        key: ${{ secrets.AWS_EC2_SSH_KEY }}
+        source: "*.tar.gz"
+        target: "/home/ubuntu/mini-ups/images/"
+
+    - name: Load Docker images on EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.AWS_EC2_HOST }}
+        username: ${{ secrets.AWS_EC2_USER }}
+        key: ${{ secrets.AWS_EC2_SSH_KEY }}
+        script: |
+          cd /home/ubuntu/mini-ups/images/
+          echo "📦 Loading Docker images..."
+          for image in *.tar.gz; do
+            if [ -f "$image" ]; then
+              echo "Loading $image..."
+              docker load < "$image"
+            fi
+          done
+          
+          # Cleanup image files
+          rm -f *.tar.gz
+          
+          echo "✅ Docker images loaded successfully!"
+
+  # Notification
+  notify-result:
+    name: Notify Deployment Result
+    runs-on: ubuntu-latest
+    needs: [deploy-aws]
+    if: always()
+
+    steps:
+    - name: Notify Success
+      if: needs.deploy-aws.result == 'success'
+      run: |
+        echo "🎉 Multi-service deployment completed successfully!"
+        echo "📍 Services are accessible at:"
+        echo "   🌐 UPS Frontend: http://${{ secrets.AWS_EC2_HOST }}:3000"
+        echo "   🛒 Amazon Service: http://${{ secrets.AWS_EC2_HOST }}:8080"  
+        echo "   🔌 UPS API: http://${{ secrets.AWS_EC2_HOST }}:8081"
+        echo "   📊 RabbitMQ Management: http://${{ secrets.AWS_EC2_HOST }}:15672"
+
+    - name: Notify Failure
+      if: needs.deploy-aws.result == 'failure' || needs.integration-test.result == 'failure'
+      run: |
+        echo "❌ Multi-service deployment failed!"
+        echo "🔍 Check the job logs for details."
+        echo "📋 Common issues:"
+        echo "   - Network connectivity to EC2"
+        echo "   - Docker image build failures"
+        echo "   - Service health check timeouts"
+        exit 1

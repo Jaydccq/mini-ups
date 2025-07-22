@@ -21,30 +21,51 @@
 
 ### 🏗️ 分层测试架构
 
-Mini-UPS 项目采用了完整的分层测试架构：
+Mini-UPS 项目采用了完整的分层测试架构，基于实际项目结构：
 
 ```
 📁 src/test/java/com/miniups/
-├── 📁 config/           # 测试配置
-│   ├── TestConfig.java           # 全局测试配置
-│   └── BaseIntegrationTest.java  # 集成测试基类
-├── 📁 controller/       # 控制器测试 (API层)
-│   ├── UserControllerTest.java
-│   ├── AuthControllerTest.java
-│   └── security/        # 安全测试
-├── 📁 service/          # 服务层测试 (业务逻辑)
-│   ├── UserServiceTest.java
-│   ├── AuthServiceTest.java
-│   └── TruckManagementServiceTest.java
-├── 📁 repository/       # 数据访问层测试
-│   └── ShipmentRepositoryIntegrationTest.java
-├── 📁 security/         # 安全组件测试
-│   ├── JwtTokenProviderTest.java
-│   └── SecurityIntegrationTest.java
-├── 📁 exception/        # 异常处理测试
-│   └── GlobalExceptionHandlerTest.java
-└── 📁 util/            # 工具类
-    └── TestDataFactory.java     # 测试数据工厂
+├── 📁 config/                    # 测试配置层
+│   ├── TestConfig.java           # 全局测试配置 (Mock外部服务)
+│   ├── TestRabbitConfig.java     # RabbitMQ测试配置
+│   └── ExceptionMetricsConfigTest.java # 异常监控配置测试
+├── 📁 controller/                # API控制器测试
+│   ├── UserControllerTest.java           # 用户管理API测试
+│   ├── AuthControllerTest.java           # 认证API测试
+│   ├── TrackingControllerIntegrationTest.java # 追踪API集成测试
+│   ├── TruckManagementControllerTest.java     # 卡车管理API测试
+│   ├── WorldSimulatorControllerTest.java      # 外部服务集成测试
+│   └── 📁 security/              # API安全测试
+│       ├── UserControllerSecurityTest.java    # 用户权限控制测试
+│       ├── TruckControllerSecurityTest.java   # 卡车权限控制测试
+│       └── AdminControllerSecurityTest.java   # 管理员权限测试
+├── 📁 service/                   # 业务逻辑层测试
+│   ├── UserServiceTest.java              # 用户服务测试
+│   ├── AuthServiceTest.java              # 认证服务测试
+│   ├── TruckManagementServiceTest.java   # 卡车管理服务测试
+│   ├── TrackingServiceTest.java          # 追踪服务测试
+│   ├── AmazonIntegrationServiceTest.java # Amazon集成服务测试
+│   ├── WorldSimulatorServiceTest.java    # 世界模拟器服务测试
+│   └── AdminServiceTest.java             # 管理员服务测试
+├── 📁 repository/                # 数据访问层测试
+│   └── ShipmentRepositoryIntegrationTest.java # JPA数据库集成测试
+├── 📁 security/                  # 安全组件测试
+│   ├── JwtTokenProviderTest.java         # JWT令牌提供者单元测试
+│   ├── CustomUserDetailsServiceTest.java # 用户详情服务测试
+│   ├── JwtSecurityTest.java              # JWT安全集成测试
+│   └── SecurityIntegrationTest.java      # 完整安全集成测试
+├── 📁 concurrency/               # 并发性能测试
+│   ├── ConcurrencyTestBase.java          # 并发测试基类
+│   ├── ConcurrentUserRegistrationTest.java   # 并发用户注册测试
+│   ├── ConcurrentTruckAssignmentTest.java     # 并发卡车分配测试
+│   ├── ConcurrentOrderProcessingTest.java     # 并发订单处理测试
+│   ├── ConcurrentTrackingNumberGenerationTest.java # 并发编号生成测试
+│   └── PerformanceBenchmarkTest.java     # 性能基准测试
+├── 📁 exception/                 # 异常处理测试
+│   └── GlobalExceptionHandlerTest.java  # 全局异常处理器测试
+├── 📁 util/                      # 测试工具类
+│   └── TestDataFactory.java             # 测试数据工厂
+└── MiniUpsApplicationTests.java  # 应用程序启动测试
 ```
 
 ### 🎯 测试分类与策略
@@ -1212,7 +1233,7 @@ mvn test -Dtest=PerformanceBenchmarkTest -DthreadCount=50
 
 ### 🏭 测试数据工厂
 
-创建可重用的测试数据工厂：
+以下是项目实际使用的测试数据工厂，提供完整的测试数据创建方法：
 
 ```java
 package com.miniups.util;
@@ -1220,61 +1241,81 @@ package com.miniups.util;
 import com.miniups.model.entity.*;
 import com.miniups.model.enums.*;
 import com.miniups.model.dto.amazon.AmazonOrderDto;
+
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
 /**
- * 测试数据工厂
- * 提供一致性的测试数据创建方法
+ * 测试数据工厂 - 创建测试实体和DTO
+ * 
+ * 设计原则：
+ * 1. 提供一致的测试数据创建方法
+ * 2. 支持默认值和自定义配置
+ * 3. 包含边界值和异常情况的测试数据
+ * 4. 考虑JPA ID生成策略的兼容性
  */
 public class TestDataFactory {
 
+    // =========================== 用户相关 ===========================
+
     /**
-     * 创建测试用户 - 默认配置
+     * 创建默认测试用户
+     * 返回具有基本属性的USER角色用户
      */
     public static User createTestUser() {
         return createTestUser("testuser", "test@example.com", UserRole.USER);
     }
 
     /**
-     * 创建测试用户 - 自定义配置
+     * 创建自定义测试用户
+     * 
+     * @param username 用户名
+     * @param email    邮箱地址
+     * @param role     用户角色
+     * @return 配置好的User实体
      */
     public static User createTestUser(String username, String email, UserRole role) {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword("encodedPassword123");
+        user.setPassword("encodedPassword123"); // 在测试中使用固定密码
         user.setRole(role);
         user.setEnabled(true);
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setPhoneNumber("1234567890");
         user.setCreatedAt(LocalDateTime.now());
         return user;
     }
 
     /**
-     * 创建不同角色的用户
+     * 创建管理员用户
      */
     public static User createTestAdmin() {
         return createTestUser("admin", "admin@example.com", UserRole.ADMIN);
     }
 
+    /**
+     * 创建司机用户
+     */
     public static User createTestDriver() {
         return createTestUser("driver", "driver@example.com", UserRole.DRIVER);
     }
 
-    public static User createTestOperator() {
-        return createTestUser("operator", "operator@example.com", UserRole.OPERATOR);
-    }
+    // =========================== 订单相关 ===========================
 
     /**
-     * 创建测试订单
+     * 创建默认测试订单
      */
     public static Shipment createTestShipment() {
         return createTestShipment(createTestUser(), "UPS123456789", ShipmentStatus.CREATED);
     }
 
+    /**
+     * 创建自定义测试订单
+     * 
+     * @param user           订单所属用户
+     * @param trackingNumber UPS追踪号
+     * @param status         订单状态
+     * @return 配置好的Shipment实体
+     */
     public static Shipment createTestShipment(User user, String trackingNumber, ShipmentStatus status) {
         Shipment shipment = new Shipment();
         shipment.setUpsTrackingId(trackingNumber);
@@ -1285,23 +1326,31 @@ public class TestDataFactory {
         shipment.setOriginY(20);
         shipment.setDestX(15);
         shipment.setDestY(25);
-        shipment.setDeliveryAddress("123 Test Street");
+        shipment.setDeliveryAddress("123 Main St");
         shipment.setDeliveryCity("Test City");
-        shipment.setDeliveryState("TS");
         shipment.setDeliveryZipCode("12345");
         shipment.setCreatedAt(LocalDateTime.now());
         return shipment;
     }
 
+    // =========================== 卡车相关 ===========================
+
     /**
-     * 创建测试卡车
+     * 创建默认测试卡车
      */
     public static Truck createTestTruck() {
-        return createTestTruck("TRUCK001", TruckStatus.IDLE);
+        return createTestTruck(1L, "TRUCK001", TruckStatus.IDLE);
     }
 
-    public static Truck createTestTruck(String licensePlate, TruckStatus status) {
+    /**
+     * 创建自定义测试卡车
+     * 
+     * 注意：ID参数是为了兼容性保留，实际使用中不会设置ID
+     * JPA会自动生成ID，手动设置ID可能导致持久化问题
+     */
+    public static Truck createTestTruck(Long id, String licensePlate, TruckStatus status) {
         Truck truck = new Truck();
+        // 不设置ID - 让JPA自动生成
         truck.setLicensePlate(licensePlate);
         truck.setStatus(status);
         truck.setCurrentX(10);
@@ -1313,10 +1362,20 @@ public class TestDataFactory {
     }
 
     /**
-     * 创建测试状态历史
+     * 创建重型卡车（大容量）
      */
-    public static ShipmentStatusHistory createTestStatusHistory(
-            Shipment shipment, ShipmentStatus status, String notes) {
+    public static Truck createTestHeavyDutyTruck() {
+        Truck truck = createTestTruck(2L, "HEAVY001", TruckStatus.IDLE);
+        truck.setCapacity(2000); // 双倍容量
+        return truck;
+    }
+
+    // =========================== 复合对象相关 ===========================
+
+    /**
+     * 创建订单状态历史记录
+     */
+    public static ShipmentStatusHistory createTestStatusHistory(Shipment shipment, ShipmentStatus status, String notes) {
         ShipmentStatusHistory history = new ShipmentStatusHistory();
         history.setShipment(shipment);
         history.setStatus(status);
@@ -1327,6 +1386,7 @@ public class TestDataFactory {
 
     /**
      * 创建Amazon订单DTO
+     * 用于测试外部系统集成
      */
     public static AmazonOrderDto createTestAmazonOrder() {
         AmazonOrderDto order = new AmazonOrderDto();
@@ -1334,9 +1394,9 @@ public class TestDataFactory {
         order.setCustomerEmail("customer@example.com");
         order.setTotalWeight(BigDecimal.valueOf(5.0));
         
-        // 设置收货地址
+        // 设置配送地址
         AmazonOrderDto.ShippingAddressDto address = new AmazonOrderDto.ShippingAddressDto();
-        address.setStreet("123 Customer Street");
+        address.setStreet("123 Customer St");
         address.setCity("Customer City");
         address.setState("NY");
         address.setZipCode("54321");
@@ -1347,8 +1407,10 @@ public class TestDataFactory {
         return order;
     }
 
+    // =========================== 特殊场景测试数据 ===========================
+
     /**
-     * 创建大货量订单 (用于容量测试)
+     * 创建重量超限的订单（用于容量测试）
      */
     public static Shipment createHeavyShipment(User user) {
         Shipment shipment = createTestShipment(user, "UPS999888777", ShipmentStatus.CREATED);
@@ -1357,16 +1419,15 @@ public class TestDataFactory {
     }
 
     /**
-     * 批量创建卡车队伍
+     * 批量创建卡车车队
+     * 注意：ID参数保留用于兼容性，实际不设置ID
      */
     public static Truck[] createTestFleet(int size) {
         Truck[] fleet = new Truck[size];
         for (int i = 0; i < size; i++) {
-            fleet[i] = createTestTruck(
-                "TRUCK" + String.format("%03d", i + 1), 
-                i % 2 == 0 ? TruckStatus.IDLE : TruckStatus.DELIVERING
-            );
-            // 设置不同位置用于距离测试
+            fleet[i] = createTestTruck((long) (i + 1), "TRUCK" + String.format("%03d", i + 1), 
+                                     i % 2 == 0 ? TruckStatus.IDLE : TruckStatus.DELIVERING);
+            // 设置不同位置用于距离计算测试
             fleet[i].setCurrentX(10 + i);
             fleet[i].setCurrentY(20 + i);
         }
@@ -1374,12 +1435,11 @@ public class TestDataFactory {
     }
 
     /**
-     * 创建特定坐标的订单 (用于距离计算测试)
+     * 创建位于特定坐标的订单（用于距离计算测试）
      */
-    public static Shipment createShipmentAtLocation(
-            User user, String trackingNumber, 
-            double pickupLat, double pickupLon, 
-            double deliveryLat, double deliveryLon) {
+    public static Shipment createShipmentAtLocation(User user, String trackingNumber, 
+                                                   double pickupLat, double pickupLon, 
+                                                   double deliveryLat, double deliveryLon) {
         Shipment shipment = createTestShipment(user, trackingNumber, ShipmentStatus.CREATED);
         shipment.setOriginX((int) pickupLat);
         shipment.setOriginY((int) pickupLon);
@@ -1389,7 +1449,20 @@ public class TestDataFactory {
     }
 
     /**
-     * 创建无效数据用于负面测试
+     * 创建位于特定位置的卡车（用于距离计算测试）
+     */
+    public static Truck createTruckAtLocation(Long id, String licensePlate, 
+                                            double lat, double lon, TruckStatus status) {
+        Truck truck = createTestTruck(id, licensePlate, status);
+        truck.setCurrentX((int) lat);
+        truck.setCurrentY((int) lon);
+        return truck;
+    }
+
+    // =========================== 边界值和异常测试数据 ===========================
+
+    /**
+     * 创建无效的追踪号列表（用于负面测试）
      */
     public static String[] createInvalidTrackingNumbers() {
         return new String[]{
@@ -1397,13 +1470,16 @@ public class TestDataFactory {
             "",
             "INVALID123",
             "ups123456789", // 小写
-            "UPS12345",     // 太短
+            "UPS12345", // 太短
             "UPS1234567890123", // 太长
             "ABC123456789", // 错误前缀
-            "UPS12345678A"  // 包含字母
+            "UPS12345678A" // 包含字母
         };
     }
 
+    /**
+     * 创建有效的追踪号列表（用于正向测试）
+     */
     public static String[] createValidTrackingNumbers() {
         return new String[]{
             "UPS123456789",
@@ -1414,7 +1490,17 @@ public class TestDataFactory {
     }
 
     /**
-     * 私有构造函数防止实例化
+     * 创建包含完整状态变更历史的订单
+     */
+    public static Shipment createShipmentWithFullHistory(User user, String trackingNumber) {
+        Shipment shipment = createTestShipment(user, trackingNumber, ShipmentStatus.DELIVERED);
+        // 实际的状态历史通常由服务层管理
+        // 这里主要用于测试状态历史功能
+        return shipment;
+    }
+
+    /**
+     * 防止实例化的私有构造函数
      */
     private TestDataFactory() {
         throw new UnsupportedOperationException("工具类不能被实例化");
@@ -1569,11 +1655,14 @@ mvn test -Dtest=*MemoryTest -Xmx512m
 
 ### ⚙️ 测试配置类
 
+以下是项目实际使用的测试配置，包含所有关键的Mock服务：
+
 ```java
 package com.miniups.config;
 
 import com.miniups.service.WorldSimulatorService;
 import com.miniups.service.AmazonIntegrationService;
+import com.miniups.service.EventPublisherService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
@@ -1583,8 +1672,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * 测试环境配置
- * 提供测试专用的Bean和Mock对象
+ * Mini-UPS 应用程序测试配置
+ * 提供Mock Bean和测试专用配置
+ * 
+ * 主要功能：
+ * 1. Mock所有外部服务依赖
+ * 2. 配置测试专用的Bean (如快速密码编码器)
+ * 3. 防止测试期间的真实外部调用
  */
 @TestConfiguration
 @Profile("test")
@@ -1593,37 +1687,43 @@ public class TestConfig {
     /**
      * Mock 世界模拟器服务
      * 防止测试中建立真实TCP连接
+     * 在所有使用 @SpringBootTest 的测试中自动生效
      */
     @MockBean
     private WorldSimulatorService worldSimulatorService;
 
     /**
      * Mock Amazon集成服务
-     * 防止测试中调用真实Amazon API
+     * 防止测试中调用真实Amazon HTTP API
+     * 包括订单同步、状态更新等操作
      */
     @MockBean
     private AmazonIntegrationService amazonIntegrationService;
 
     /**
-     * 测试用密码编码器
-     * 使用较低强度以提高测试执行速度
+     * Mock 事件发布服务
+     * 防止测试中发送真实的RabbitMQ消息
+     * 用于测试异步事件处理逻辑
+     */
+    @MockBean
+    private EventPublisherService eventPublisherService;
+
+    /**
+     * 测试专用密码编码器
+     * 使用BCrypt强度4而不是默认的10
+     * 
+     * 性能提升：
+     * - 默认强度10: ~100ms/操作
+     * - 测试强度4:  ~6ms/操作
+     * - 测试执行速度提升约15倍
+     * 
+     * @return 快速密码编码器实例
      */
     @Bean
     @Primary
     @Profile("test")
     public PasswordEncoder testPasswordEncoder() {
-        // 使用强度4而不是默认的10，大幅提升测试速度
         return new BCryptPasswordEncoder(4);
-    }
-
-    /**
-     * 测试用邮件服务 (如果需要)
-     */
-    @Bean
-    @Primary
-    @Profile("test")
-    public EmailService testEmailService() {
-        return new MockEmailService(); // 不发送真实邮件
     }
 }
 ```
@@ -2162,6 +2262,295 @@ mvn test -Dsurefire.rerunFailingTestsCount=3
 
 ---
 
+## 🔄 高级测试主题 - 并发测试
+
+### 🚀 并发测试架构
+
+Mini-UPS项目包含了一套完整的并发测试框架，专门测试高并发场景下的数据一致性和性能：
+
+#### **并发测试的重要性**
+
+在分布式系统中，并发问题往往是最难发现和调试的问题：
+- **数据竞争条件**：多个线程同时修改共享数据
+- **死锁问题**：资源互相等待导致程序挂起
+- **性能瓶颈**：高并发下的系统性能表现
+- **数据一致性**：并发写入时的数据完整性
+
+#### **实际并发测试示例**
+
+以下是项目中实际使用的并发用户注册测试：
+
+```java
+/**
+ * 用户注册并发测试示例
+ * 测试场景：50个线程同时注册相同用户名，验证唯一性约束
+ */
+@Test
+@DisplayName("并发用户注册 - 相同用户名冲突处理")
+void testConcurrentUserRegistration_SameUsernameConflict() {
+    // Given - 测试参数
+    String duplicateUsername = "duplicate_user_" + System.currentTimeMillis();
+    int threadCount = 50;
+    AtomicInteger successCounter = new AtomicInteger(0);
+    AtomicInteger conflictCounter = new AtomicInteger(0);
+
+    // When - 并发执行测试
+    ConcurrencyTestResult result = executeConcurrencyTest(() -> {
+        try {
+            // 所有线程尝试注册相同的用户名
+            RegisterRequestDto request = createRegisterRequest(duplicateUsername, 
+                duplicateUsername + "_" + Thread.currentThread().getId() + "@example.com");
+            
+            authService.register(request);
+            successCounter.incrementAndGet();
+            return true;
+        } catch (Exception e) {
+            conflictCounter.incrementAndGet();
+            return false;
+        }
+    }, threadCount, 2, 30);
+
+    // Then - 验证结果
+    // 应该只有一个注册成功，其他都应该失败
+    assertThat(successCounter.get()).isEqualTo(1);
+    assertThat(conflictCounter.get()).isEqualTo(result.getFailureCount());
+    assertThat(result.getFailureRate()).isGreaterThan(90.0);
+    
+    System.out.println("成功注册数: " + successCounter.get());
+    System.out.println("冲突失败数: " + conflictCounter.get());
+}
+```
+
+#### **并发测试基类架构**
+
+```java
+/**
+ * 并发测试基类 - 提供通用的并发测试工具
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+public abstract class ConcurrencyTestBase {
+
+    /**
+     * 执行并发测试并收集性能指标
+     */
+    protected ConcurrencyTestResult executeConcurrencyTest(
+            Callable<Boolean> operation, 
+            int threadCount, 
+            int operationsPerThread, 
+            int timeoutSeconds) {
+        
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch startLatch = new CountDownLatch(1); // 控制统一开始
+        CountDownLatch endLatch = new CountDownLatch(threadCount); // 等待全部完成
+        
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failureCount = new AtomicInteger(0);
+        
+        long startTime = System.currentTimeMillis();
+        
+        // 启动所有工作线程
+        for (int i = 0; i < threadCount; i++) {
+            executor.submit(() -> {
+                try {
+                    startLatch.await(); // 等待统一开始信号
+                    
+                    for (int j = 0; j < operationsPerThread; j++) {
+                        if (operation.call()) {
+                            successCount.incrementAndGet();
+                        } else {
+                            failureCount.incrementAndGet();
+                        }
+                    }
+                } catch (Exception e) {
+                    failureCount.incrementAndGet();
+                } finally {
+                    endLatch.countDown();
+                }
+            });
+        }
+        
+        startLatch.countDown(); // 发出开始信号
+        
+        // 等待所有线程完成
+        endLatch.await(timeoutSeconds, TimeUnit.SECONDS);
+        
+        return new ConcurrencyTestResult(/* 收集的指标 */);
+    }
+}
+```
+
+### 🚀 并发测试执行指令
+
+#### **并发测试运行**
+```bash
+# 运行所有并发测试
+mvn test -Dtest=*ConcurrentTest
+
+# 运行特定并发测试
+mvn test -Dtest=ConcurrentUserRegistrationTest
+
+# 运行性能基准测试
+mvn test -Dtest=PerformanceBenchmarkTest
+
+# 并发测试调试（降低线程数）
+mvn test -Dtest=ConcurrentUserRegistrationTest -DthreadCount=5
+```
+
+#### **并发测试分析**
+```bash
+# 查看并发测试结果和指标
+mvn test -Dtest=*ConcurrentTest -Dshow.performance.metrics=true
+
+# 生成并发性能报告
+mvn test -Dtest=*ConcurrentTest surefire-report:report
+
+# 检查并发死锁和资源泄露
+mvn test -Dtest=*ConcurrentTest -XX:+PrintGCDetails -XX:+PrintConcurrentLocks
+```
+
+#### **并发问题调试**
+```bash
+# 启用详细并发日志
+mvn test -Dtest=ConcurrentUserRegistrationTest \
+    -Dlogging.level.com.miniups=DEBUG \
+    -Dspring.jpa.show-sql=true
+
+# 模拟高并发场景
+mvn test -Dtest=ConcurrentUserRegistrationTest \
+    -DthreadCount=100 -DoperationsPerThread=20
+
+# 内存和线程监控
+mvn test -Dtest=*ConcurrentTest -Xmx1G -XX:+HeapDumpOnOutOfMemoryError
+```
+
+### 📊 并发测试最佳实践
+
+#### **1. 测试设计原则**
+```java
+// ✅ 好的并发测试设计
+@Test
+void testConcurrentOperation() {
+    // 明确的测试目标
+    String sharedResource = "shared_resource_" + System.currentTimeMillis();
+    
+    // 可控的并发参数
+    int threadCount = 20;
+    int operationsPerThread = 5;
+    
+    // 原子性结果统计
+    AtomicInteger successCount = new AtomicInteger(0);
+    AtomicReference<Exception> firstException = new AtomicReference<>();
+    
+    // 使用基类提供的并发测试框架
+    ConcurrencyTestResult result = executeConcurrencyTest(() -> {
+        try {
+            // 实际的业务操作
+            businessService.performOperation(sharedResource);
+            successCount.incrementAndGet();
+            return true;
+        } catch (Exception e) {
+            firstException.compareAndSet(null, e);
+            return false;
+        }
+    }, threadCount, operationsPerThread, 30);
+    
+    // 明确的断言和结果验证
+    assertThat(result.getSuccessRate()).isGreaterThan(expectedSuccessRate);
+    if (firstException.get() != null) {
+        System.err.println("首个异常: " + firstException.get().getMessage());
+    }
+}
+```
+
+#### **2. 避免并发测试陷阱**
+```java
+// ❌ 错误的并发测试
+@Test
+void badConcurrentTest() {
+    // 问题1: 没有同步控制，线程启动时间不一致
+    for (int i = 0; i < 10; i++) {
+        new Thread(() -> {
+            businessService.doSomething(); // 不知道什么时候执行
+        }).start();
+    }
+    
+    // 问题2: 没有等待机制，测试可能提前结束
+    Thread.sleep(1000); // 硬编码等待时间
+    
+    // 问题3: 无法验证结果
+    // 没有结果收集机制
+}
+
+// ✅ 正确的并发测试
+@Test  
+void goodConcurrentTest() throws InterruptedException {
+    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch endLatch = new CountDownLatch(10);
+    AtomicInteger results = new AtomicInteger(0);
+    
+    for (int i = 0; i < 10; i++) {
+        new Thread(() -> {
+            try {
+                startLatch.await(); // 等待统一开始
+                businessService.doSomething();
+                results.incrementAndGet();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                endLatch.countDown(); // 标记完成
+            }
+        }).start();
+    }
+    
+    startLatch.countDown(); // 发出开始信号
+    assertTrue(endLatch.await(10, TimeUnit.SECONDS)); // 等待完成
+    
+    // 验证结果
+    assertThat(results.get()).isEqualTo(expectedValue);
+}
+```
+
+#### **3. 性能基准测试**
+```java
+@Test
+@DisplayName("高负载性能基准测试")
+void performanceBenchmarkTest() {
+    // 预热阶段 - 避免JIT编译影响
+    for (int i = 0; i < 100; i++) {
+        businessService.warmupOperation();
+    }
+    
+    // 基准测试参数
+    int[] threadCounts = {1, 5, 10, 20, 50, 100};
+    
+    for (int threadCount : threadCounts) {
+        long startTime = System.nanoTime();
+        
+        ConcurrencyTestResult result = executeConcurrencyTest(() -> {
+            businessService.benchmarkOperation();
+            return true;
+        }, threadCount, 100, 60);
+        
+        long endTime = System.nanoTime();
+        double throughput = result.getTotalOperations() / ((endTime - startTime) / 1_000_000_000.0);
+        
+        System.out.println(String.format(
+            "线程数: %d, 吞吐量: %.2f ops/sec, 成功率: %.2f%%", 
+            threadCount, throughput, result.getSuccessRate()
+        ));
+        
+        // 性能回归检测
+        if (threadCount <= 10) {
+            assertThat(result.getSuccessRate()).isGreaterThan(95.0);
+        }
+    }
+}
+```
+
+---
+
 ## 🎯 新手完整执行指南
 
 ### **第一步：环境准备**
@@ -2359,17 +2748,62 @@ chmod +x quick-test.sh full-test.sh debug-test.sh
 
 ## 总结
 
-这个基于 Mini-UPS 项目的 Java 测试指南涵盖了：
+这个基于 Mini-UPS 项目的完整 Java 测试指南涵盖了企业级测试开发的方方面面：
 
-1. **完整的测试架构** - 从单元测试到集成测试的分层策略
-2. **实用的工具配置** - Maven插件、TestContainers、JaCoCo等现代工具
-3. **具体的代码示例** - 真实项目中的测试实现
-4. **最佳实践指导** - 避免常见陷阱，提高测试质量
-5. **质量控制机制** - 代码覆盖率和质量门禁
+### 🏗️ **架构与设计**
+1. **完整的测试架构** - 基于实际项目的分层测试策略
+2. **模块化测试设计** - 服务层、控制层、数据层、安全层的完整覆盖
+3. **并发测试框架** - 专门针对高并发场景的测试基础设施
 
-通过遵循这些实践，你可以构建一个健壮、可维护、高质量的 Java 测试套件，确保你的应用程序在各种场景下都能可靠运行。
+### 🛠️ **工具与配置**
+4. **现代化工具栈** - Maven插件、TestContainers、JaCoCo、Mockito等
+5. **测试环境配置** - Profile管理、Mock服务配置、外部依赖隔离
+6. **测试数据管理** - 工厂模式、Builder模式、边界值测试数据
 
-**记住**: 好的测试不仅仅是为了覆盖率，更重要的是提供信心、文档价值和快速反馈。测试应该像生产代码一样精心设计和维护。
+### 💡 **实践与示例**
+7. **真实代码示例** - 直接来自生产项目的测试实现
+8. **详细执行指令** - 每个测试场景的具体运行命令
+9. **问题排查指南** - 常见问题的诊断和解决方案
+
+### 🚀 **高级主题**
+10. **并发测试专题** - 竞争条件、数据一致性、性能基准测试
+11. **安全测试深度覆盖** - JWT、权限控制、API安全
+12. **集成测试最佳实践** - TestContainers、真实数据库环境
+
+### 📊 **质量保障**
+13. **代码覆盖率策略** - JaCoCo配置、覆盖率目标、质量门禁
+14. **性能监控集成** - 测试性能指标收集和分析
+15. **CI/CD集成指导** - 持续集成环境下的测试执行策略
+
+### 🎯 **学习路径**
+16. **新手入门指南** - 从零开始的三周学习计划
+17. **渐进式学习** - 从基础到高级的知识体系
+18. **实用脚本提供** - 开箱即用的测试执行脚本
+
+### 💎 **核心价值观**
+
+**测试即文档**: 每个测试都应该清楚地表达业务逻辑和预期行为
+**测试即信心**: 良好的测试覆盖让重构和功能迭代更安全
+**测试即反馈**: 快速的测试执行为开发提供即时反馈
+**测试即质量**: 测试不仅验证功能，更保证系统的健壮性
+
+### 🔑 **关键成功因素**
+
+1. **分层清晰**: 不同层次的测试有明确的职责和边界
+2. **数据隔离**: 测试间相互独立，避免数据污染
+3. **环境一致**: 开发、测试、生产环境的一致性
+4. **持续改进**: 定期重构测试代码，保持可维护性
+5. **团队约定**: 统一的测试标准和最佳实践
+
+通过遵循这个指南，你将能够：
+
+✅ **构建企业级测试套件** - 从单元测试到性能测试的全覆盖
+✅ **掌握现代测试工具** - 熟练使用Spring Boot Test生态
+✅ **处理复杂测试场景** - 并发、安全、集成等高级测试技术
+✅ **建立质量保障体系** - 代码覆盖率、CI/CD集成、自动化测试
+✅ **提升开发效率** - 通过测试驱动开发加快迭代速度
+
+**记住**: 测试不是开发的负担，而是软件质量的守护者和开发效率的助推器。投资于测试就是投资于软件的未来！
 
 <function_calls>
 <invoke name="TodoWrite">

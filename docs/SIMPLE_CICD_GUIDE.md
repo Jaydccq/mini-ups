@@ -314,7 +314,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -327,7 +327,7 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-abc123}", "ping"]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-abc123}", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -335,8 +335,8 @@ services:
   # Spring Boot后端
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ../backend
+      dockerfile: ../backend/Dockerfile
     container_name: mini-ups-backend
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
@@ -357,7 +357,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/api/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/api/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -365,8 +365,8 @@ services:
   # React前端
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ../frontend
+      dockerfile: ../frontend/Dockerfile
     container_name: mini-ups-frontend
     environment:
       REACT_APP_API_URL: http://localhost:8081/api
@@ -375,7 +375,7 @@ services:
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80" ]
       interval: 30s
       timeout: 10s
       retries: 3

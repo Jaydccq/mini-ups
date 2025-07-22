@@ -142,7 +142,7 @@ class UserServiceTest {
     @DisplayName("测试根据角色获取用户")
     void testGetUsersByRole() {
         List<User> adminUsers = Arrays.asList(testAdmin);
-        when(userRepository.findAll()).thenReturn(adminUsers);
+        when(userRepository.findByRole(UserRole.ADMIN)).thenReturn(adminUsers);
 
         List<UserDto> result = userService.getUsersByRole(UserRole.ADMIN);
 
@@ -151,7 +151,7 @@ class UserServiceTest {
         assertEquals("admin", result.get(0).getUsername());
         assertEquals(UserRole.ADMIN, result.get(0).getRole());
 
-        verify(userRepository, times(1)).findAll();
+        verify(userRepository, times(1)).findByRole(UserRole.ADMIN);
     }
 
     @Test

@@ -325,9 +325,8 @@ public class UserService {
     public List<UserDto> getUsersByRole(UserRole role) {
         logger.debug("Getting users list by role: role={}", role);
         
-        List<User> users = userRepository.findAll().stream()
-                .filter(user -> user.getRole() == role)
-                .collect(Collectors.toList());
+        // Use repository method for better performance instead of filtering all users
+        List<User> users = userRepository.findByRole(role);
         
         List<UserDto> userDtos = users.stream()
                 .map(UserDto::fromEntity)

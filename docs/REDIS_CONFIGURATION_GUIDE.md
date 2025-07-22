@@ -359,6 +359,7 @@ public class TokenBlacklistService {
 ### 4.1 完整的Docker Compose配置
 
 #### docker-compose.yml（当前实际配置）
+
 ```yaml
 version: '3.8'
 
@@ -376,7 +377,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -388,7 +389,7 @@ services:
     container_name: mini-ups-redis
     command: redis-server --requirepass ${REDIS_PASSWORD?REDIS_PASSWORD is not set}
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD?REDIS_PASSWORD is not set}", "ping"]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD?REDIS_PASSWORD is not set}", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -397,8 +398,8 @@ services:
   # Spring Boot后端
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ../backend
+      dockerfile: ../backend/Dockerfile
     container_name: mini-ups-backend
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
@@ -421,7 +422,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/api/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/api/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
