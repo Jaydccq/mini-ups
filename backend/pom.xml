@@ -137,6 +137,27 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
+        <!-- Explicit Mockito version for Java 17+ compatibility -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.12.0</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>5.2.0</version>
+            <scope>test</scope>
         </dependency>
         
         <dependency>
@@ -259,6 +280,20 @@
                     <excludes>
                         <exclude>**/*IntegrationTest.java</exclude>
                     </excludes>
+                    <!-- Fix for Java 17+ compatibility with JaCoCo and Mockito -->
+                    <argLine>
+                        @{argLine} --add-opens java.base/java.lang=ALL-UNNAMED 
+                        --add-opens java.base/java.util=ALL-UNNAMED 
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED 
+                        --add-opens java.base/sun.nio.ch=ALL-UNNAMED 
+                        --add-opens java.management/sun.management=ALL-UNNAMED
+                        --add-opens java.base/java.time=ALL-UNNAMED
+                        --add-opens java.base/sun.util.calendar=ALL-UNNAMED
+                        -Djdk.instrument.traceUsage=false
+                    </argLine>
+                    <systemPropertyVariables>
+                        <mockmaker.inline>true</mockmaker.inline>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             
@@ -288,11 +323,22 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
+                <configuration>
+                    <!-- Skip JaCoCo instrumentation for problematic classes -->
+                    <excludes>
+                        <exclude>java/**/*</exclude>
+                        <exclude>javax/**/*</exclude>
+                        <exclude>org/springframework/**/*</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <propertyName>argLine</propertyName>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>report</id>

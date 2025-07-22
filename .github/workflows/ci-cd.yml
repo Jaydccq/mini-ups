@@ -117,8 +117,8 @@ jobs:
         mvn -version | head -10
         echo ""
         echo "Running tests with Java ${{ env.JAVA_VERSION }}..."
-        # Use the same approach as local test-java17.sh script
-        mvn clean test -Dspring.profiles.active=test -DfailIfNoTests=false
+        # Use the same approach as local test-java17.sh script with proper JVM options
+        mvn clean test -Dspring.profiles.active=test -DfailIfNoTests=false -Dmaven.test.failure.ignore=false
       env:
         # Ensure Java 17 is used (actions/setup-java@v4 sets this)
         JAVA_HOME: ${{ env.JAVA_HOME }}
@@ -131,18 +131,27 @@ jobs:
         # CI Redis Configuration
         TEST_REDIS_HOST: localhost
         TEST_REDIS_PORT: 6379
-        # JVM options for CI (compatible with Java 17)
-        MAVEN_OPTS: "-Xmx1024m -XX:+UseG1GC"
+        # JVM options for CI (Java 17 compatible with JaCoCo and Mockito fixes)
+        MAVEN_OPTS: "-Xmx1024m -XX:+UseG1GC -Djdk.instrument.traceUsage=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED"
         # Spring Test Profile uses mocks for RabbitMQ (see TestRabbitConfig.java)
         SPRING_PROFILES_ACTIVE: test
 
     - name: List test results
       working-directory: ./backend
+      if: always()
       run: |
         echo "Checking for test results..."
         find . -name "*.xml" -path "*/surefire-reports/*" || echo "No surefire reports found"
         find . -name "*.xml" -path "*/target/*" || echo "No target XML files found"
         ls -la target/ || echo "No target directory"
+        # Show test failure summaries if any
+        if [ -d "target/surefire-reports" ]; then
+          echo "Test failure summaries:"
+          grep -l "<failure\|<error" target/surefire-reports/*.xml 2>/dev/null | head -5 | while read file; do
+            echo "=== $file ==="
+            grep -A 5 "<failure\|<error" "$file" | head -10
+          done
+        fi
 
     - name: Generate test report
       uses: dorny/test-reporter@v1
