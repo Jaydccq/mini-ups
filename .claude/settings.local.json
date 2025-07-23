@@ -128,7 +128,11 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=UserServiceTest -Dspring.profiles.active=test)",
       "Bash(openssl rand:*)",
       "Bash(./scripts/deploy-aws.sh:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -q)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }
