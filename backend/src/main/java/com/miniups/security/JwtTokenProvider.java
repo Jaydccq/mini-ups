@@ -131,6 +131,10 @@ public class JwtTokenProvider {
     }
     
     public String generateToken(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
         
@@ -144,39 +148,38 @@ public class JwtTokenProvider {
     }
     
     public String getUsernameFromToken(String token) {
-        try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-            
-            return claims.getSubject();
-        } catch (Exception e) {
-            logger.error("Error extracting username from token", e);
-            return null;
-        }
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        
+        return claims.getSubject();
     }
     
     public boolean validateToken(String authToken) {
+        if (authToken == null || authToken.trim().isEmpty()) {
+            logger.warn("JWT token is null or empty");
+            return false;
+        }
+        
         try {
             Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(authToken);
             return true;
-        } catch (MalformedJwtException ex) {
-            logger.error("Invalid JWT token");
-        } catch (ExpiredJwtException ex) {
-            logger.error("Expired JWT token");
-        } catch (UnsupportedJwtException ex) {
-            logger.error("Unsupported JWT token");
+        } catch (MalformedJwtException | ExpiredJwtException | UnsupportedJwtException | 
+                 io.jsonwebtoken.security.SignatureException ex) {
+            logger.warn("JWT validation failed: {}", ex.getMessage());
+            return false;
         } catch (IllegalArgumentException ex) {
-            logger.error("JWT claims string is empty");
+            logger.warn("JWT validation failed: {}", ex.getMessage());
+            return false;
         } catch (Exception ex) {
             logger.error("JWT validation error", ex);
+            return false;
         }
-        return false;
     }
     
     public Long getExpirationTime() {

@@ -132,7 +132,14 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -q)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(timeout 60 mvn test:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean test -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean test -Dspring.profiles.active=test -Dtest=JwtTokenProviderTest,AmazonIntegrationServiceTest,JwtSecurityTest)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=JwtTokenProviderTest,AmazonIntegrationServiceTest,JwtSecurityTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn compile -DskipTests=true)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=JwtSecurityTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=JwtTokenProviderTest)"
     ],
     "deny": []
   }

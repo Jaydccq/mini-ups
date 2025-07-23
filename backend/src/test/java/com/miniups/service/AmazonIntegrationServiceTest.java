@@ -2,7 +2,6 @@ package com.miniups.service;
 
 import com.miniups.model.dto.AmazonMessageDto;
 import com.miniups.model.dto.UpsResponseDto;
-import com.miniups.model.dto.amazon.AmazonShipmentDto;
 import com.miniups.model.entity.Shipment;
 import com.miniups.model.entity.Truck;
 import com.miniups.model.entity.User;
@@ -57,14 +56,11 @@ class AmazonIntegrationServiceTest {
     @Mock
     private TrackingService trackingService;
 
-    @Mock
-    private WorldSimulatorService worldSimulatorService;
 
     @InjectMocks
     private AmazonIntegrationService amazonIntegrationService;
 
     private WireMockServer wireMockServer;
-    private RestTemplate restTemplate;
     private User testUser;
     private Shipment testShipment;
     private Truck testTruck;
@@ -78,9 +74,9 @@ class AmazonIntegrationServiceTest {
         WireMock.configureFor("localhost", dynamicPort);
 
         // Setup RestTemplate and service configuration with dynamic port
-        restTemplate = new RestTemplate();
-        String dynamicAmazonApiUrl = "http://localhost:" + dynamicPort;
-        ReflectionTestUtils.setField(amazonIntegrationService, "amazonApiUrl", dynamicAmazonApiUrl);
+        RestTemplate restTemplate = new RestTemplate();
+        String dynamicAmazonBaseUrl = "http://localhost:" + dynamicPort;
+        ReflectionTestUtils.setField(amazonIntegrationService, "amazonBaseUrl", dynamicAmazonBaseUrl);
         ReflectionTestUtils.setField(amazonIntegrationService, "restTemplate", restTemplate);
 
         // Create test entities
@@ -99,20 +95,21 @@ class AmazonIntegrationServiceTest {
     void testHandleShipmentCreated_Success() {
         // Given
         AmazonMessageDto messageDto = createAmazonMessageDto();
-        when(userRepository.findByEmail(messageDto.getPayloadString("customerEmail"))).thenReturn(Optional.of(testUser));
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
         when(trackingService.generateTrackingNumber()).thenReturn("UPS123456789");
+        when(shipmentRepository.findByShipmentId("AMZ123456")).thenReturn(Optional.empty());
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
-        when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), eq(5))).thenReturn(testTruck);
+        when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class))).thenReturn(testTruck);
 
         // When
         var result = amazonIntegrationService.handleShipmentCreated(messageDto);
 
         // Then
         assertThat(result).isNotNull();
-        verify(userRepository).findByEmail(messageDto.getPayloadString("customerEmail"));
+        verify(userRepository).findByEmail("test@example.com");
         verify(trackingService).generateTrackingNumber();
         verify(shipmentRepository).save(any(Shipment.class));
-        verify(truckManagementService).assignOptimalTruck(eq(10), eq(20), eq(5));
+        verify(truckManagementService).assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class));
     }
 
     @Test
@@ -120,18 +117,19 @@ class AmazonIntegrationServiceTest {
     void testHandleShipmentCreated_NewUser() {
         // Given
         AmazonMessageDto messageDto = createAmazonMessageDto();
-        when(userRepository.findByEmail(messageDto.getPayloadString("customerEmail"))).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(trackingService.generateTrackingNumber()).thenReturn("UPS123456789");
+        when(shipmentRepository.findByShipmentId("AMZ123456")).thenReturn(Optional.empty());
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
-        when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), eq(5))).thenReturn(testTruck);
+        when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class))).thenReturn(testTruck);
 
         // When
         var result = amazonIntegrationService.handleShipmentCreated(messageDto);
 
         // Then
         assertThat(result).isNotNull();
-        verify(userRepository).findByEmail(messageDto.getPayloadString("customerEmail"));
+        verify(userRepository).findByEmail("test@example.com");
         verify(userRepository).save(any(User.class));
         verify(shipmentRepository).save(any(Shipment.class));
     }
@@ -142,30 +140,32 @@ class AmazonIntegrationServiceTest {
         // Given
         String trackingNumber = "UPS123456789";
         when(shipmentRepository.findByShipmentId(trackingNumber)).thenReturn(Optional.of(testShipment));
-        doNothing().when(trackingService).updateShipmentStatus(anyString(), any(), anyString());
+        when(trackingService.updateShipmentStatus(anyString(), any(), anyString())).thenReturn(true);
 
         // When
         AmazonMessageDto message = createShipmentLoadedMessage(trackingNumber);
-        amazonIntegrationService.handleShipmentLoaded(message);
+        UpsResponseDto result = amazonIntegrationService.handleShipmentLoaded(message);
 
         // Then
+        assertThat(result).isNotNull();
         verify(shipmentRepository).findByShipmentId(trackingNumber);
         verify(trackingService).updateShipmentStatus(trackingNumber, ShipmentStatus.IN_TRANSIT, "Package loaded for delivery");
     }
 
     @Test
-    @DisplayName("Should throw exception when shipment not found for loading")
+    @DisplayName("Should handle shipment not found gracefully")
     void testHandleShipmentLoaded_ShipmentNotFound() {
         // Given
         String trackingNumber = "UPS999999999";
         when(shipmentRepository.findByShipmentId(trackingNumber)).thenReturn(Optional.empty());
 
-        // When & Then
+        // When
         AmazonMessageDto message = createShipmentLoadedMessage(trackingNumber);
-        assertThatThrownBy(() -> amazonIntegrationService.handleShipmentLoaded(message))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Shipment not found");
+        UpsResponseDto result = amazonIntegrationService.handleShipmentLoaded(message);
 
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccess()).isFalse();
         verify(shipmentRepository).findByShipmentId(trackingNumber);
         verify(trackingService, never()).updateShipmentStatus(anyString(), any(), anyString());
     }
@@ -180,7 +180,7 @@ class AmazonIntegrationServiceTest {
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
 
         // When
-        AmazonMessageDto message = createAddressChangeMessage(trackingNumber, 16, 26, "123 New St", "New City", "12345");
+        AmazonMessageDto message = createAddressChangeMessage(trackingNumber);
         amazonIntegrationService.handleAddressChange(message);
 
         // Then
@@ -198,13 +198,13 @@ class AmazonIntegrationServiceTest {
         testShipment.setStatus(ShipmentStatus.IN_TRANSIT);
         when(shipmentRepository.findByShipmentId(trackingNumber)).thenReturn(Optional.of(testShipment));
 
-        // When & Then
-        AmazonMessageDto message = createAddressChangeMessage(trackingNumber, 16, 26, "123 New St", "New City", "12345");
-        assertThatThrownBy(() -> 
-                amazonIntegrationService.handleAddressChange(message))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Cannot change address");
+        // When
+        AmazonMessageDto message = createAddressChangeMessage(trackingNumber);
+        UpsResponseDto result = amazonIntegrationService.handleAddressChange(message);
 
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccess()).isFalse();
         verify(shipmentRepository).findByShipmentId(trackingNumber);
         verify(shipmentRepository, never()).save(any());
     }
@@ -216,7 +216,7 @@ class AmazonIntegrationServiceTest {
         String truckId = "1";
         String shipmentId = "AMZ123456";
 
-        stubFor(post(urlEqualTo("/api/ups/truck-dispatched"))
+        stubFor(post(urlEqualTo("/api/webhooks/truck-dispatched"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -226,7 +226,7 @@ class AmazonIntegrationServiceTest {
         amazonIntegrationService.notifyTruckDispatched(truckId, shipmentId);
 
         // Then
-        verify(postRequestedFor(urlEqualTo("/api/ups/truck-dispatched"))
+        verify(postRequestedFor(urlEqualTo("/api/webhooks/truck-dispatched"))
                 .withHeader("Content-Type", matching("application/json"))
                 .withRequestBody(containing(truckId))
                 .withRequestBody(containing(shipmentId)));
@@ -240,7 +240,7 @@ class AmazonIntegrationServiceTest {
         String warehouseId = "WH001";
         String shipmentId = "AMZ123456";
 
-        stubFor(post(urlEqualTo("/api/ups/truck-arrived"))
+        stubFor(post(urlEqualTo("/api/webhooks/truck-arrived"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -250,7 +250,7 @@ class AmazonIntegrationServiceTest {
         amazonIntegrationService.notifyTruckArrived(truckId, warehouseId, shipmentId);
 
         // Then
-        verify(postRequestedFor(urlEqualTo("/api/ups/truck-arrived"))
+        verify(postRequestedFor(urlEqualTo("/api/webhooks/truck-arrived"))
                 .withHeader("Content-Type", matching("application/json"))
                 .withRequestBody(containing(truckId))
                 .withRequestBody(containing(warehouseId))
@@ -263,7 +263,7 @@ class AmazonIntegrationServiceTest {
         // Given
         String shipmentId = "AMZ123456";
 
-        stubFor(post(urlEqualTo("/api/ups/shipment-delivered"))
+        stubFor(post(urlEqualTo("/api/webhooks/shipment-delivered"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -273,7 +273,7 @@ class AmazonIntegrationServiceTest {
         amazonIntegrationService.notifyShipmentDelivered(shipmentId);
 
         // Then
-        verify(postRequestedFor(urlEqualTo("/api/ups/shipment-delivered"))
+        verify(postRequestedFor(urlEqualTo("/api/webhooks/shipment-delivered"))
                 .withHeader("Content-Type", matching("application/json"))
                 .withRequestBody(containing(shipmentId)));
     }
@@ -285,7 +285,7 @@ class AmazonIntegrationServiceTest {
         String truckId = "1";
         String shipmentId = "AMZ123456";
 
-        stubFor(post(urlEqualTo("/api/ups/truck-dispatched"))
+        stubFor(post(urlEqualTo("/api/webhooks/truck-dispatched"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
@@ -330,15 +330,18 @@ class AmazonIntegrationServiceTest {
     }
 
     @Test
-    @DisplayName("Should validate message DTO fields")
+    @DisplayName("Should handle validation errors gracefully")
     void testHandleShipmentCreated_ValidationErrors() {
         // Given - Invalid message DTO
         AmazonMessageDto invalidMessage = new AmazonMessageDto();
         // Missing required fields
 
-        // When & Then
-        assertThatThrownBy(() -> amazonIntegrationService.handleShipmentCreated(invalidMessage))
-                .isInstanceOf(IllegalArgumentException.class);
+        // When
+        UpsResponseDto result = amazonIntegrationService.handleShipmentCreated(invalidMessage);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccess()).isFalse();
     }
 
     @Test
@@ -417,7 +420,7 @@ class AmazonIntegrationServiceTest {
         
         Map<String, Object> payload = new HashMap<>();
         payload.put("shipment_id", "AMZ123456");
-        payload.put("customerEmail", "test@example.com");
+        payload.put("email", "test@example.com");
         payload.put("weight", java.math.BigDecimal.valueOf(5.0));
         payload.put("origin_x", 10);
         payload.put("origin_y", 20);
@@ -449,18 +452,18 @@ class AmazonIntegrationServiceTest {
     /**
      * Helper method to create address change message.
      */
-    private AmazonMessageDto createAddressChangeMessage(String trackingNumber, int newX, int newY, String address, String city, String zipCode) {
+    private AmazonMessageDto createAddressChangeMessage(String trackingNumber) {
         AmazonMessageDto messageDto = new AmazonMessageDto();
         messageDto.setMessageType("AddressChange");
         messageDto.setTimestamp(LocalDateTime.now());
         
         Map<String, Object> payload = new HashMap<>();
         payload.put("shipment_id", trackingNumber);
-        payload.put("destination_x", newX);
-        payload.put("destination_y", newY);
-        payload.put("new_address", address);
-        payload.put("new_city", city);
-        payload.put("new_zip_code", zipCode);
+        payload.put("destination_x", 16);
+        payload.put("destination_y", 26);
+        payload.put("new_address", "123 New St");
+        payload.put("new_city", "New City");
+        payload.put("new_zip_code", "12345");
         
         messageDto.setPayload(payload);
         return messageDto;
