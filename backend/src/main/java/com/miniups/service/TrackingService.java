@@ -246,7 +246,17 @@ public class TrackingService {
         // Define valid state transitions
         switch (fromStatus) {
             case CREATED:
-                return toStatus == ShipmentStatus.PICKED_UP || toStatus == ShipmentStatus.CANCELLED;
+                return toStatus == ShipmentStatus.TRUCK_DISPATCHED || 
+                       toStatus == ShipmentStatus.PICKED_UP || 
+                       toStatus == ShipmentStatus.CANCELLED;
+                
+            case TRUCK_DISPATCHED:
+                return toStatus == ShipmentStatus.PICKED_UP || 
+                       toStatus == ShipmentStatus.IN_TRANSIT || 
+                       toStatus == ShipmentStatus.OUT_FOR_DELIVERY ||
+                       toStatus == ShipmentStatus.DELIVERED ||
+                       toStatus == ShipmentStatus.CANCELLED ||
+                       toStatus == ShipmentStatus.EXCEPTION;
                 
             case PICKED_UP:
                 return toStatus == ShipmentStatus.IN_TRANSIT || toStatus == ShipmentStatus.CANCELLED;

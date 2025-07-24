@@ -93,22 +93,20 @@ public class ShipmentService {
             shipment.setCreatedAt(LocalDateTime.now());
             shipment.setUpdatedAt(LocalDateTime.now());
             
-            // 4. 分配车辆
-            try {
-                Truck assignedTruck = truckManagementService.assignOptimalTruck(
-                    createShipmentDto.getOriginX(),
-                    createShipmentDto.getOriginY(),
-                    Constants.DEFAULT_PACKAGE_COUNT // 默认包裹数量
-                );
-                
-                if (assignedTruck != null) {
-                    shipment.setTruck(assignedTruck);
-                    shipment.setStatus(ShipmentStatus.TRUCK_DISPATCHED);
-                    logger.info("Assigned truck {} to shipment {}", assignedTruck.getLicensePlate(), trackingNumber);
-                }
-            } catch (Exception e) {
-                logger.warn("Failed to assign truck to shipment {}: {}", trackingNumber, e.getMessage());
-                // 继续处理，稍后可以手动分配车辆
+            // 4. 分配车辆 - 不捕获异常，让失败自然传播
+            Truck assignedTruck = truckManagementService.assignOptimalTruck(
+                createShipmentDto.getOriginX(),
+                createShipmentDto.getOriginY(),
+                Constants.DEFAULT_PACKAGE_COUNT
+            );
+            
+            if (assignedTruck != null) {
+                shipment.setTruck(assignedTruck);
+                shipment.setStatus(ShipmentStatus.TRUCK_DISPATCHED);
+                logger.info("Assigned truck {} to shipment {}", assignedTruck.getLicensePlate(), trackingNumber);
+            } else {
+                logger.info("No trucks available for immediate assignment to shipment {}", trackingNumber);
+                // Keep status as CREATED - truck can be assigned later
             }
             
             // 5. 保存运单
@@ -178,6 +176,7 @@ public class ShipmentService {
             logger.warn("Failed to update shipment status for tracking number: {}", trackingNumber);
         }
     }
+    
     
     /**
      * 获取或创建客户用户

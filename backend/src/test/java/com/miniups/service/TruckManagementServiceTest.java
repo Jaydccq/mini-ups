@@ -82,8 +82,9 @@ class TruckManagementServiceTest {
     @DisplayName("Should assign optimal truck based on distance and availability")
     void testAssignOptimalTruck_Success() {
         // Given - Mock atomic assignment
-        when(truckRepository.assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY())).thenReturn(1);
-        when(truckRepository.findRecentlyAssignedTrucks()).thenReturn(Arrays.asList(testTruck1));
+        when(truckRepository.findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY()))
+            .thenReturn(Optional.of(testTruck1));
+        when(truckRepository.save(any(Truck.class))).thenReturn(testTruck1);
 
         // When
         Truck assignedTruck = truckManagementService.assignOptimalTruck(testShipment.getOriginX(), testShipment.getOriginY(), 1);
@@ -91,23 +92,24 @@ class TruckManagementServiceTest {
         // Then
         assertThat(assignedTruck).isNotNull();
         assertThat(assignedTruck.getId()).isEqualTo(1L);
-        verify(truckRepository).assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY());
-        verify(truckRepository).findRecentlyAssignedTrucks();
+        verify(truckRepository).findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY());
+        verify(truckRepository).save(testTruck1);
     }
 
     @Test
     @DisplayName("Should return null when no trucks available")
     void testAssignOptimalTruck_NoTrucksAvailable() {
-        // Given - Mock atomic assignment returns 0 (no trucks assigned)
-        when(truckRepository.assignNearestTruckAtomically(100, 200)).thenReturn(0);
+        // Given - Mock atomic assignment returns empty Optional
+        when(truckRepository.findNearestAvailableTruckForAssignment(100, 200)).thenReturn(Optional.empty());
+        when(truckRepository.findIdleForUpdateSkipLocked()).thenReturn(Arrays.asList());
 
         // When
         Truck result = truckManagementService.assignOptimalTruck(100, 200, 1);
 
         // Then
         assertThat(result).isNull();
-        verify(truckRepository).assignNearestTruckAtomically(100, 200);
-        verify(truckRepository, never()).findRecentlyAssignedTrucks();
+        verify(truckRepository).findNearestAvailableTruckForAssignment(100, 200);
+        verify(truckRepository).findIdleForUpdateSkipLocked();
     }
 
     @Test
@@ -245,8 +247,8 @@ class TruckManagementServiceTest {
         Truck heavyDutyTruck = createTruck(3L, "TRUCK003", TruckStatus.IDLE, 10, 20, 2000, 100.0);
         
         // Mock atomic assignment returns 1 truck assigned
-        when(truckRepository.assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY())).thenReturn(1);
-        when(truckRepository.findRecentlyAssignedTrucks()).thenReturn(Arrays.asList(heavyDutyTruck));
+        when(truckRepository.findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY())).thenReturn(Optional.of(testTruck1));
+        when(truckRepository.save(any(Truck.class))).thenReturn(heavyDutyTruck);
 
         // When
         Truck assignedTruck = truckManagementService.assignOptimalTruck(testShipment.getOriginX(), testShipment.getOriginY(), 1);
@@ -255,8 +257,8 @@ class TruckManagementServiceTest {
         assertThat(assignedTruck).isNotNull();
         assertThat(assignedTruck.getId()).isEqualTo(3L); // Should assign heavy duty truck
         assertThat(assignedTruck.getCapacity()).isGreaterThanOrEqualTo((int) testShipment.getWeight().doubleValue());
-        verify(truckRepository).assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY());
-        verify(truckRepository).findRecentlyAssignedTrucks();
+        verify(truckRepository).findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY());
+        verify(truckRepository).save(any(Truck.class));
     }
 
     @Test
@@ -266,8 +268,8 @@ class TruckManagementServiceTest {
         Truck closeTruck = createTruck(3L, "TRUCK003", TruckStatus.IDLE, 12, 22, 1000, 50.0);
         
         // Mock atomic assignment returns 1 truck assigned (closest one)
-        when(truckRepository.assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY())).thenReturn(1);
-        when(truckRepository.findRecentlyAssignedTrucks()).thenReturn(Arrays.asList(closeTruck));
+        when(truckRepository.findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY())).thenReturn(Optional.of(testTruck1));
+        when(truckRepository.save(any(Truck.class))).thenReturn(closeTruck);
 
         // When
         Truck assignedTruck = truckManagementService.assignOptimalTruck(testShipment.getOriginX(), testShipment.getOriginY(), 1);
@@ -275,24 +277,24 @@ class TruckManagementServiceTest {
         // Then
         assertThat(assignedTruck).isNotNull();
         assertThat(assignedTruck.getId()).isEqualTo(3L); // Should assign closer truck
-        verify(truckRepository).assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY());
-        verify(truckRepository).findRecentlyAssignedTrucks();
+        verify(truckRepository).findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY());
+        verify(truckRepository).save(any(Truck.class));
     }
 
     @Test
     @DisplayName("Should handle truck assignment with World Simulator integration")
     void testAssignOptimalTruck_WorldSimulatorIntegration() {
         // Given
-        when(truckRepository.assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY())).thenReturn(1);
-        when(truckRepository.findRecentlyAssignedTrucks()).thenReturn(Arrays.asList(testTruck1));
+        when(truckRepository.findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY())).thenReturn(Optional.of(testTruck1));
+        when(truckRepository.save(any(Truck.class))).thenReturn(testTruck1);
         
         // When
         Truck assignedTruck = truckManagementService.assignOptimalTruck(testShipment.getOriginX(), testShipment.getOriginY(), 1);
 
         // Then
         assertThat(assignedTruck).isNotNull();
-        verify(truckRepository).assignNearestTruckAtomically(testShipment.getOriginX(), testShipment.getOriginY());
-        verify(truckRepository).findRecentlyAssignedTrucks();
+        verify(truckRepository).findNearestAvailableTruckForAssignment(testShipment.getOriginX(), testShipment.getOriginY());
+        verify(truckRepository).save(any(Truck.class));
         // Note: Current implementation doesn't directly call worldSimulatorService.sendTruckToPickup
         // This is handled separately in the actual service layer
     }
@@ -355,7 +357,7 @@ class TruckManagementServiceTest {
     @DisplayName("Should handle exception during truck assignment gracefully")
     void testAssignOptimalTruck_HandlesException() {
         // Given
-        when(truckRepository.assignNearestTruckAtomically(10, 20))
+        when(truckRepository.findNearestAvailableTruckForAssignment(10, 20))
             .thenThrow(new RuntimeException("Database connection failed"));
         // Mock fallback to pessimistic locking
         when(truckRepository.findByStatus(TruckStatus.IDLE)).thenReturn(Arrays.asList());
@@ -365,7 +367,7 @@ class TruckManagementServiceTest {
 
         // Then
         assertThat(assignedTruck).isNull();
-        verify(truckRepository).assignNearestTruckAtomically(10, 20);
+        verify(truckRepository).findNearestAvailableTruckForAssignment(10, 20);
         verify(truckRepository).findByStatus(TruckStatus.IDLE); // Fallback called
     }
 

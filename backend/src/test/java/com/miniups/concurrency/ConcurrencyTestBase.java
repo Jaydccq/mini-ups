@@ -64,7 +64,7 @@ public abstract class ConcurrencyTestBase {
         // 创建足够的测试卡车来支持高并发测试
         createTestTrucks(50);  // 创建50辆测试卡车，足够支持高并发测试
         
-        log.info("Set up {} test trucks for concurrency testing", 50);
+        System.out.println("Set up 50 test trucks for concurrency testing");
     }
     
     /**

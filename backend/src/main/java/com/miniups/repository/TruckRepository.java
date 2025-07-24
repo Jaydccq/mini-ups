@@ -51,7 +51,6 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
     
     Optional<Truck> findByTruckId(Integer truckId);
     
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Truck> findByStatus(TruckStatus status);
     
     List<Truck> findByDriverId(Long driverId);
@@ -62,31 +61,30 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
     long countByStatus(@Param("status") TruckStatus status);
     
     /**
-     * Find and lock the first available truck for assignment
-     * This method uses pessimistic locking to prevent race conditions
-     * during concurrent truck assignments
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT t FROM Truck t WHERE t.status = :status ORDER BY t.id ASC")
-    List<Truck> findByStatusWithLock(@Param("status") TruckStatus status);
-    
-    /**
-     * Atomic truck assignment using update query
-     * This provides the most efficient concurrency control for truck allocation
-     * Returns the number of trucks successfully assigned
+     * Find available trucks using PostgreSQL SKIP LOCKED for high concurrency
+     * This prevents deadlocks by skipping already locked trucks
      */
     @Query(value = """
-        UPDATE trucks SET status = 'EN_ROUTE', updated_at = NOW() 
-        WHERE id = (
-            SELECT id FROM trucks 
-            WHERE status = 'IDLE' 
-            AND ABS(current_x - :originX) + ABS(current_y - :originY) < 1000
-            ORDER BY (ABS(current_x - :originX) + ABS(current_y - :originY)) ASC
-            LIMIT 1
-        ) 
-        AND status = 'IDLE'
+        SELECT * FROM trucks 
+        WHERE status = 'IDLE' 
+        ORDER BY id ASC 
+        FOR UPDATE SKIP LOCKED
         """, nativeQuery = true)
-    int assignNearestTruckAtomically(@Param("originX") Integer originX, @Param("originY") Integer originY);
+    List<Truck> findIdleForUpdateSkipLocked();
+    
+    /**
+     * Find nearest available truck for assignment using SKIP LOCKED
+     * This prevents deadlocks by skipping already locked trucks
+     */
+    @Query(value = """
+        SELECT * FROM trucks 
+        WHERE status = 'IDLE' 
+        AND ABS(current_x - :originX) + ABS(current_y - :originY) < 1000
+        ORDER BY (ABS(current_x - :originX) + ABS(current_y - :originY)) ASC
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+        """, nativeQuery = true)
+    Optional<Truck> findNearestAvailableTruckForAssignment(@Param("originX") Integer originX, @Param("originY") Integer originY);
     
     /**
      * Get the truck that was just assigned atomically
