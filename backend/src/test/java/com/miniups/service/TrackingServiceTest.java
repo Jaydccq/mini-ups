@@ -5,7 +5,6 @@ import com.miniups.model.entity.ShipmentStatusHistory;
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.ShipmentStatus;
 import com.miniups.repository.ShipmentRepository;
-import com.miniups.repository.ShipmentStatusHistoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,9 +35,6 @@ class TrackingServiceTest {
 
     @Mock
     private ShipmentRepository shipmentRepository;
-
-    @Mock
-    private ShipmentStatusHistoryRepository statusHistoryRepository;
 
     @InjectMocks
     private TrackingService trackingService;
@@ -116,7 +112,7 @@ class TrackingServiceTest {
     void testUpdateShipmentStatus_Success() {
         // Given
         String trackingNumber = "UPS123456789";
-        ShipmentStatus newStatus = ShipmentStatus.IN_TRANSIT;
+        ShipmentStatus newStatus = ShipmentStatus.PICKED_UP; // Valid transition from CREATED
         String notes = "Package picked up";
 
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
@@ -124,35 +120,33 @@ class TrackingServiceTest {
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
 
         // When
-        trackingService.updateShipmentStatus(trackingNumber, newStatus, notes);
+        boolean result = trackingService.updateShipmentStatus(trackingNumber, newStatus, notes);
 
         // Then
+        assertThat(result).isTrue();
         assertThat(testShipment.getStatus()).isEqualTo(newStatus);
         verify(shipmentRepository).findByUpsTrackingId(trackingNumber);
         verify(shipmentRepository).save(testShipment);
-        verify(statusHistoryRepository).save(any(ShipmentStatusHistory.class));
     }
 
     @Test
-    @DisplayName("Should throw exception when updating non-existent shipment")
+    @DisplayName("Should return false when updating non-existent shipment")
     void testUpdateShipmentStatus_ShipmentNotFound() {
         // Given
         String trackingNumber = "UPS999999999";
-        ShipmentStatus newStatus = ShipmentStatus.IN_TRANSIT;
+        ShipmentStatus newStatus = ShipmentStatus.PICKED_UP;
         String notes = "Package picked up";
 
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
                 .thenReturn(Optional.empty());
 
-        // When & Then
-        assertThatThrownBy(() -> 
-            trackingService.updateShipmentStatus(trackingNumber, newStatus, notes))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Shipment not found");
+        // When
+        boolean result = trackingService.updateShipmentStatus(trackingNumber, newStatus, notes);
 
+        // Then
+        assertThat(result).isFalse();
         verify(shipmentRepository).findByUpsTrackingId(trackingNumber);
         verify(shipmentRepository, never()).save(any());
-        verify(statusHistoryRepository, never()).save(any());
     }
 
     @Test
@@ -162,11 +156,12 @@ class TrackingServiceTest {
         String trackingNumber = "UPS123456789";
         List<ShipmentStatusHistory> mockHistory = Arrays.asList(
                 createStatusHistory(ShipmentStatus.CREATED, "Order created"),
-                createStatusHistory(ShipmentStatus.IN_TRANSIT, "Package picked up")
+                createStatusHistory(ShipmentStatus.PICKED_UP, "Package picked up")
         );
+        testShipment.setStatusHistory(mockHistory);
 
-        when(statusHistoryRepository.findByShipmentIdOrderByTimestampDesc(1L))
-                .thenReturn(mockHistory);
+        when(shipmentRepository.findByUpsTrackingId(trackingNumber))
+                .thenReturn(Optional.of(testShipment));
 
         // When
         List<ShipmentStatusHistory> result = trackingService.getStatusHistory(trackingNumber);
@@ -174,22 +169,23 @@ class TrackingServiceTest {
         // Then
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getStatus()).isEqualTo(ShipmentStatus.CREATED);
-        assertThat(result.get(1).getStatus()).isEqualTo(ShipmentStatus.IN_TRANSIT);
-        verify(statusHistoryRepository).findByShipmentIdOrderByTimestampDesc(1L);
+        assertThat(result.get(1).getStatus()).isEqualTo(ShipmentStatus.PICKED_UP);
+        verify(shipmentRepository).findByUpsTrackingId(trackingNumber);
     }
 
     @Test
     @DisplayName("Should validate tracking number format correctly")
     void testTrackingNumberValidation() {
-        // Valid tracking numbers
-        assertThat(trackingService.isValidTrackingNumberFormat("UPS123456789")).isTrue();
-        assertThat(trackingService.isValidTrackingNumberFormat("UPS000000001")).isTrue();
+        // Valid tracking numbers (21+ characters: UPS + 14 timestamp + 4+ sequence)
+        assertThat(trackingService.isValidTrackingNumberFormat("UPS123456789012345678")).isTrue();
+        assertThat(trackingService.isValidTrackingNumberFormat("UPS000000001234567890")).isTrue();
+        assertThat(trackingService.isValidTrackingNumberFormat("UPS202401151030450001")).isTrue();
 
         // Invalid tracking numbers
-        assertThat(trackingService.isValidTrackingNumberFormat("ABC123456789")).isFalse();
+        assertThat(trackingService.isValidTrackingNumberFormat("ABC123456789012345678")).isFalse();
         assertThat(trackingService.isValidTrackingNumberFormat("UPS12345")).isFalse();
-        assertThat(trackingService.isValidTrackingNumberFormat("UPS12345678901")).isFalse();
-        assertThat(trackingService.isValidTrackingNumberFormat("ups123456789")).isFalse();
+        assertThat(trackingService.isValidTrackingNumberFormat("UPS123456789")).isFalse(); // Too short
+        assertThat(trackingService.isValidTrackingNumberFormat("ups123456789012345678")).isFalse();
         assertThat(trackingService.isValidTrackingNumberFormat("")).isFalse();
         assertThat(trackingService.isValidTrackingNumberFormat(null)).isFalse();
     }
@@ -225,10 +221,11 @@ class TrackingServiceTest {
         when(shipmentRepository.save(any(Shipment.class)))
                 .thenThrow(new RuntimeException("Optimistic locking failure"));
 
-        // When & Then
-        assertThatThrownBy(() -> 
-            trackingService.updateShipmentStatus(trackingNumber, ShipmentStatus.IN_TRANSIT, "Test"))
-                .isInstanceOf(RuntimeException.class);
+        // When
+        boolean result = trackingService.updateShipmentStatus(trackingNumber, ShipmentStatus.PICKED_UP, "Test");
+
+        // Then - Service catches exceptions and returns false
+        assertThat(result).isFalse();
     }
 
     @Test

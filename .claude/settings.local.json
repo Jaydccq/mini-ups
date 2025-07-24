@@ -139,7 +139,13 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=JwtTokenProviderTest,AmazonIntegrationServiceTest,JwtSecurityTest -Dspring.profiles.active=test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn compile -DskipTests=true)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=JwtSecurityTest -Dspring.profiles.active=test)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=JwtTokenProviderTest)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=JwtTokenProviderTest)",
+      "Bash(npm update:*)",
+      "Bash(npm view:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"AmazonIntegrationServiceTest#testHandleShipmentCreated_Success\" -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"AmazonIntegrationServiceTest\" -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"AmazonIntegrationServiceTest#testHandleShipmentCreated_Success\" -Dspring.profiles.active=test -X)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"TrackingServiceTest\" -Dspring.profiles.active=test)"
     ],
     "deny": []
   }

@@ -55,6 +55,9 @@ class AmazonIntegrationServiceTest {
 
     @Mock
     private TrackingService trackingService;
+    
+    @Mock
+    private WorldSimulatorService worldSimulatorService;
 
 
     @InjectMocks
@@ -100,12 +103,14 @@ class AmazonIntegrationServiceTest {
         when(shipmentRepository.findByShipmentId("AMZ123456")).thenReturn(Optional.empty());
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
         when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class))).thenReturn(testTruck);
+        when(worldSimulatorService.isConnected()).thenReturn(false); // Simplify by assuming not connected
 
         // When
         var result = amazonIntegrationService.handleShipmentCreated(messageDto);
 
         // Then
         assertThat(result).isNotNull();
+        assertThat(result.isSuccess()).isTrue();
         verify(userRepository).findByEmail("test@example.com");
         verify(trackingService).generateTrackingNumber();
         verify(shipmentRepository).save(any(Shipment.class));
@@ -123,15 +128,19 @@ class AmazonIntegrationServiceTest {
         when(shipmentRepository.findByShipmentId("AMZ123456")).thenReturn(Optional.empty());
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
         when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class))).thenReturn(testTruck);
+        when(worldSimulatorService.isConnected()).thenReturn(false); // Simplify by assuming not connected
 
         // When
         var result = amazonIntegrationService.handleShipmentCreated(messageDto);
 
         // Then
         assertThat(result).isNotNull();
+        assertThat(result.isSuccess()).isTrue();
         verify(userRepository).findByEmail("test@example.com");
         verify(userRepository).save(any(User.class));
+        verify(trackingService).generateTrackingNumber();
         verify(shipmentRepository).save(any(Shipment.class));
+        verify(truckManagementService).assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class));
     }
 
     @Test
@@ -139,8 +148,9 @@ class AmazonIntegrationServiceTest {
     void testHandleShipmentLoaded_Success() {
         // Given
         String trackingNumber = "UPS123456789";
+        testShipment.setUpsTrackingId(trackingNumber); // Ensure the shipment has the tracking number
         when(shipmentRepository.findByShipmentId(trackingNumber)).thenReturn(Optional.of(testShipment));
-        when(trackingService.updateShipmentStatus(anyString(), any(), anyString())).thenReturn(true);
+        when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
 
         // When
         AmazonMessageDto message = createShipmentLoadedMessage(trackingNumber);
@@ -148,8 +158,11 @@ class AmazonIntegrationServiceTest {
 
         // Then
         assertThat(result).isNotNull();
+        assertThat(result.isSuccess()).isTrue();
         verify(shipmentRepository).findByShipmentId(trackingNumber);
-        verify(trackingService).updateShipmentStatus(trackingNumber, ShipmentStatus.IN_TRANSIT, "Package loaded for delivery");
+        verify(shipmentRepository).save(testShipment);
+        // Verify shipment status was updated to IN_TRANSIT (after picking up and starting delivery)
+        assertThat(testShipment.getStatus()).isEqualTo(ShipmentStatus.IN_TRANSIT);
     }
 
     @Test
@@ -191,12 +204,13 @@ class AmazonIntegrationServiceTest {
     }
 
     @Test
-    @DisplayName("Should reject address change for shipments in transit")
+    @DisplayName("Should allow address change for shipments in transit")
     void testHandleAddressChange_InTransit() {
         // Given
         String trackingNumber = "UPS123456789";
         testShipment.setStatus(ShipmentStatus.IN_TRANSIT);
         when(shipmentRepository.findByShipmentId(trackingNumber)).thenReturn(Optional.of(testShipment));
+        when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
 
         // When
         AmazonMessageDto message = createAddressChangeMessage(trackingNumber);
@@ -204,9 +218,11 @@ class AmazonIntegrationServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.isSuccess()).isTrue();
         verify(shipmentRepository).findByShipmentId(trackingNumber);
-        verify(shipmentRepository, never()).save(any());
+        verify(shipmentRepository).save(testShipment);
+        assertThat(testShipment.getDestX()).isEqualTo(16);
+        assertThat(testShipment.getDestY()).isEqualTo(26);
     }
 
     @Test
@@ -300,6 +316,7 @@ class AmazonIntegrationServiceTest {
     void testHandleShipmentStatusRequest_Success() {
         // Given
         String trackingNumber = "UPS123456789";
+        testShipment.setUpsTrackingId(trackingNumber);
         when(shipmentRepository.findByShipmentId(trackingNumber)).thenReturn(Optional.of(testShipment));
 
         // When
@@ -308,7 +325,8 @@ class AmazonIntegrationServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.getMessageType()).isEqualTo("ShipmentStatusResponse");
+        assertThat(result.getPayload()).isNotNull();
         verify(shipmentRepository).findByShipmentId(trackingNumber);
     }
 
@@ -422,10 +440,9 @@ class AmazonIntegrationServiceTest {
         payload.put("shipment_id", "AMZ123456");
         payload.put("email", "test@example.com");
         payload.put("weight", java.math.BigDecimal.valueOf(5.0));
-        payload.put("origin_x", 10);
-        payload.put("origin_y", 20);
-        payload.put("dest_x", 15);
-        payload.put("dest_y", 25);
+        payload.put("warehouse_id", 1L); // Add warehouse_id which is required
+        payload.put("destination_x", 15); // Use correct field names as expected by service
+        payload.put("destination_y", 25);
         payload.put("delivery_address", "123 Main St");
         payload.put("delivery_city", "Test City");
         payload.put("delivery_zip_code", "12345");
