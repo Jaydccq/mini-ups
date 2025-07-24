@@ -7,10 +7,18 @@ spring:
   
   # Use H2 in-memory database for testing (can be overridden by CI environment variables)
   datasource:
-    url: ${TEST_DATABASE_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    url: ${TEST_DATABASE_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MULTI_THREADED=1;LOCK_TIMEOUT=10000}
     username: ${TEST_DATABASE_USERNAME:sa}
     password: ${TEST_DATABASE_PASSWORD:}
     driver-class-name: ${TEST_DATABASE_DRIVER:org.h2.Driver}
+    # High-concurrency connection pool optimizations
+    hikari:
+      maximum-pool-size: 30      # Increased for high-concurrency tests
+      minimum-idle: 10           # Maintain idle connections
+      connection-timeout: 10000  # 10 seconds
+      idle-timeout: 300000       # 5 minutes  
+      leak-detection-threshold: 60000  # 1 minute
+      pool-name: HikariCP-Test
   
   # JPA configuration for H2 (can be overridden for PostgreSQL in CI)
   jpa:
@@ -21,6 +29,17 @@ spring:
       hibernate:
         dialect: ${TEST_DATABASE_DIALECT:org.hibernate.dialect.H2Dialect}
         format_sql: false
+        # High-concurrency optimizations
+        jdbc:
+          batch_size: 25           # Batch database operations
+          order_inserts: true      # Order inserts for better performance
+          order_updates: true      # Order updates for better performance
+          batch_versioned_data: true
+        connection:
+          provider_disables_autocommit: true  # Performance optimization
+        cache:
+          use_second_level_cache: false       # Disable for testing
+          use_query_cache: false              # Disable for testing
     open-in-view: false
   
   # Test Redis configuration - using embedded Redis or mock (can be overridden by CI)

@@ -1,9 +1,14 @@
 package com.miniups.concurrency;
 
 import com.miniups.config.TestConfig;
+import com.miniups.model.entity.Truck;
+import com.miniups.model.enums.TruckStatus;
+import com.miniups.repository.TruckRepository;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
@@ -18,6 +23,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.*;
+
+import com.miniups.model.entity.Truck;
+import com.miniups.model.enums.TruckStatus;
+import com.miniups.repository.TruckRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 高并发测试基础框架
@@ -38,6 +49,63 @@ public abstract class ConcurrencyTestBase {
     protected static final int DEFAULT_THREAD_COUNT = 20;  // 减少线程数
     protected static final int DEFAULT_OPERATIONS_PER_THREAD = 5;   // 减少每线程操作数
     protected static final long DEFAULT_TIMEOUT_SECONDS = 60;  // 增加超时时间
+    
+    @Autowired
+    protected TruckRepository truckRepository;
+    
+    /**
+     * 在每个测试前设置基础测试数据
+     */
+    @BeforeEach
+    void setUpTestData() {
+        // 清理现有数据
+        truckRepository.deleteAll();
+        
+        // 创建足够的测试卡车来支持高并发测试
+        createTestTrucks(50);  // 创建50辆测试卡车，足够支持高并发测试
+        
+        log.info("Set up {} test trucks for concurrency testing", 50);
+    }
+    
+    /**
+     * 创建测试卡车
+     * 
+     * @param count 卡车数量
+     */
+    private void createTestTrucks(int count) {
+        List<Truck> trucks = new ArrayList<>();
+        
+        for (int i = 1; i <= count; i++) {
+            Truck truck = new Truck();
+            truck.setTruckId(1000 + i);  // 使用1001-1050作为测试卡车ID
+            truck.setStatus(TruckStatus.IDLE);
+            truck.setCurrentX((int) (Math.random() * 100));
+            truck.setCurrentY((int) (Math.random() * 100));
+            truck.setCapacity(1000);  // 标准载重
+            trucks.add(truck);
+        }
+        
+        truckRepository.saveAll(trucks);
+        truckRepository.flush();  // 确保立即写入数据库
+    }
+    
+    @BeforeEach
+    void setUpTestTrucks() {
+        // Clear any existing trucks
+        truckRepository.deleteAll();
+        
+        // Create some test trucks for concurrent assignment testing
+        for (int i = 1; i <= 10; i++) {
+            Truck truck = new Truck(i, 100); // truckId, capacity
+            truck.setStatus(TruckStatus.IDLE);
+            truck.setCurrentX((int)(Math.random() * 100));
+            truck.setCurrentY((int)(Math.random() * 100));
+            truck.setLicensePlate("TEST-" + String.format("%03d", i));
+            truckRepository.save(truck);
+        }
+        
+        System.out.println("Set up " + truckRepository.count() + " test trucks");
+    }
 
     /**
      * 并发测试结果
@@ -61,7 +129,15 @@ public abstract class ConcurrencyTestBase {
             this.operationsPerSecond = totalOperations / (executionTimeMs / 1000.0);
         }
 
-        // Custom getters not covered by Lombok
+        // Getters
+        public int getTotalOperations() { return totalOperations; }
+        public int getSuccessCount() { return successCount; }
+        public int getFailureCount() { return failureCount; }
+        public long getExecutionTimeMs() { return executionTimeMs; }
+        public List<Exception> getExceptions() { return exceptions; }
+        public double getOperationsPerSecond() { return operationsPerSecond; }
+        
+        // Custom getters
         public double getSuccessRate() { return (double) successCount / totalOperations * 100; }
         public double getFailureRate() { return (double) failureCount / totalOperations * 100; }
     }
@@ -248,8 +324,11 @@ public abstract class ConcurrencyTestBase {
             .isLessThanOrEqualTo(maxAcceptableFailureRate);
         
         if (!result.getExceptions().isEmpty()) {
-            log.error("Exceptions during concurrency test:");
-            result.getExceptions().forEach(ex -> log.error("Exception: ", ex));
+            System.err.println("Exceptions during concurrency test:");
+            result.getExceptions().forEach(ex -> {
+                System.err.println("Exception: " + ex.getMessage());
+                ex.printStackTrace();
+            });
         }
     }
 

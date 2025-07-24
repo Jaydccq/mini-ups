@@ -36,7 +36,9 @@ package com.miniups.repository;
 
 import com.miniups.model.entity.Truck;
 import com.miniups.model.enums.TruckStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -49,6 +51,7 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
     
     Optional<Truck> findByTruckId(Integer truckId);
     
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Truck> findByStatus(TruckStatus status);
     
     List<Truck> findByDriverId(Long driverId);
@@ -57,4 +60,37 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
     
     @Query("SELECT COUNT(t) FROM Truck t WHERE t.status = :status")
     long countByStatus(@Param("status") TruckStatus status);
+    
+    /**
+     * Find and lock the first available truck for assignment
+     * This method uses pessimistic locking to prevent race conditions
+     * during concurrent truck assignments
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Truck t WHERE t.status = :status ORDER BY t.id ASC")
+    List<Truck> findByStatusWithLock(@Param("status") TruckStatus status);
+    
+    /**
+     * Atomic truck assignment using update query
+     * This provides the most efficient concurrency control for truck allocation
+     * Returns the number of trucks successfully assigned
+     */
+    @Query(value = """
+        UPDATE trucks SET status = 'EN_ROUTE', updated_at = NOW() 
+        WHERE id = (
+            SELECT id FROM trucks 
+            WHERE status = 'IDLE' 
+            AND ABS(current_x - :originX) + ABS(current_y - :originY) < 1000
+            ORDER BY (ABS(current_x - :originX) + ABS(current_y - :originY)) ASC
+            LIMIT 1
+        ) 
+        AND status = 'IDLE'
+        """, nativeQuery = true)
+    int assignNearestTruckAtomically(@Param("originX") Integer originX, @Param("originY") Integer originY);
+    
+    /**
+     * Get the truck that was just assigned atomically
+     */
+    @Query("SELECT t FROM Truck t WHERE t.status = 'EN_ROUTE' ORDER BY t.updatedAt DESC")
+    List<Truck> findRecentlyAssignedTrucks();
 }
