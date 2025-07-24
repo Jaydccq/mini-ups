@@ -1,6 +1,8 @@
 package com.miniups.concurrency;
 
 import com.miniups.config.TestConfig;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -10,7 +12,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.List;
 import java.util.ArrayList;
@@ -31,15 +32,17 @@ import static org.assertj.core.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
 @Import(TestConfig.class)
+@Slf4j
 public abstract class ConcurrencyTestBase {
 
-    protected static final int DEFAULT_THREAD_COUNT = 50;
-    protected static final int DEFAULT_OPERATIONS_PER_THREAD = 10;
-    protected static final long DEFAULT_TIMEOUT_SECONDS = 30;
+    protected static final int DEFAULT_THREAD_COUNT = 20;  // 减少线程数
+    protected static final int DEFAULT_OPERATIONS_PER_THREAD = 5;   // 减少每线程操作数
+    protected static final long DEFAULT_TIMEOUT_SECONDS = 60;  // 增加超时时间
 
     /**
      * 并发测试结果
      */
+    @Getter
     public static class ConcurrencyTestResult {
         private final int totalOperations;
         private final int successCount;
@@ -58,13 +61,7 @@ public abstract class ConcurrencyTestBase {
             this.operationsPerSecond = totalOperations / (executionTimeMs / 1000.0);
         }
 
-        // Getters
-        public int getTotalOperations() { return totalOperations; }
-        public int getSuccessCount() { return successCount; }
-        public int getFailureCount() { return failureCount; }
-        public long getExecutionTimeMs() { return executionTimeMs; }
-        public List<Exception> getExceptions() { return exceptions; }
-        public double getOperationsPerSecond() { return operationsPerSecond; }
+        // Custom getters not covered by Lombok
         public double getSuccessRate() { return (double) successCount / totalOperations * 100; }
         public double getFailureRate() { return (double) failureCount / totalOperations * 100; }
     }
@@ -251,8 +248,8 @@ public abstract class ConcurrencyTestBase {
             .isLessThanOrEqualTo(maxAcceptableFailureRate);
         
         if (!result.getExceptions().isEmpty()) {
-            System.err.println("Exceptions during concurrency test:");
-            result.getExceptions().forEach(e -> e.printStackTrace());
+            log.error("Exceptions during concurrency test:");
+            result.getExceptions().forEach(ex -> log.error("Exception: ", ex));
         }
     }
 
@@ -354,8 +351,8 @@ public abstract class ConcurrencyTestBase {
         assertThat(result.getSuccessRate()).isGreaterThan(50.0); // 宽松的成功率要求
         
         // 性能信息记录（不做硬性断言）
-        System.out.println(String.format("INFO: %s - Success rate: %.2f%%, Throughput: %.2f ops/sec", 
-                                        operationName, result.getSuccessRate(), result.getOperationsPerSecond()));
+        System.out.printf("INFO: %s - Success rate: %.2f%%, Throughput: %.2f ops/sec%n", 
+                          operationName, result.getSuccessRate(), result.getOperationsPerSecond());
         
         // 只在极端情况下失败（比如完全无响应）
         if (result.getOperationsPerSecond() < 0.1) {

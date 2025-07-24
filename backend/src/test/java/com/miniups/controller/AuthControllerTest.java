@@ -1,23 +1,20 @@
 package com.miniups.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.miniups.exception.BusinessValidationException;
 import com.miniups.exception.InvalidCredentialsException;
 import com.miniups.exception.UserAlreadyExistsException;
 import com.miniups.model.dto.auth.AuthResponseDto;
 import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.dto.auth.PasswordChangeDto;
 import com.miniups.model.dto.auth.RegisterRequestDto;
-import com.miniups.model.dto.user.UserDto;
-import com.miniups.model.enums.UserRole;
 import com.miniups.service.AuthService;
-import com.miniups.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,24 +23,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AuthController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 @DisplayName("AuthController 认证API测试")
 class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private AuthService authService;
-
-    @MockBean
-    private UserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -52,7 +47,6 @@ class AuthControllerTest {
     private LoginRequestDto loginRequest;
     private PasswordChangeDto passwordChangeRequest;
     private AuthResponseDto authResponse;
-    private UserDto userDto;
 
     @BeforeEach
     void setUp() {
@@ -78,12 +72,6 @@ class AuthControllerTest {
         authResponse.setTokenType("Bearer");
         authResponse.setExpiresIn(3600L);
 
-        userDto = new UserDto();
-        userDto.setId(1L);
-        userDto.setUsername("testuser");
-        userDto.setEmail("test@example.com");
-        userDto.setRole(UserRole.USER);
-        userDto.setEnabled(true);
     }
 
     @Test
@@ -144,7 +132,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("测试修改密码 - 密码不匹配")
-    @WithMockUser(username = "testuser", roles = {"USER"})
+    @WithMockUser(username = "testuser")
     void testChangePassword_PasswordMismatch() throws Exception {
         PasswordChangeDto mismatchRequest = new PasswordChangeDto();
         mismatchRequest.setCurrentPassword("Password123!");
@@ -165,7 +153,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("测试修改密码 - 当前密码错误")
-    @WithMockUser(username = "testuser", roles = {"USER"})
+    @WithMockUser(username = "testuser")
     void testChangePassword_WrongCurrentPassword() throws Exception {
         doThrow(new InvalidCredentialsException("Current password is incorrect"))
                 .when(authService).changePassword(eq("testuser"), any(PasswordChangeDto.class));

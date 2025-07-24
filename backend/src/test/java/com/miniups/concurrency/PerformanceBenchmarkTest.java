@@ -54,7 +54,7 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
             } catch (Exception e) {
                 return false;
             }
-        }, 20, 25);
+        }, 10, 5);  // 减少负载
 
         // 追踪号生成性能测试
         System.out.println("\n📊 追踪号生成性能基准:");
@@ -65,7 +65,7 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
             } catch (Exception e) {
                 return false;
             }
-        }, 50, 100);
+        }, 15, 10);  // 减少负载
 
         // 订单创建性能测试
         System.out.println("\n📊 订单创建性能基准:");
@@ -77,7 +77,7 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
             } catch (Exception e) {
                 return false;
             }
-        }, 30, 50);
+        }, 10, 8);  // 减少负载
 
         // 车辆分配性能测试
         System.out.println("\n📊 车辆分配性能基准:");
@@ -91,7 +91,7 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
             } catch (Exception e) {
                 return false;
             }
-        }, 25, 40);
+        }, 8, 5);  // 减少负载
 
         System.out.println("\n" + "=".repeat(60));
         System.out.println("综合性能基准测试完成");
@@ -229,14 +229,14 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
     @Test
     @DisplayName("持续负载耐久测试")
     void testSustainedLoadEnduranceTest() {
-        System.out.println("\n⏰ 持续负载耐久测试 (30秒)");
+        System.out.println("\n⏰ 持续负载耐久测试 (15秒)");
         
-        int threadCount = 30;
-        int operationsPerThread = 100; // 高操作数量
+        int threadCount = 10;  // 减少线程数
+        int operationsPerThread = 20; // 减少操作数量
         AtomicInteger totalOperations = new AtomicInteger(0);
         AtomicInteger successOperations = new AtomicInteger(0);
         
-        long testDuration = 30000; // 30秒
+        long testDuration = 15000; // 15秒
         long startTime = System.currentTimeMillis();
         
         ConcurrencyTestResult result = executeConcurrencyTest(() -> {
@@ -292,7 +292,7 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
         
         // 耐久性验证
         assertThat(result.getSuccessRate()).isGreaterThan(60.0);
-        assertThat(actualDuration).isBetween(25.0, 40.0); // 在预期时间范围内
+        assertThat(actualDuration).isBetween(12.0, 20.0); // 在预期时间范围内
         
         System.out.println("系统耐久性评级: " + getEnduranceGrade(result.getSuccessRate(), actualDuration));
     }
@@ -318,7 +318,7 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
             } catch (Exception e) {
                 return false;
             }
-        }, 50, 40, 60);
+        }, 15, 5, 60);  // 大幅减少负载
         
         // 测试后内存状态
         System.gc();

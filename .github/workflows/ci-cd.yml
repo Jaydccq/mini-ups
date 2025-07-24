@@ -100,8 +100,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y postgresql-client redis-tools
 
-    - name: Verify service health
+    - name: Configure system for Redis and verify service health
       run: |
+        echo "🔧 Configuring system for Redis..."
+        sudo sysctl -w vm.overcommit_memory=1
         echo "✅ Services started with health checks - ready for testing"
         pg_isready -h localhost -p 5432 -U postgres
         redis-cli -h localhost -p 6379 ping

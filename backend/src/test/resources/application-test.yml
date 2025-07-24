@@ -33,10 +33,19 @@ spring:
     generate-ddl: true
   
   # Redis Configuration for Testing
-  redis:
-    host: ${TEST_REDIS_HOST:localhost}
-    port: ${TEST_REDIS_PORT:6379}  # Aligned with standard Redis and CI service port
-    timeout: 2000ms
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:localhost}
+      port: ${TEST_REDIS_PORT:6379}  # Aligned with standard Redis and CI service port
+      database: 1
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 4
+          max-idle: 2
+          min-idle: 0
+      repositories:
+        enabled: false
   
   # RabbitMQ Configuration (Disabled for Testing)
   rabbitmq:
@@ -47,16 +56,18 @@ spring:
   
   # Auto-configuration exclusions for testing
   autoconfigure:
-    exclude: ${TEST_RABBITMQ_EXCLUDE:org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration}
+    exclude: org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
   
-  # Logging Configuration
-  logging:
-    level:
-      com.miniups: DEBUG
-      org.springframework.security: DEBUG
-      org.springframework.web: DEBUG
-      org.hibernate.SQL: DEBUG
-      org.hibernate.type.descriptor.sql.BasicBinder: DEBUG
+
+
+# Logging Configuration
+logging:
+  level:
+    com.miniups: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: DEBUG
 
 # JWT Configuration for Testing
 jwt:
@@ -88,3 +99,35 @@ management:
   endpoint:
     health:
       show-details: always
+
+# Application-specific Configuration for testing
+app:
+  cors:
+    allowed-origins: http://localhost:3000
+  rabbitmq:
+    test:
+      enabled: true # Enable test mode which uses mocks
+  notifications:
+    enabled: false # Disable notifications in tests
+    email:
+      enabled: false
+    sms:
+      enabled: false
+    push:
+      enabled: false
+
+# Rate Limiting Configuration for testing
+rate-limiting:
+  enabled: false # Disable rate limiting in tests
+  shipment-creation:
+    requests-per-minute: 1000
+  general-api:
+    requests-per-minute: 1000
+
+# HTTP Client Configuration for testing
+http:
+  client:
+    max-total-connections: 10
+    max-default-per-route: 5
+    connect-timeout-ms: 5000
+    socket-timeout-ms: 10000
