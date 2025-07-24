@@ -165,26 +165,17 @@ public class ShipmentService {
     }
     
     /**
-     * 更新运单状态
+     * 更新运单状态 - Delegates to TrackingService for proper concurrency handling
      * 
      * @param trackingNumber 追踪号
      * @param newStatus 新状态
      * @param notes 备注
      */
     public void updateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String notes) {
-        Optional<Shipment> shipmentOpt = findByTrackingNumber(trackingNumber);
-        if (shipmentOpt.isPresent()) {
-            Shipment shipment = shipmentOpt.get();
-            shipment.setStatus(newStatus);
-            shipment.setUpdatedAt(LocalDateTime.now());
-            shipmentRepository.save(shipment);
-            
-            // 更新状态历史
-            trackingService.updateShipmentStatus(trackingNumber, newStatus, notes);
-            
-            logger.info("Updated shipment {} status to {}", trackingNumber, newStatus);
-        } else {
-            logger.warn("Shipment not found for tracking number: {}", trackingNumber);
+        // Delegate to TrackingService which has proper retry mechanism for optimistic locking
+        boolean updated = trackingService.updateShipmentStatus(trackingNumber, newStatus, notes);
+        if (!updated) {
+            logger.warn("Failed to update shipment status for tracking number: {}", trackingNumber);
         }
     }
     

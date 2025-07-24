@@ -145,7 +145,10 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"AmazonIntegrationServiceTest#testHandleShipmentCreated_Success\" -Dspring.profiles.active=test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"AmazonIntegrationServiceTest\" -Dspring.profiles.active=test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"AmazonIntegrationServiceTest#testHandleShipmentCreated_Success\" -Dspring.profiles.active=test -X)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"TrackingServiceTest\" -Dspring.profiles.active=test)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"TrackingServiceTest\" -Dspring.profiles.active=test)",
+      "Bash(for file in /Users/hongxichen/Desktop/mini-ups/backend/src/main/resources/application-*.yml /Users/hongxichen/Desktop/mini-ups/backend/src/test/resources/application-*.yml)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": []
   }

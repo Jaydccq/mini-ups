@@ -29,6 +29,9 @@ import com.miniups.repository.ShipmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,14 +103,23 @@ public class TrackingService {
     }
     
     /**
-     * Update package status
+     * Update package status with retry mechanism for optimistic locking
      * 
      * @param trackingNumber UPS tracking number
      * @param newStatus New status
      * @param comment Status change comment
      * @return Whether update was successful
      */
+    @Retryable(
+        value = {OptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 50, multiplier = 1.5, maxDelay = 500)
+    )
     public boolean updateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String comment) {
+        return doUpdateShipmentStatus(trackingNumber, newStatus, comment);
+    }
+    
+    private boolean doUpdateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String comment) {
         try {
             Optional<Shipment> shipmentOpt = findByTrackingNumber(trackingNumber);
             
@@ -127,7 +139,7 @@ public class TrackingService {
             }
             
             // Update status
-            shipment.updateStatus(newStatus);
+            shipment.setStatus(newStatus);
             
             // Add status history entry with comment
             ShipmentStatusHistory history = new ShipmentStatusHistory();
@@ -150,6 +162,9 @@ public class TrackingService {
             
             return true;
             
+        } catch (OptimisticLockingFailureException e) {
+            logger.debug("Optimistic locking failure for tracking number: {}, will retry", trackingNumber);
+            throw e; // Re-throw to trigger retry
         } catch (Exception e) {
             logger.error("Error updating shipment status for tracking number: " + trackingNumber, e);
             return false;

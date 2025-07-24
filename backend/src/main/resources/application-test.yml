@@ -62,7 +62,7 @@ spring:
 
 # JWT Configuration for testing
 jwt:
-  secret: mySecretKeyForTestingPurposesOnlyDoNotUseInProduction1234567890 # Minimum 32 characters
+  secret: 9Kj8H7F6E5D4C3B2A1Z9Y8X7W6V5U4T3S2R1Q0P9O8N7M6L5K4J3H2G1F0E9D8C7B6A5Z4Y3X2W1V0U9T8S7R6Q5P4O3N2M1L0 # Minimum 32 characters, secure random for testing
   expiration: 86400000 # 24 hours in milliseconds
 
 # World Simulator Configuration for testing

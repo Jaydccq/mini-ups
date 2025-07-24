@@ -71,7 +71,7 @@ logging:
 
 # JWT Configuration for Testing
 jwt:
-  secret: test-secret-key-for-unit-tests-that-is-long-enough-for-security
+  secret: F3E2D1C0B9A8G7H6I5J4K3L2M1N0O9P8Q7R6S5T4U3V2W1X0Y9Z8A7B6C5D4E3F2G1H0I9J8K7L6M5N4O3P2Q1R0
   expiration: 3600000  # 1 hour
 
 # World Simulator Mock Configuration

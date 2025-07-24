@@ -32,6 +32,9 @@ import com.miniups.repository.TruckRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,20 +58,29 @@ public class TruckManagementService {
     private WorldSimulatorService worldSimulatorService;
     
     /**
-     * Intelligently assign truck to shipment order
+     * Intelligently assign truck to shipment order with retry mechanism for concurrency
      * 
      * @param originX Origin X coordinate
      * @param originY Origin Y coordinate
      * @param priority Priority level (1-5, 5 is highest)
      * @return Assigned truck, null if no available trucks
      */
+    @Retryable(
+        value = {OptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 50, multiplier = 1.5, maxDelay = 500)
+    )
     public Truck assignOptimalTruck(Integer originX, Integer originY, Integer priority) {
+        return doAssignOptimalTruck(originX, originY, priority);
+    }
+    
+    private Truck doAssignOptimalTruck(Integer originX, Integer originY, Integer priority) {
         try {
             // Find all available trucks
             List<Truck> availableTrucks = truckRepository.findByStatus(TruckStatus.IDLE);
             
             if (availableTrucks.isEmpty()) {
-                logger.warn("No available trucks for assignment");
+                logger.debug("No available trucks for assignment at ({}, {})", originX, originY);
                 return null;
             }
             
@@ -76,16 +88,28 @@ public class TruckManagementService {
             Truck bestTruck = findBestTruck(availableTrucks, originX, originY, priority);
             
             if (bestTruck != null) {
+                // Refresh the truck entity to get the latest version
+                Optional<Truck> freshTruckOpt = truckRepository.findById(bestTruck.getId());
+                if (freshTruckOpt.isEmpty() || freshTruckOpt.get().getStatus() != TruckStatus.IDLE) {
+                    logger.debug("Truck {} no longer available, will retry", bestTruck.getTruckId());
+                    throw new OptimisticLockingFailureException("Truck no longer available");
+                }
+                
+                Truck freshTruck = freshTruckOpt.get();
                 // Update truck status to busy
-                bestTruck.setStatus(TruckStatus.EN_ROUTE);
-                bestTruck = truckRepository.save(bestTruck);
+                freshTruck.setStatus(TruckStatus.EN_ROUTE);
+                freshTruck = truckRepository.save(freshTruck);
                 
                 logger.info("Assigned truck {} to pickup at ({}, {})", 
-                           bestTruck.getTruckId(), originX, originY);
+                           freshTruck.getTruckId(), originX, originY);
+                return freshTruck;
             }
             
-            return bestTruck;
+            return null;
             
+        } catch (OptimisticLockingFailureException e) {
+            logger.debug("Optimistic locking failure during truck assignment, will retry");
+            throw e; // Re-throw to trigger retry
         } catch (Exception e) {
             logger.error("Error assigning truck", e);
             return null;
@@ -129,7 +153,7 @@ public class TruckManagementService {
     }
     
     /**
-     * Update truck location and status
+     * Update truck location and status with retry mechanism for concurrency
      * 
      * @param truckId Truck ID
      * @param x X coordinate
@@ -137,6 +161,11 @@ public class TruckManagementService {
      * @param status New status
      * @return Whether update was successful
      */
+    @Retryable(
+        value = {OptimisticLockingFailureException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 25, multiplier = 2.0)
+    )
     public boolean updateTruckStatus(Integer truckId, Integer x, Integer y, String status) {
         try {
             Optional<Truck> truckOpt = truckRepository.findByTruckId(truckId);
@@ -161,8 +190,11 @@ public class TruckManagementService {
             
             return true;
             
+        } catch (OptimisticLockingFailureException e) {
+            logger.debug("Optimistic locking failure updating truck {}, will retry", truckId);
+            throw e; // Re-throw to trigger retry
         } catch (Exception e) {
-            logger.error("Error updating truck status", e);
+            logger.error("Error updating truck status for truck {}", truckId, e);
             return false;
         }
     }
