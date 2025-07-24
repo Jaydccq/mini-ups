@@ -8,10 +8,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
 /**
- * Test configuration for RabbitMQ components
+ * Test configuration for RabbitMQ and other components
  * 
- * Provides mock implementations for RabbitMQ dependencies in test environment.
- * This allows tests to run without requiring actual RabbitMQ infrastructure.
+ * Provides mock implementations for dependencies in test environment.
+ * This allows tests to run without requiring actual infrastructure.
+ * Updated for Spring Boot 3.4+ compatibility.
  */
 @TestConfiguration
 @Profile("test")
@@ -26,5 +27,16 @@ public class TestRabbitConfig {
     @Primary
     public RabbitTemplate rabbitTemplate() {
         return Mockito.mock(RabbitTemplate.class);
+    }
+
+    /**
+     * Mock ExceptionMetricsConfig bean for testing
+     * 
+     * @return Mock ExceptionMetricsConfig that can be used in tests
+     */
+    @Bean
+    @Primary
+    public ExceptionMetricsConfig exceptionMetricsConfig() {
+        return Mockito.mock(ExceptionMetricsConfig.class);
     }
 }
