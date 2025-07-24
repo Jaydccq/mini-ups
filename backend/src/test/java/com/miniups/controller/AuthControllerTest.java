@@ -102,7 +102,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("User registration successful"))
-                .andExpect(jsonPath("$.data.accessToken").value("jwt-token-123"));
+                .andExpect(jsonPath("$.data.access_token").value("jwt-token-123"));
 
         verify(authService, times(1)).register(any(RegisterRequestDto.class));
     }
@@ -120,7 +120,7 @@ class AuthControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("USER_ALREADY_EXISTS"))
+                .andExpect(jsonPath("$.error").value("USER_ALREADY_EXISTS"))
                 .andExpect(jsonPath("$.message").value("Username already exists"));
 
         verify(authService, times(1)).register(any(RegisterRequestDto.class));
@@ -139,7 +139,7 @@ class AuthControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"))
                 .andExpect(jsonPath("$.message").value("Invalid credentials"));
 
         verify(authService, times(1)).login(any(LoginRequestDto.class));
@@ -161,7 +161,7 @@ class AuthControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("PASSWORD_MISMATCH"));
+                .andExpect(jsonPath("$.error").value("PASSWORD_MISMATCH"));
 
         verify(authService, never()).changePassword(anyString(), any(PasswordChangeDto.class));
     }
@@ -180,7 +180,7 @@ class AuthControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"))
                 .andExpect(jsonPath("$.message").value("Current password is incorrect"));
 
         verify(authService, times(1)).changePassword(eq("testuser"), any(PasswordChangeDto.class));

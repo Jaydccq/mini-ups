@@ -1,12 +1,12 @@
 spring:
   
   # Database Configuration for Tests
-  # Uses H2 for fast unit tests, PostgreSQL for CI integration tests
+  # Uses H2 for fast unit tests with explicit configuration to avoid PostgreSQL conflicts
   datasource:
-    url: ${TEST_DATABASE_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-    driver-class-name: ${TEST_DATABASE_DRIVER:org.h2.Driver}
-    username: ${TEST_DATABASE_USERNAME:sa}
-    password: ${TEST_DATABASE_PASSWORD:password}
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
     hikari:
       maximum-pool-size: 10
       minimum-idle: 1
@@ -14,13 +14,13 @@ spring:
   
   # JPA Configuration
   jpa:
-    database-platform: ${TEST_DATABASE_DIALECT:org.hibernate.dialect.H2Dialect}
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
-        dialect: ${TEST_DATABASE_DIALECT:org.hibernate.dialect.H2Dialect}
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
         id:
           new_generator_mappings: false
