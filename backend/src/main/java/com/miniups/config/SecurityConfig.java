@@ -193,6 +193,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/tracking/**").permitAll() // Allow tracking without auth
                 .requestMatchers("/api/webhooks/**").permitAll() // Amazon webhooks
+                .requestMatchers("/api/users/*/public").permitAll() // Public user profiles
                 .requestMatchers("/api/shipment", "/api/shipment_loaded", "/api/shipment_status", "/api/address_change").permitAll() // Amazon integration endpoints
                 
                 // API Documentation

@@ -78,13 +78,16 @@ public class TruckManagementControllerTest {
         mockMvc.perform(get("/api/trucks")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].truck_id").value("TRUCK001"))
-                .andExpect(jsonPath("$[0].status").value("IDLE"))
-                .andExpect(jsonPath("$[0].available").value(true))
-                .andExpect(jsonPath("$[1].truck_id").value("TRUCK002"))
-                .andExpect(jsonPath("$[1].status").value("EN_ROUTE"))
-                .andExpect(jsonPath("$[1].available").value(false));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Truck statuses retrieved successfully"))
+                .andExpect(jsonPath("$.data.trucks").isArray())
+                .andExpect(jsonPath("$.data.trucks.length()").value(2))
+                .andExpect(jsonPath("$.data.total_count").value(2))
+                .andExpect(jsonPath("$.data.trucks[0].truck_id").value("TRUCK001"))
+                .andExpect(jsonPath("$.data.trucks[0].status").value("IDLE"))
+                .andExpect(jsonPath("$.data.trucks[0].available").value(true))
+                .andExpect(jsonPath("$.data.trucks[1].truck_id").value("TRUCK002"))
+                .andExpect(jsonPath("$.data.trucks[1].status").value("EN_ROUTE"))
+                .andExpect(jsonPath("$.data.trucks[1].available").value(false));
     }
 }
