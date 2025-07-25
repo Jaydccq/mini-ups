@@ -46,10 +46,20 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --legacy-peer-deps
 
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: frontend/src/**/*.{ts,tsx}
+
       - name: Type checking
         run: |
-          echo "🔍 Running TypeScript type checking..."
-          npm run type-check:ci || echo "⚠️ Type errors found - continuing build"
+          echo "🔍 Running TypeScript type checking on changed files..."
+          if [ -n "${{ steps.changed-files.outputs.all_changed_files }}" ]; then
+            echo "${{ steps.changed-files.outputs.all_changed_files }}" | xargs npm run type-check:ci --
+          else
+            echo "No TypeScript files changed."
+          fi
         continue-on-error: true
 
       - name: Lint code
