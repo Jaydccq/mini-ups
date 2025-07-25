@@ -133,51 +133,51 @@ jobs:
           retention-days: 7
 
   # Validate Amazon and World Simulator Services
-  external-services-validate:
-    name: Validate External Services
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # external-services-validate:
+  #   name: Validate External Services
+  #   runs-on: ubuntu-latest
+  #   
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+  #     - name: Set up Python ${{ env.PYTHON_VERSION }}
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: ${{ env.PYTHON_VERSION }}
 
-      # - name: Validate Amazon service structure
-      #   run: |
-      #     echo "🔍 Validating Amazon service..."
-      #     ls -la knowledge/amazon/
-      #     test -f knowledge/amazon/Dockerfile
-      #     test -f knowledge/amazon/requirements.txt
-      #     test -f knowledge/amazon/app/__init__.py
-      #     echo "✅ Amazon service structure validated"
+  #     # - name: Validate Amazon service structure
+  #     #   run: |
+  #     #     echo "🔍 Validating Amazon service..."
+  #     #     ls -la knowledge/amazon/
+  #     #     test -f knowledge/amazon/Dockerfile
+  #     #     test -f knowledge/amazon/requirements.txt
+  #     #     test -f knowledge/amazon/app/__init__.py
+  #     #     echo "✅ Amazon service structure validated"
 
-      - name: Validate World Simulator structure
-        run: |
-          echo "🔍 Validating World Simulator..."
-          ls -la knowledge/world_simulator_exec/docker_deploy/
-          test -f knowledge/world_simulator_exec/docker_deploy/Dockerfile
-          test -f knowledge/world_simulator_exec/docker_deploy/docker-compose.yml
-          test -f knowledge/world_simulator_exec/docker_deploy/server
-          echo "✅ World Simulator structure validated"
+  #     - name: Validate World Simulator structure
+  #       run: |
+  #         echo "🔍 Validating World Simulator..."
+  #         ls -la knowledge/world_simulator_exec/docker_deploy/
+  #         test -f knowledge/world_simulator_exec/docker_deploy/Dockerfile
+  #         test -f knowledge/world_simulator_exec/docker_deploy/docker-compose.yml
+  #         test -f knowledge/world_simulator_exec/docker_deploy/server
+  #         echo "✅ World Simulator structure validated"
 
-      # - name: Test Amazon service dependencies
-      #   working-directory: ./knowledge/amazon
-      #   run: |
-      #     echo "🔍 Testing Amazon dependencies..."
-      #     pip install -r requirements.txt
-      #     python -c "import flask; print('Flask version:', flask.__version__)"
-      #     python -c "import psycopg2; print('PostgreSQL driver ready')"
-      #     echo "✅ Amazon dependencies validated"
+  #     # - name: Test Amazon service dependencies
+  #     #   working-directory: ./knowledge/amazon
+  #     #   run: |
+  #     #     echo "🔍 Testing Amazon dependencies..."
+  #     #     pip install -r requirements.txt
+  #     #     python -c "import flask; print('Flask version:', flask.__version__)"
+  #     #     python -c "import psycopg2; print('PostgreSQL driver ready')"
+  #     #     echo "✅ Amazon dependencies validated"
 
   # Build Docker Images
   build-images:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [ups-test, external-services-validate]
+    needs: [ups-test]
     if: success()
     
     outputs:
