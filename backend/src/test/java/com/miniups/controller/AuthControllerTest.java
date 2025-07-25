@@ -65,6 +65,8 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
+        // Reset mock before each test to avoid interference
+        Mockito.reset(authService);
         registerRequest = new RegisterRequestDto();
         registerRequest.setUsername("testuser");
         registerRequest.setEmail("test@example.com");
