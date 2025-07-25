@@ -360,7 +360,7 @@ class TruckManagementServiceTest {
         when(truckRepository.findNearestAvailableTruckForAssignment(10, 20))
             .thenThrow(new RuntimeException("Database connection failed"));
         // Mock fallback to pessimistic locking
-        when(truckRepository.findByStatus(TruckStatus.IDLE)).thenReturn(Arrays.asList());
+        when(truckRepository.findIdleForUpdateSkipLocked()).thenReturn(Arrays.asList());
 
         // When
         Truck assignedTruck = truckManagementService.assignOptimalTruck(10, 20, 1);
@@ -368,7 +368,7 @@ class TruckManagementServiceTest {
         // Then
         assertThat(assignedTruck).isNull();
         verify(truckRepository).findNearestAvailableTruckForAssignment(10, 20);
-        verify(truckRepository).findByStatus(TruckStatus.IDLE); // Fallback called
+        verify(truckRepository).findIdleForUpdateSkipLocked(); // Fallback called
     }
 
     @Test

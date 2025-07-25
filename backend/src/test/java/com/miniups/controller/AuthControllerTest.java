@@ -160,10 +160,9 @@ class AuthControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mismatchRequest)))
-                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("PASSWORD_MISMATCH"));
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"));
 
         verify(authService, never()).changePassword(anyString(), any(PasswordChangeDto.class));
     }

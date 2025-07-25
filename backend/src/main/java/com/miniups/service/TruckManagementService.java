@@ -78,22 +78,29 @@ public class TruckManagementService {
      * This method provides the best concurrency performance by avoiding application-level locks
      */
     private Truck doAssignOptimalTruckAtomic(Integer originX, Integer originY, Integer priority) {
-        // Step 1: Find nearest available truck with SKIP LOCKED
-        Optional<Truck> truckOpt = truckRepository.findNearestAvailableTruckForAssignment(originX, originY);
-        
-        if (truckOpt.isPresent()) {
-            // Step 2: Update the truck status in same transaction
-            Truck truck = truckOpt.get();
-            truck.setStatus(TruckStatus.EN_ROUTE);
-            truck = truckRepository.save(truck);
+        try {
+            // Step 1: Find nearest available truck with SKIP LOCKED
+            Optional<Truck> truckOpt = truckRepository.findNearestAvailableTruckForAssignment(originX, originY);
             
-            logger.info("Atomically assigned truck {} to pickup at ({}, {})", 
-                       truck.getTruckId(), originX, originY);
-            return truck;
+            if (truckOpt.isPresent()) {
+                // Step 2: Update the truck status in same transaction
+                Truck truck = truckOpt.get();
+                truck.setStatus(TruckStatus.EN_ROUTE);
+                truck = truckRepository.save(truck);
+                
+                logger.info("Atomically assigned truck {} to pickup at ({}, {})", 
+                           truck.getTruckId(), originX, originY);
+                return truck;
+            }
+            
+            logger.debug("No available trucks for atomic assignment at ({}, {})", originX, originY);
+            return null;
+        } catch (Exception e) {
+            // If atomic assignment fails for any reason (database issues, locking conflicts, etc.),
+            // return null to allow fallback to pessimistic approach
+            logger.warn("Atomic truck assignment failed at ({}, {}): {}", originX, originY, e.getMessage());
+            return null;
         }
-        
-        logger.debug("No available trucks for atomic assignment at ({}, {})", originX, originY);
-        return null;
     }
     
     /**
