@@ -166,7 +166,7 @@ jobs:
           -Djunit.platform.output.capture.stdout=true \
           -Djunit.platform.output.capture.stderr=true \
           -Djacoco.skip=true \
-          -DTEST_NUM_TRUCKS=20 \
+          -DTEST_NUM_TRUCKS=100 \
           -DTEST_RABBITMQ_HOST=localhost \
           --batch-mode \
           --fail-at-end \
@@ -183,6 +183,8 @@ jobs:
         # CI Redis Configuration
         TEST_REDIS_HOST: localhost
         TEST_REDIS_PORT: 6379
+        # CI RabbitMQ Configuration - Enable real RabbitMQ for integration tests
+        TEST_RABBITMQ_HOST: localhost
         # Enhanced JVM options for CI with Java 17+ compatibility
         MAVEN_OPTS: >-
           -Xmx2048m
