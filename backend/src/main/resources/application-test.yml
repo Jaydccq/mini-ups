@@ -13,12 +13,13 @@ spring:
     driver-class-name: ${TEST_DATABASE_DRIVER:org.h2.Driver}
     # High-concurrency connection pool optimizations
     hikari:
-      maximum-pool-size: 30      # Increased for high-concurrency tests
-      minimum-idle: 10           # Maintain idle connections
-      connection-timeout: 10000  # 10 seconds
+      maximum-pool-size: 50      # Increased for high-concurrency tests
+      minimum-idle: 15           # Maintain idle connections
+      connection-timeout: 5000   # 5 seconds (fail faster)
       idle-timeout: 300000       # 5 minutes  
       leak-detection-threshold: 60000  # 1 minute
       pool-name: HikariCP-Test
+      max-lifetime: 1800000      # 30 minutes
   
   # JPA configuration for H2 (can be overridden for PostgreSQL in CI)
   jpa:
@@ -59,7 +60,7 @@ spring:
   
   # Test RabbitMQ configuration - will use mocks from TestRabbitConfig
   rabbitmq:
-    host: localhost
+    host: ${TEST_RABBITMQ_HOST:rabbitmq}  # Use Docker service name, fallback to localhost for local tests
     port: 5672
     username: guest
     password: guest
@@ -152,6 +153,10 @@ app:
       enabled: false
     push:
       enabled: false
+  # Performance testing configuration
+  testing:
+    num-trucks: ${TEST_NUM_TRUCKS:20}  # Increase truck pool for performance tests
+    truck-assignment-timeout: 5000     # 5 second timeout for truck assignment
 
 # Rate Limiting Configuration for testing
 rate-limiting:

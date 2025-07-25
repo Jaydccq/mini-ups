@@ -91,4 +91,17 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
      */
     @Query("SELECT t FROM Truck t WHERE t.status = 'EN_ROUTE' ORDER BY t.updatedAt DESC")
     List<Truck> findRecentlyAssignedTrucks();
+    
+    /**
+     * Find and lock one available truck for assignment - optimized for high concurrency
+     * Uses SKIP LOCKED to prevent blocking when multiple threads compete for trucks
+     */
+    @Query(value = """
+        SELECT * FROM trucks 
+        WHERE status = 'IDLE' 
+        ORDER BY id ASC 
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+        """, nativeQuery = true)
+    Optional<Truck> findAndLockOneAvailableTruck();
 }
