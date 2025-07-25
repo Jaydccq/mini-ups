@@ -53,21 +53,20 @@ jobs:
         ports:
           - 6379:6379
       
-      # RabbitMQ - disabled as tests use TestRabbitConfig.java mocks
-      # If integration tests require real RabbitMQ in future, use correct health check:
-      # rabbitmq:
-      #   image: rabbitmq:3.13-management-alpine
-      #   environment:
-      #     RABBITMQ_DEFAULT_USER: guest
-      #     RABBITMQ_DEFAULT_PASS: guest
-      #   options: >-
-      #     --health-cmd "rabbitmq-diagnostics -q ping"
-      #     --health-interval 15s
-      #     --health-timeout 10s
-      #     --health-retries 5
-      #   ports:
-      #     - 5672:5672
-      #     - 15672:15672
+      # RabbitMQ - enabled for performance tests
+      rabbitmq:
+        image: rabbitmq:3.13-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 5
+        ports:
+          - 5672:5672
+          - 15672:15672
 
     steps:
     - name: Checkout code
@@ -94,6 +93,44 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
+    
+    - name: Configure Maven retry and mirror settings
+      run: |
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml << 'EOF'
+        <settings>
+          <mirrors>
+            <mirror>
+              <id>aliyun-central</id>
+              <mirrorOf>central</mirrorOf>
+              <name>Aliyun Central Mirror</name>
+              <url>https://maven.aliyun.com/repository/central</url>
+            </mirror>
+            <mirror>
+              <id>maven-default-http-blocker</id>
+              <mirrorOf>external:http:*</mirrorOf>
+              <name>Pseudo repository to mirror external repositories initially using HTTP.</name>
+              <url>http://0.0.0.0/</url>
+              <blocked>true</blocked>
+            </mirror>
+          </mirrors>
+          <profiles>
+            <profile>
+              <id>retry-settings</id>
+              <activation>
+                <activeByDefault>true</activeByDefault>
+              </activation>
+              <properties>
+                <maven.wagon.http.retryHandler.count>3</maven.wagon.http.retryHandler.count>
+                <maven.wagon.http.pool>false</maven.wagon.http.pool>
+                <maven.wagon.httpconnectionManager.ttlSeconds>120</maven.wagon.httpconnectionManager.ttlSeconds>
+                <maven.wagon.http.connectionTimeout>10000</maven.wagon.http.connectionTimeout>
+                <maven.wagon.http.readTimeout>30000</maven.wagon.http.readTimeout>
+              </properties>
+            </profile>
+          </profiles>
+        </settings>
+        EOF
 
     - name: Install PostgreSQL client
       run: |
@@ -107,8 +144,8 @@ jobs:
         echo "✅ Services started with health checks - ready for testing"
         pg_isready -h localhost -p 5432 -U postgres
         redis-cli -h localhost -p 6379 ping
-        echo "✅ PostgreSQL and Redis are ready for testing"
-        echo "Note: RabbitMQ disabled - tests use mocks (TestRabbitConfig.java)"
+        curl -s http://localhost:15672/api/overview | grep '"name":"rabbit@' || echo "RabbitMQ starting..."
+        echo "✅ PostgreSQL, Redis, and RabbitMQ are ready for testing"
 
     - name: Run backend tests
       working-directory: ./backend
@@ -128,7 +165,12 @@ jobs:
           -Dmockito.mock-maker.inline=true \
           -Djunit.platform.output.capture.stdout=true \
           -Djunit.platform.output.capture.stderr=true \
-          -Djacoco.skip=true
+          -Djacoco.skip=true \
+          -DTEST_NUM_TRUCKS=20 \
+          -DTEST_RABBITMQ_HOST=localhost \
+          --batch-mode \
+          --fail-at-end \
+          --show-version
       env:
         # Ensure Java 17 is used (actions/setup-java@v4 sets this)
         JAVA_HOME: ${{ env.JAVA_HOME }}
