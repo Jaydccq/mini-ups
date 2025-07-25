@@ -26,7 +26,7 @@ on:
       force_rebuild:
         description: 'Force rebuild all Docker images'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 env:
@@ -241,15 +241,15 @@ jobs:
       #     cache-from: type=gha,scope=amazon
       #     cache-to: type=gha,mode=max,scope=amazon
 
-      - name: Build World Simulator
-        uses: docker/build-push-action@v5
-        with:
-          context: ./knowledge/world_simulator_exec/docker_deploy
-          file: ./knowledge/world_simulator_exec/docker_deploy/Dockerfile
-          push: false
-          tags: ${{ steps.meta.outputs.world-sim-tag }}
-          cache-from: type=gha,scope=world-sim
-          cache-to: type=gha,mode=max,scope=world-sim
+      # - name: Build World Simulator
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./knowledge/world_simulator_exec/docker_deploy
+      #     file: ./knowledge/world_simulator_exec/docker_deploy/Dockerfile
+      #     push: false
+      #     tags: ${{ steps.meta.outputs.world-sim-tag }}
+      #     cache-from: type=gha,scope=world-sim
+      #     cache-to: type=gha,mode=max,scope=world-sim
 
       - name: Save Docker images as artifacts
         run: |
@@ -257,7 +257,7 @@ jobs:
           docker save ${{ steps.meta.outputs.ups-backend-tag }} | gzip > ups-backend.tar.gz
           docker save ${{ steps.meta.outputs.ups-frontend-tag }} | gzip > ups-frontend.tar.gz
           # docker save ${{ steps.meta.outputs.amazon-tag }} | gzip > amazon.tar.gz
-          docker save ${{ steps.meta.outputs.world-sim-tag }} | gzip > world-sim.tar.gz
+          # docker save ${{ steps.meta.outputs.world-sim-tag }} | gzip > world-sim.tar.gz
           ls -lh *.tar.gz
 
       - name: Upload Docker images
@@ -268,7 +268,7 @@ jobs:
             ups-backend.tar.gz
             ups-frontend.tar.gz
             # amazon.tar.gz
-            world-sim.tar.gz
+            # world-sim.tar.gz
           retention-days: 1
 
   # Integration Test
@@ -293,7 +293,7 @@ jobs:
           docker load < ups-backend.tar.gz
           docker load < ups-frontend.tar.gz
           # docker load < amazon.tar.gz
-          docker load < world-sim.tar.gz
+          # docker load < world-sim.tar.gz
           docker images
 
       - name: Create test environment file
