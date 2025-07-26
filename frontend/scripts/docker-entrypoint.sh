@@ -24,6 +24,11 @@ if [ "$(id -u)" = "0" ]; then
     # Ensure nginx config is readable by miniups user
     chown miniups:miniups /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
+    # Take ownership of nginx runtime directories
+    # This is critical for running as a non-root user, especially with volumes
+    echo "Updating ownership of Nginx runtime directories for user 'miniups'..."
+    chown -R miniups:miniups /var/cache/nginx /var/run/nginx
+
     echo "✅ Nginx configuration generated successfully"
 
     # Switch to miniups user and execute the command

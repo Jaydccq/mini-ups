@@ -7,8 +7,8 @@
 worker_processes auto;
 worker_rlimit_nofile 65535;
 
-# Error log (writable by miniups user)
-error_log /var/log/nginx/error.log warn;
+# Error log (cloud-native: send to stderr for Docker log collection)
+error_log /dev/stderr warn;
 pid /var/run/nginx/nginx.pid;
 
 # Events block
@@ -31,8 +31,8 @@ http {
                     'rt=$request_time uct="$upstream_connect_time" '
                     'uht="$upstream_header_time" urt="$upstream_response_time"';
 
-    # Access log
-    access_log /var/log/nginx/access.log main;
+    # Access log (cloud-native: send to stdout for Docker log collection)
+    access_log /dev/stdout main;
 
     # Performance optimizations
     sendfile on;

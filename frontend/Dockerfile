@@ -91,10 +91,9 @@ RUN addgroup -g 1001 -S miniups && \
     adduser -S miniups -u 1001 -G miniups
 
 # Create necessary directories with proper permissions
-RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run/nginx && \
+RUN mkdir -p /var/cache/nginx /var/run/nginx && \
     rm -rf /usr/share/nginx/html/* && \
-    rm -f /etc/nginx/conf.d/default.conf && \
-    touch /var/log/nginx/access.log /var/log/nginx/error.log
+    rm -f /etc/nginx/conf.d/default.conf
 
 # Copy nginx configuration template and entrypoint script
 COPY --chown=miniups:miniups nginx.conf.template /etc/nginx/nginx.conf.template
@@ -108,14 +107,7 @@ COPY --chown=miniups:miniups scripts/health-check.sh /usr/local/bin/health-check
 
 # Set proper permissions for non-root nginx operation
 RUN chmod +x /usr/local/bin/health-check.sh && \
-    chmod +x /usr/local/bin/docker-entrypoint.sh && \
-    chown -R miniups:miniups /var/cache/nginx && \
-    chown -R miniups:miniups /var/log/nginx && \
-    chown -R miniups:miniups /var/run/nginx && \
-    chown -R miniups:miniups /etc/nginx && \
-    chown -R miniups:miniups /usr/share/nginx/html && \
-    chmod 755 /var/cache/nginx /var/log/nginx /var/run/nginx && \
-    chmod 644 /var/log/nginx/access.log /var/log/nginx/error.log
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Create version info file
 RUN echo "{\
