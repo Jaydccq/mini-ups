@@ -254,10 +254,31 @@ jobs:
       - name: Save Docker images as artifacts
         run: |
           echo "💾 Saving Docker images..."
-          docker save ${{ steps.meta.outputs.ups-backend-tag }} | gzip > ups-backend.tar.gz
-          docker save ${{ steps.meta.outputs.ups-frontend-tag }} | gzip > ups-frontend.tar.gz
+          echo "Available Docker images:"
+          docker images
+          
+          echo "Saving UPS Backend image..."
+          if docker image inspect ${{ steps.meta.outputs.ups-backend-tag }} >/dev/null 2>&1; then
+            docker save ${{ steps.meta.outputs.ups-backend-tag }} | gzip > ups-backend.tar.gz
+            echo "✅ UPS Backend image saved: $(du -h ups-backend.tar.gz)"
+          else
+            echo "❌ UPS Backend image not found: ${{ steps.meta.outputs.ups-backend-tag }}"
+            exit 1
+          fi
+          
+          echo "Saving UPS Frontend image..."
+          if docker image inspect ${{ steps.meta.outputs.ups-frontend-tag }} >/dev/null 2>&1; then
+            docker save ${{ steps.meta.outputs.ups-frontend-tag }} | gzip > ups-frontend.tar.gz
+            echo "✅ UPS Frontend image saved: $(du -h ups-frontend.tar.gz)"
+          else
+            echo "❌ UPS Frontend image not found: ${{ steps.meta.outputs.ups-frontend-tag }}"
+            exit 1
+          fi
+          
           # docker save ${{ steps.meta.outputs.amazon-tag }} | gzip > amazon.tar.gz
           # docker save ${{ steps.meta.outputs.world-sim-tag }} | gzip > world-sim.tar.gz
+          
+          echo "Final saved images:"
           ls -lh *.tar.gz
 
       - name: Upload Docker images
@@ -307,9 +328,50 @@ jobs:
 
       - name: Create test environment file
         run: |
-          cp .env.production .env.test
+          echo "🔧 Creating test environment file..."
+          
+          # Check if .env.production exists, fallback to .env.ci or create basic one
+          if [ -f ".env.production" ]; then
+            echo "Using .env.production as base"
+            cp .env.production .env.test
+          elif [ -f ".env.ci" ]; then
+            echo "Using .env.ci as base"
+            cp .env.ci .env.test
+          else
+            echo "Creating basic .env.test file"
+            cat > .env.test << EOF
+          # Test Environment Configuration
+          SPRING_PROFILES_ACTIVE=test
+          
+          # Database Configuration
+          POSTGRES_HOST=mini-ups-postgres
+          POSTGRES_PORT=5432
+          POSTGRES_DB=ups_db
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=abc123
+          
+          # Redis Configuration
+          REDIS_HOST=mini-ups-redis
+          REDIS_PORT=6379
+          
+          # JWT Configuration
+          JWT_SECRET=test-secret-key-for-integration-tests-only
+          
+          # External Services
+          WORLD_HOST=host.docker.internal
+          WORLD_PORT=12345
+          AMAZON_API_URL=http://host.docker.internal:8080
+          EOF
+          fi
+          
+          # Override with our built image tags
           echo "UPS_BACKEND_IMAGE=${{ needs.build-images.outputs.ups-backend-tag }}" >> .env.test
           echo "UPS_FRONTEND_IMAGE=${{ needs.build-images.outputs.ups-frontend-tag }}" >> .env.test
+          
+          echo "✅ Test environment file created:"
+          echo "--- .env.test content ---"
+          cat .env.test
+          echo "------------------------"
 
       - name: Start multi-service stack
         run: |
