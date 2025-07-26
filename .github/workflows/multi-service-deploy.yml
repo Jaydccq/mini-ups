@@ -387,14 +387,14 @@ jobs:
               image: postgres:15
               container_name: mini-ups-postgres-test
               environment:
-                POSTGRES_DB: ${UPS_POSTGRES_DB:-ups_db}
-                POSTGRES_USER: ${UPS_POSTGRES_USER:-postgres}
-                POSTGRES_PASSWORD: ${UPS_POSTGRES_PASSWORD:-abc123}
+                POSTGRES_DB: ups_db
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: abc123
                 TZ: UTC
               ports:
                 - "5431:5432"
               healthcheck:
-                test: ["CMD-SHELL", "pg_isready -U ${UPS_POSTGRES_USER:-postgres}"]
+                test: ["CMD-SHELL", "pg_isready -U postgres"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
@@ -406,11 +406,11 @@ jobs:
             ups-redis:
               image: redis:7-alpine
               container_name: mini-ups-redis-test
-              command: redis-server --requirepass ${UPS_REDIS_PASSWORD:-test123}
+              command: redis-server --requirepass test123
               ports:
                 - "6380:6379"
               healthcheck:
-                test: ["CMD", "redis-cli", "-a", "${UPS_REDIS_PASSWORD:-test123}", "ping"]
+                test: ["CMD", "redis-cli", "-a", "test123", "ping"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
@@ -425,13 +425,23 @@ jobs:
               pull_policy: never
               environment:
                 SPRING_PROFILES_ACTIVE: docker
-                DATABASE_URL: jdbc:postgresql://ups-database:5432/${UPS_POSTGRES_DB:-ups_db}
-                DATABASE_USERNAME: ${UPS_POSTGRES_USER:-postgres}
-                DATABASE_PASSWORD: ${UPS_POSTGRES_PASSWORD:-abc123}
+                # Database connection - using both formats for compatibility
+                DATABASE_URL: jdbc:postgresql://ups-database:5432/ups_db
+                DATABASE_USERNAME: postgres
+                DATABASE_PASSWORD: abc123
+                DATABASE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+                # Legacy format variables as fallback
+                POSTGRES_HOST: ups-database
+                POSTGRES_PORT: 5432
+                POSTGRES_DB: ups_db
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: abc123
+                # Redis configuration
                 REDIS_HOST: ups-redis
                 REDIS_PORT: 6379
-                REDIS_PASSWORD: ${UPS_REDIS_PASSWORD:-test123}
-                JWT_SECRET: ${JWT_SECRET:-test_jwt_secret_for_integration_tests}
+                REDIS_PASSWORD: test123
+                # JWT configuration
+                JWT_SECRET: test_jwt_secret_for_integration_tests
                 # Mock external services for testing
                 WORLD_SIMULATOR_HOST: localhost
                 WORLD_SIMULATOR_PORT: 12345
