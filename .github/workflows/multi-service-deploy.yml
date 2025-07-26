@@ -486,10 +486,19 @@ jobs:
           
           # Verify environment variables are set correctly
           echo "🔍 Verifying environment variables..."
-          UPS_BACKEND_IMAGE=$(grep "^UPS_BACKEND_IMAGE=" .env.test | cut -d'=' -f2)
-          UPS_FRONTEND_IMAGE=$(grep "^UPS_FRONTEND_IMAGE=" .env.test | cut -d'=' -f2)
-          echo "UPS_BACKEND_IMAGE=${UPS_BACKEND_IMAGE}"
-          echo "UPS_FRONTEND_IMAGE=${UPS_FRONTEND_IMAGE}"
+          echo "Contents of .env.test file:"
+          cat .env.test
+          echo "------------------------"
+          
+          # Get the last occurrence of each variable (should be the ones we added)
+          UPS_BACKEND_IMAGE=$(grep "^UPS_BACKEND_IMAGE=" .env.test | tail -1 | cut -d'=' -f2)
+          UPS_FRONTEND_IMAGE=$(grep "^UPS_FRONTEND_IMAGE=" .env.test | tail -1 | cut -d'=' -f2)
+          echo "Extracted UPS_BACKEND_IMAGE=${UPS_BACKEND_IMAGE}"
+          echo "Extracted UPS_FRONTEND_IMAGE=${UPS_FRONTEND_IMAGE}"
+          
+          # Show all available images
+          echo "Available Docker images:"
+          docker images | grep -E "(mini-ups|REPOSITORY)"
           
           # Verify the images exist locally
           echo "🔍 Verifying local images exist..."
