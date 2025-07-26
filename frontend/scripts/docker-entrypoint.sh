@@ -19,7 +19,15 @@ envsubst '${BACKEND_HOST} ${BACKEND_PORT}' < /etc/nginx/nginx.conf.template > /e
 # Copy to conf.d as well for compatibility
 cp /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
+# Create nginx directories with proper permissions for non-root user
+mkdir -p /var/log/nginx /var/cache/nginx /var/run/nginx
+chown -R miniups:miniups /var/log/nginx /var/cache/nginx /var/run/nginx
+chmod -R 755 /var/log/nginx /var/cache/nginx /var/run/nginx
+
+# Ensure nginx config is readable
+chown miniups:miniups /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
 echo "✅ Nginx configuration generated successfully"
 
-# Execute the command passed to docker run
-exec "$@"
+# Switch to miniups user and execute the command
+exec su-exec miniups "$@"
