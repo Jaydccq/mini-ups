@@ -93,7 +93,9 @@ RUN addgroup -g 1001 -S miniups && \
 # Create necessary directories with proper permissions
 RUN mkdir -p /var/cache/nginx /var/run/nginx /var/log/nginx && \
     rm -rf /usr/share/nginx/html/* && \
-    rm -f /etc/nginx/conf.d/default.conf
+    rm -f /etc/nginx/conf.d/default.conf && \
+    ln -sf /dev/stdout /var/log/nginx/access.log && \
+    ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Copy nginx configuration template and entrypoint script
 COPY --chown=miniups:miniups nginx.conf.template /etc/nginx/nginx.conf.template
