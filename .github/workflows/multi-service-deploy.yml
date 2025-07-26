@@ -367,6 +367,8 @@ jobs:
           fi
           
           # Override with our built image tags
+          echo "" >> .env.test  # Add a newline first
+          echo "# Updated image tags from CI build" >> .env.test
           echo "UPS_BACKEND_IMAGE=${{ needs.build-images.outputs.ups-backend-tag }}" >> .env.test
           echo "UPS_FRONTEND_IMAGE=${{ needs.build-images.outputs.ups-frontend-tag }}" >> .env.test
           
@@ -491,8 +493,9 @@ jobs:
           echo "------------------------"
           
           # Get the last occurrence of each variable (should be the ones we added)
-          UPS_BACKEND_IMAGE=$(grep "^UPS_BACKEND_IMAGE=" .env.test | tail -1 | cut -d'=' -f2)
-          UPS_FRONTEND_IMAGE=$(grep "^UPS_FRONTEND_IMAGE=" .env.test | tail -1 | cut -d'=' -f2)
+          # Also handle cases where the line might be concatenated
+          UPS_BACKEND_IMAGE=$(grep -o "UPS_BACKEND_IMAGE=[^[:space:]]*" .env.test | tail -1 | cut -d'=' -f2)
+          UPS_FRONTEND_IMAGE=$(grep -o "UPS_FRONTEND_IMAGE=[^[:space:]]*" .env.test | tail -1 | cut -d'=' -f2)
           echo "Extracted UPS_BACKEND_IMAGE=${UPS_BACKEND_IMAGE}"
           echo "Extracted UPS_FRONTEND_IMAGE=${UPS_FRONTEND_IMAGE}"
           
