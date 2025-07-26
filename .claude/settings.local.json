@@ -156,7 +156,8 @@
       "Bash(gh pr view:*)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile)",
       "Bash(docker logs:*)",
-      "Bash(yamllint:*)"
+      "Bash(yamllint:*)",
+      "Bash(gh pr create:*)"
     ],
     "deny": []
   }
