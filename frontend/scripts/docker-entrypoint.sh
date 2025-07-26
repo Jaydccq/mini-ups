@@ -27,7 +27,7 @@ if [ "$(id -u)" = "0" ]; then
     # Take ownership of nginx runtime directories
     # This is critical for running as a non-root user, especially with volumes
     echo "Updating ownership of Nginx runtime directories for user 'miniups'..."
-    chown -R miniups:miniups /var/cache/nginx /var/run/nginx
+    chown -R miniups:miniups /var/cache/nginx /var/run/nginx /var/log/nginx
 
     echo "✅ Nginx configuration generated successfully"
 

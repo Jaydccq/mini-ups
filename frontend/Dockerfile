@@ -91,7 +91,7 @@ RUN addgroup -g 1001 -S miniups && \
     adduser -S miniups -u 1001 -G miniups
 
 # Create necessary directories with proper permissions
-RUN mkdir -p /var/cache/nginx /var/run/nginx && \
+RUN mkdir -p /var/cache/nginx /var/run/nginx /var/log/nginx && \
     rm -rf /usr/share/nginx/html/* && \
     rm -f /etc/nginx/conf.d/default.conf
 
