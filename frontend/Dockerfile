@@ -80,7 +80,8 @@ RUN apk add --no-cache \
     curl \
     jq \
     tzdata \
-    tini && \
+    tini \
+    gettext && \
     apk upgrade && \
     rm -rf /var/cache/apk/*
 
@@ -93,9 +94,9 @@ RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run/nginx && \
     rm -rf /usr/share/nginx/html/* && \
     rm /etc/nginx/conf.d/default.conf
 
-# Copy production nginx configuration
-COPY --chown=miniups:miniups nginx.conf /etc/nginx/nginx.conf
-COPY --chown=miniups:miniups nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration template and entrypoint script
+COPY --chown=miniups:miniups nginx.conf.template /etc/nginx/nginx.conf.template
+COPY --chown=miniups:miniups scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Copy built application
 COPY --from=build --chown=miniups:miniups /app/dist /usr/share/nginx/html
@@ -105,6 +106,7 @@ COPY --chown=miniups:miniups scripts/health-check.sh /usr/local/bin/health-check
 
 # Set proper permissions
 RUN chmod +x /usr/local/bin/health-check.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh && \
     chown -R miniups:miniups /var/cache/nginx && \
     chown -R miniups:miniups /var/log/nginx && \
     chown -R miniups:miniups /var/run/nginx && \
@@ -136,7 +138,7 @@ LABEL description="Mini-UPS Frontend Application"
 LABEL version="${VITE_APP_VERSION:-1.0.0}"
 
 # Use tini for proper signal handling
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

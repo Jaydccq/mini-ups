@@ -496,6 +496,9 @@ jobs:
               image: ${UPS_FRONTEND_IMAGE}
               container_name: mini-ups-frontend-test
               pull_policy: never
+              environment:
+                BACKEND_HOST: ups-backend
+                BACKEND_PORT: 8081
               ports:
                 - "3000:8080"
               depends_on:
