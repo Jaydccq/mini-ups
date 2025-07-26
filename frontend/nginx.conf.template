@@ -3,7 +3,8 @@
 # Mini-UPS Frontend Application
 # =======================================
 
-# User and worker configuration (running as non-root user)
+# User and worker configuration (master as root, workers as non-root user)
+user miniups miniups;
 worker_processes auto;
 worker_rlimit_nofile 65535;
 

@@ -120,7 +120,7 @@ RUN echo "{\
   \"nginx_version\": \"$(nginx -v 2>&1 | cut -d' ' -f3)\"\
 }" > /usr/share/nginx/html/version.json
 
-# Note: We'll switch to miniups user in the entrypoint script after setting up directories
+# Note: nginx master runs as root, workers run as miniups user (standard nginx security model)
 
 # Expose port
 EXPOSE 8080
