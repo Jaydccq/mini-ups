@@ -512,34 +512,103 @@ jobs:
           echo "🚀 Starting Docker Compose services..."
           docker compose -f docker-compose.test.yml --env-file .env.test up -d
           
-          # Wait for services to be ready
+          # Wait for services to be ready with better health checking
           echo "⏳ Waiting for services to start..."
-          sleep 60
+          
+          # Wait for database to be ready first
+          echo "🔍 Waiting for database to be ready..."
+          for i in {1..30}; do
+            if docker exec mini-ups-postgres-test pg_isready -U postgres >/dev/null 2>&1; then
+              echo "✅ Database is ready!"
+              break
+            fi
+            echo "⏳ Database not ready yet... (attempt $i/30)"
+            sleep 2
+          done
+          
+          # Wait for Redis to be ready
+          echo "🔍 Waiting for Redis to be ready..."
+          for i in {1..15}; do
+            if docker exec mini-ups-redis-test redis-cli -a test123 ping >/dev/null 2>&1; then
+              echo "✅ Redis is ready!"
+              break
+            fi
+            echo "⏳ Redis not ready yet... (attempt $i/15)"
+            sleep 2
+          done
+          
+          # Wait for backend to be ready with extended timeout
+          echo "🔍 Waiting for UPS Backend to be ready..."
+          for i in {1..60}; do
+            if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
+              echo "✅ UPS Backend is ready!"
+              break
+            fi
+            echo "⏳ UPS Backend not ready yet... (attempt $i/60)"
+            sleep 5
+          done
+          
+          # Show service status
+          echo "📊 Service status:"
+          docker compose -f docker-compose.test.yml --env-file .env.test ps
 
       - name: Run integration tests
         run: |
           echo "🧪 Running UPS integration tests..."
           
-          # Health checks for UPS services only
-          echo "Testing UPS Backend health..."
-          curl -f http://localhost:8081/actuator/health || exit 1
+          # Show current service status first
+          echo "📊 Current service status:"
+          docker compose -f docker-compose.test.yml --env-file .env.test ps
           
-          echo "Testing UPS Frontend..."
-          curl -f http://localhost:3000 || exit 1
+          # Health checks for UPS services only
+          echo "🔍 Testing UPS Backend health..."
+          if curl -f http://localhost:8081/actuator/health; then
+            echo "✅ UPS Backend health check passed"
+          else
+            echo "❌ UPS Backend health check failed"
+            echo "📋 Backend logs:"
+            docker logs mini-ups-backend-test --tail=50
+            exit 1
+          fi
+          
+          echo "🔍 Testing UPS Frontend..."
+          if curl -f http://localhost:3000; then
+            echo "✅ UPS Frontend is accessible"
+          else
+            echo "❌ UPS Frontend is not accessible"
+            echo "📋 Frontend logs:"
+            docker logs mini-ups-frontend-test --tail=20
+            exit 1
+          fi
           
           # Database connectivity
-          echo "Testing UPS database connection..."
-          docker exec mini-ups-postgres-test pg_isready -U postgres || exit 1
+          echo "🔍 Testing UPS database connection..."
+          if docker exec mini-ups-postgres-test pg_isready -U postgres; then
+            echo "✅ Database connection successful"
+          else
+            echo "❌ Database connection failed"
+            exit 1
+          fi
           
           # Redis connectivity
-          echo "Testing UPS Redis connection..."
-          docker exec mini-ups-redis-test redis-cli -a test123 ping || exit 1
+          echo "🔍 Testing UPS Redis connection..."
+          if docker exec mini-ups-redis-test redis-cli -a test123 ping; then
+            echo "✅ Redis connection successful"
+          else
+            echo "❌ Redis connection failed"
+            exit 1
+          fi
           
           # Basic API test
-          echo "Testing UPS API endpoints..."
-          curl -f http://localhost:8081/api/health || echo "API health endpoint not available (expected for this stage)"
+          echo "🔍 Testing UPS API endpoints..."
+          curl -f http://localhost:8081/api/health && echo "✅ API health endpoint available" || echo "ℹ️ API health endpoint not available (may be expected)"
           
-          echo "✅ All UPS integration tests passed!"
+          echo ""
+          echo "🎉 All UPS integration tests passed!"
+          echo "✅ Backend: Healthy"
+          echo "✅ Frontend: Accessible" 
+          echo "✅ Database: Connected"
+          echo "✅ Redis: Connected"
 
       - name: Check service logs
         if: failure()
