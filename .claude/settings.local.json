@@ -155,7 +155,8 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile -DskipTests=true)",
       "Bash(gh pr view:*)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(yamllint:*)"
     ],
     "deny": []
   }
