@@ -217,6 +217,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: false
+          load: true
           tags: ${{ steps.meta.outputs.ups-backend-tag }}
           cache-from: type=gha,scope=ups-backend
           cache-to: type=gha,mode=max,scope=ups-backend
@@ -227,6 +228,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: false
+          load: true
           tags: ${{ steps.meta.outputs.ups-frontend-tag }}
           cache-from: type=gha,scope=ups-frontend
           cache-to: type=gha,mode=max,scope=ups-frontend
