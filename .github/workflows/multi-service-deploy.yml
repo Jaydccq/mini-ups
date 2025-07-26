@@ -486,7 +486,8 @@ jobs:
           
           # Verify environment variables are set correctly
           echo "🔍 Verifying environment variables..."
-          source .env.test
+          UPS_BACKEND_IMAGE=$(grep "^UPS_BACKEND_IMAGE=" .env.test | cut -d'=' -f2)
+          UPS_FRONTEND_IMAGE=$(grep "^UPS_FRONTEND_IMAGE=" .env.test | cut -d'=' -f2)
           echo "UPS_BACKEND_IMAGE=${UPS_BACKEND_IMAGE}"
           echo "UPS_FRONTEND_IMAGE=${UPS_FRONTEND_IMAGE}"
           
@@ -496,6 +497,7 @@ jobs:
           docker image inspect ${UPS_FRONTEND_IMAGE} || { echo "❌ Frontend image not found"; exit 1; }
           
           # Start services
+          echo "🚀 Starting Docker Compose services..."
           docker compose -f docker-compose.test.yml --env-file .env.test up -d
           
           # Wait for services to be ready
