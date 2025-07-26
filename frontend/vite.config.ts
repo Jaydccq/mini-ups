@@ -21,9 +21,9 @@ export default defineConfig(({ command, mode }) => {
         babel: isProd ? {
           plugins: [
             // Remove PropTypes in production
-            ['transform-react-remove-prop-types', { removeImport: true }],
+            ['babel-plugin-transform-react-remove-prop-types', { removeImport: true }],
             // Remove development-only code
-            ['transform-remove-console', { exclude: ['error', 'warn'] }]
+            ['babel-plugin-transform-remove-console', { exclude: ['error', 'warn'] }]
           ]
         } : undefined
       }),
