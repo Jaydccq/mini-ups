@@ -227,6 +227,7 @@ jobs:
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
+          target: production
           push: false
           load: true
           tags: ${{ steps.meta.outputs.ups-frontend-tag }}
@@ -495,14 +496,12 @@ jobs:
               image: ${UPS_FRONTEND_IMAGE}
               container_name: mini-ups-frontend-test
               pull_policy: never
-              environment:
-                REACT_APP_API_URL: http://localhost:8081/api
               ports:
-                - "3000:80"
+                - "3000:8080"
               depends_on:
                 - ups-backend
               healthcheck:
-                test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+                test: ["CMD", "curl", "-f", "http://localhost:8080"]
                 interval: 30s
                 timeout: 10s
                 retries: 3
