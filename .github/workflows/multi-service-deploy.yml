@@ -418,7 +418,7 @@ jobs:
           
             # Spring Boot后端 (UPS)
             ups-backend:
-              image: ${UPS_BACKEND_IMAGE:-mini-ups-backend:latest}
+              image: ${UPS_BACKEND_IMAGE}
               container_name: mini-ups-backend-test
               pull_policy: never
               environment:
@@ -454,7 +454,7 @@ jobs:
           
             # React前端 (UPS)
             ups-frontend:
-              image: ${UPS_FRONTEND_IMAGE:-mini-ups-frontend:latest}
+              image: ${UPS_FRONTEND_IMAGE}
               container_name: mini-ups-frontend-test
               pull_policy: never
               environment:
@@ -483,6 +483,19 @@ jobs:
       - name: Start multi-service stack
         run: |
           echo "🚀 Starting UPS services for integration testing..."
+          
+          # Verify environment variables are set correctly
+          echo "🔍 Verifying environment variables..."
+          source .env.test
+          echo "UPS_BACKEND_IMAGE=${UPS_BACKEND_IMAGE}"
+          echo "UPS_FRONTEND_IMAGE=${UPS_FRONTEND_IMAGE}"
+          
+          # Verify the images exist locally
+          echo "🔍 Verifying local images exist..."
+          docker image inspect ${UPS_BACKEND_IMAGE} || { echo "❌ Backend image not found"; exit 1; }
+          docker image inspect ${UPS_FRONTEND_IMAGE} || { echo "❌ Frontend image not found"; exit 1; }
+          
+          # Start services
           docker compose -f docker-compose.test.yml --env-file .env.test up -d
           
           # Wait for services to be ready
