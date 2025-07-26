@@ -418,6 +418,25 @@ jobs:
               networks:
                 - mini-ups-network
           
+            # RabbitMQ消息队列 (UPS)
+            ups-rabbitmq:
+              image: rabbitmq:3.13-management-alpine
+              container_name: mini-ups-rabbitmq-test
+              environment:
+                RABBITMQ_DEFAULT_USER: guest
+                RABBITMQ_DEFAULT_PASS: guest
+              ports:
+                - "5672:5672"
+                - "15672:15672"
+              healthcheck:
+                test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+                interval: 15s
+                timeout: 10s
+                retries: 5
+              restart: unless-stopped
+              networks:
+                - mini-ups-network
+          
             # Spring Boot后端 (UPS)
             ups-backend:
               image: ${UPS_BACKEND_IMAGE}
@@ -440,6 +459,11 @@ jobs:
                 REDIS_HOST: ups-redis
                 REDIS_PORT: 6379
                 REDIS_PASSWORD: test123
+                # RabbitMQ configuration
+                SPRING_RABBITMQ_HOST: ups-rabbitmq
+                SPRING_RABBITMQ_PORT: 5672
+                SPRING_RABBITMQ_USERNAME: guest
+                SPRING_RABBITMQ_PASSWORD: guest
                 # JWT configuration
                 JWT_SECRET: test_jwt_secret_for_integration_tests
                 # Mock external services for testing
@@ -453,6 +477,8 @@ jobs:
                 ups-database:
                   condition: service_healthy
                 ups-redis:
+                  condition: service_healthy
+                ups-rabbitmq:
                   condition: service_healthy
               healthcheck:
                 test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
@@ -547,6 +573,17 @@ jobs:
             sleep 2
           done
           
+          # Wait for RabbitMQ to be ready
+          echo "🔍 Waiting for RabbitMQ to be ready..."
+          for i in {1..20}; do
+            if docker exec mini-ups-rabbitmq-test rabbitmq-diagnostics -q ping >/dev/null 2>&1; then
+              echo "✅ RabbitMQ is ready!"
+              break
+            fi
+            echo "⏳ RabbitMQ not ready yet... (attempt $i/20)"
+            sleep 3
+          done
+          
           # Wait for backend to be ready with extended timeout
           echo "🔍 Waiting for UPS Backend to be ready..."
           for i in {1..60}; do
@@ -606,6 +643,15 @@ jobs:
             echo "✅ Redis connection successful"
           else
             echo "❌ Redis connection failed"
+            exit 1
+          fi
+          
+          # RabbitMQ connectivity
+          echo "🔍 Testing UPS RabbitMQ connection..."
+          if docker exec mini-ups-rabbitmq-test rabbitmq-diagnostics -q ping; then
+            echo "✅ RabbitMQ connection successful"
+          else
+            echo "❌ RabbitMQ connection failed"
             exit 1
           fi
           

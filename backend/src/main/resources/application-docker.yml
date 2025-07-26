@@ -33,6 +33,15 @@ spring:
           max-active: 10
           max-idle: 8
           min-idle: 0
+  
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    virtual-host: /
+    connection-timeout: 10000
+    requested-heartbeat: 30
 
 jwt:
   secret: ${JWT_SECRET:YourVeryLongSecretKeyThatShouldBeAtLeast256BitsLongForHS256Algorithm}
