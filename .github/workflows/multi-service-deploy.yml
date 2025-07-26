@@ -378,8 +378,6 @@ jobs:
           # Create a test-specific docker-compose file with only UPS services
           echo "🔧 Creating test docker-compose file..."
           cat > docker-compose.test.yml << 'EOF'
-          version: '3.8'
-          
           services:
             # ===== UPS Services Only =====
             # PostgreSQL数据库 (UPS)
@@ -422,6 +420,7 @@ jobs:
             ups-backend:
               image: ${UPS_BACKEND_IMAGE:-mini-ups-backend:latest}
               container_name: mini-ups-backend-test
+              pull_policy: never
               environment:
                 SPRING_PROFILES_ACTIVE: docker
                 DATABASE_URL: jdbc:postgresql://ups-database:5432/${UPS_POSTGRES_DB:-ups_db}
@@ -457,6 +456,7 @@ jobs:
             ups-frontend:
               image: ${UPS_FRONTEND_IMAGE:-mini-ups-frontend:latest}
               container_name: mini-ups-frontend-test
+              pull_policy: never
               environment:
                 REACT_APP_API_URL: http://localhost:8081/api
               ports:
