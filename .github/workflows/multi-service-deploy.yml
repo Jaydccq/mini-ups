@@ -290,8 +290,17 @@ jobs:
       - name: Load Docker images
         run: |
           echo "📦 Loading Docker images..."
-          docker load < ups-backend.tar.gz
-          docker load < ups-frontend.tar.gz
+          ls -la *.tar.gz || echo "No image files found"
+          if [ -f "ups-backend.tar.gz" ]; then
+            docker load < ups-backend.tar.gz
+          else
+            echo "ups-backend.tar.gz not found, skipping..."
+          fi
+          if [ -f "ups-frontend.tar.gz" ]; then
+            docker load < ups-frontend.tar.gz
+          else
+            echo "ups-frontend.tar.gz not found, skipping..."
+          fi
           # docker load < amazon.tar.gz
           # docker load < world-sim.tar.gz
           docker images
@@ -305,7 +314,7 @@ jobs:
       - name: Start multi-service stack
         run: |
           echo "🚀 Starting all services..."
-          docker-compose -f docker-compose.production.yml --env-file .env.test up -d
+          docker compose -f docker-compose.production.yml --env-file .env.test up -d
           
           # Wait for services to be ready
           echo "⏳ Waiting for services to start..."
@@ -341,12 +350,12 @@ jobs:
         if: failure()
         run: |
           echo "📋 Service logs for troubleshooting..."
-          docker-compose -f docker-compose.production.yml --env-file .env.test logs --tail=50
+          docker compose -f docker-compose.production.yml --env-file .env.test logs --tail=50
 
       - name: Cleanup test environment
         if: always()
         run: |
-          docker-compose -f docker-compose.production.yml --env-file .env.test down -v
+          docker compose -f docker-compose.production.yml --env-file .env.test down -v
           docker system prune -f
 
   # Deploy to AWS EC2
@@ -398,7 +407,7 @@ jobs:
             
             # Stop existing services
             echo "⏹️  Stopping existing services..."
-            docker-compose -f docker-compose.production.yml down || true
+            docker compose -f docker-compose.production.yml down || true
             
             # Create production environment
             echo "⚙️  Setting up production environment..."
@@ -414,7 +423,7 @@ jobs:
             
             # Start services
             echo "🔄 Starting services..."
-            docker-compose -f docker-compose.production.yml --env-file .env.production.deploy up -d --remove-orphans
+            docker compose -f docker-compose.production.yml --env-file .env.production.deploy up -d --remove-orphans
             
             # Wait for services to be ready
             echo "⏳ Waiting for services to be ready..."
