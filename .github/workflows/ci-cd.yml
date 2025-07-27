@@ -431,9 +431,9 @@ jobs:
     - name: Deploy to EC2 via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.STAGING_HOST }}
-        username: ${{ secrets.STAGING_USER }}
-        key: ${{ secrets.STAGING_SSH_KEY }}
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Navigate to project directory
           cd /home/ec2-user/mini-ups
@@ -471,9 +471,9 @@ jobs:
     - name: Run smoke tests
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.STAGING_HOST }}
-        username: ${{ secrets.STAGING_USER }}
-        key: ${{ secrets.STAGING_SSH_KEY }}
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Basic health checks
           curl -f http://localhost:8081/api/health
