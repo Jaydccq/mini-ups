@@ -2,6 +2,21 @@
 
 > 本指南基于 Mini-UPS 项目的实际测试架构，提供从基础到高级的 Java 测试开发教程
 
+## ⚠️ 重要更新说明 - Spring Boot 3.4+ 测试最佳实践
+
+🔥 **关键变化**: Spring Boot 3.4.0 开始弃用 `@MockBean` 和 `@SpyBean` 注解
+
+### 现代化测试方式
+- **单元测试**: 使用 `@Mock` + `@InjectMocks` + `@ExtendWith(MockitoExtension.class)`
+- **集成测试**: 使用 `@TestConfiguration` + `@Bean` + `@Primary` 替代已弃用的 `@MockBean`
+- **优势**: 更明确的依赖注入、更快的测试执行速度、更好的可维护性
+
+### 技术栈版本
+- **Spring Boot**: 3.4.1
+- **Mockito**: 5.15.2 (支持 Java 17+)
+- **JUnit**: 5.10+ (Jupiter)
+- **Java**: 17+
+
 ## 目录
 
 1. [测试架构概览](#测试架构概览)
@@ -65,7 +80,9 @@ Mini-UPS 项目采用了完整的分层测试架构，基于实际项目结构�
 │   └── GlobalExceptionHandlerTest.java  # 全局异常处理器测试
 ├── 📁 util/                      # 测试工具类
 │   └── TestDataFactory.java             # 测试数据工厂
-└── MiniUpsApplicationTests.java  # 应用程序启动测试
+├── MiniUpsApplicationTests.java  # 应用程序启动测试
+├── SECURITY_TESTING_GUIDE.md     # 安全测试指南
+└── TEST_EXECUTION_GUIDE.md       # 测试执行指南
 ```
 
 ### 🎯 测试分类与策略
@@ -117,12 +134,34 @@ mvn versions:display-dependency-updates
 ### 📦 Maven 依赖配置
 
 ```xml
-<!-- pom.xml 中的测试依赖 -->
+<!-- pom.xml 中的测试依赖 (Spring Boot 3.4.1) -->
 <dependencies>
     <!-- Spring Boot 测试启动器 -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+        <exclusions>
+            <exclusion>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    
+    <!-- 最新Mockito版本用于Java 17+兼容 -->
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>5.15.2</version>
+        <scope>test</scope>
+    </dependency>
+    
+    <!-- Mockito Jupiter集成 -->
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <version>5.15.2</version>
         <scope>test</scope>
     </dependency>
     
@@ -143,6 +182,13 @@ mvn versions:display-dependency-updates
     <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>postgresql</artifactId>
+        <scope>test</scope>
+    </dependency>
+    
+    <!-- RabbitMQ TestContainer -->
+    <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>rabbitmq</artifactId>
         <scope>test</scope>
     </dependency>
     
@@ -242,12 +288,11 @@ import com.miniups.util.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -258,20 +303,21 @@ import static org.mockito.Mockito.*;
 /**
  * UserService 业务逻辑测试
  * 重点测试：业务规则、异常处理、数据转换
+ * 
+ * 使用现代化测试方式，避免Spring Boot 3.4+中已弃用的@MockBean
+ * 纯单元测试，不加载Spring上下文，速度更快
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@Transactional
+@ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 业务逻辑测试")
 class UserServiceTest {
 
-    @Autowired
+    @InjectMocks
     private UserService userService;
 
-    @MockBean  // 模拟数据访问层
+    @Mock  // 直接使用Mockito Mock
     private UserRepository userRepository;
 
-    @MockBean  // 模拟密码编码器
+    @Mock  // 直接使用Mockito Mock
     private PasswordEncoder passwordEncoder;
 
     private User testUser;
@@ -680,11 +726,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.Mockito;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -696,15 +748,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * UserController API 测试
  * 重点测试：HTTP状态码、JSON响应、权限控制
+ * 
+ * 使用现代化测试方式：通过@TestConfiguration提供Mock服务
  */
-@WebMvcTest(UserController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Import(UserControllerTest.TestConfig.class)
 @DisplayName("UserController API 测试")
 class UserControllerTest {
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        @Primary
+        public UserService userService() {
+            return Mockito.mock(UserService.class);
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -740,11 +806,11 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpected(jsonPath("$.success").value(true))
-                .andExpected(jsonPath("$.message").value("Get user profile successful"))
-                .andExpected(jsonPath("$.user.id").value(1))
-                .andExpected(jsonPath("$.user.username").value("testuser"))
-                .andExpected(jsonPath("$.user.email").value("test@example.com"))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Get user profile successful"))
+                .andExpect(jsonPath("$.user.id").value(1))
+                .andExpect(jsonPath("$.user.username").value("testuser"))
+                .andExpect(jsonPath("$.user.email").value("test@example.com"))
                 .andExpected(jsonPath("$.user.role").value("USER"));
 
         verify(userService, times(1)).getCurrentUserInfo("testuser");
