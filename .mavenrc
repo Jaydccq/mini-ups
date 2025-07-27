@@ -1,0 +1,5 @@
+#!/bin/bash
+# Maven configuration for Mini-UPS project
+# Forces Maven to use Java 17 for this project
+export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
+export PATH="$JAVA_HOME/bin:$PATH"

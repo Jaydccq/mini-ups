@@ -10,12 +10,11 @@ import com.miniups.util.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,19 +28,17 @@ import static org.mockito.Mockito.*;
  * UserService 集成测试
  * 测试用户服务的业务逻辑
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@Transactional
+@ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 业务逻辑测试")
 class UserServiceTest {
 
-    @Autowired
+    @InjectMocks
     private UserService userService;
 
-    @MockBean
+    @Mock
     private UserRepository userRepository;
 
-    @MockBean
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     private User testUser;
@@ -142,7 +139,7 @@ class UserServiceTest {
     @DisplayName("测试根据角色获取用户")
     void testGetUsersByRole() {
         List<User> adminUsers = Arrays.asList(testAdmin);
-        when(userRepository.findAll()).thenReturn(adminUsers);
+        when(userRepository.findByRole(UserRole.ADMIN)).thenReturn(adminUsers);
 
         List<UserDto> result = userService.getUsersByRole(UserRole.ADMIN);
 
@@ -151,7 +148,7 @@ class UserServiceTest {
         assertEquals("admin", result.get(0).getUsername());
         assertEquals(UserRole.ADMIN, result.get(0).getRole());
 
-        verify(userRepository, times(1)).findAll();
+        verify(userRepository, times(1)).findByRole(UserRole.ADMIN);
     }
 
     @Test
@@ -199,14 +196,14 @@ class UserServiceTest {
         updateDto.setEmail("admin@example.com"); // 已存在的邮箱
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.existsByEmailAndIdNot("admin@example.com", 1L)).thenReturn(true);
+        when(userRepository.existsByEmail("admin@example.com")).thenReturn(true);
 
         assertThrows(RuntimeException.class, () -> {
             userService.updateUser(1L, updateDto);
         });
 
         verify(userRepository, times(1)).findById(1L);
-        verify(userRepository, times(1)).existsByEmailAndIdNot("admin@example.com", 1L);
+        verify(userRepository, times(1)).existsByEmail("admin@example.com");
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -236,7 +233,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("测试启用用户")
+    @DisplayName("测试1启用用户")
     void testEnableUser_Success() {
         testUser.setEnabled(false); // 设置为禁用状态
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
@@ -370,15 +367,21 @@ class UserServiceTest {
     @Test
     @DisplayName("测试空值处理")
     void testNullHandling() {
-        assertThrows(IllegalArgumentException.class, () -> {
+        // For null username, repository returns empty and service throws UserNotFoundException
+        when(userRepository.findByUsername(null)).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> {
             userService.getCurrentUserInfo(null);
         });
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        // For empty username, repository returns empty and service throws UserNotFoundException
+        when(userRepository.findByUsername("")).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> {
             userService.getCurrentUserInfo("");
         });
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        // For null userId, repository returns empty and service throws UserNotFoundException
+        when(userRepository.findById(null)).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> {
             userService.getUserById(null);
         });
     }

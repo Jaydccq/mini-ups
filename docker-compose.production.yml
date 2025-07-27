@@ -1,0 +1,221 @@
+version: '3.8'
+
+services:
+  # ===== UPS Services =====
+  # PostgreSQL数据库 (UPS)
+  ups-database:
+    image: postgres:15
+    container_name: mini-ups-postgres
+    environment:
+      POSTGRES_DB: ${UPS_POSTGRES_DB:-ups_db}
+      POSTGRES_USER: ${UPS_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${UPS_POSTGRES_PASSWORD:-abc123}
+      TZ: UTC
+    volumes:
+      - ups_postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5431:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${UPS_POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - mini-ups-network
+
+  # Redis缓存 (UPS)
+  ups-redis:
+    image: redis:7-alpine
+    container_name: mini-ups-redis
+    command: redis-server --requirepass ${UPS_REDIS_PASSWORD:-test123}
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${UPS_REDIS_PASSWORD:-test123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - mini-ups-network
+
+  # RabbitMQ消息队列 (UPS)
+  ups-rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: mini-ups-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${UPS_RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${UPS_RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbit log_levels [{connection,error},{default,error}]
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI port
+    volumes:
+      - ups_rabbitmq_data:/var/lib/rabbitmq/
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - mini-ups-network
+
+  # Spring Boot后端 (UPS)
+  ups-backend:
+    image: ${UPS_BACKEND_IMAGE:-mini-ups-backend:latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mini-ups-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DATABASE_URL: jdbc:postgresql://ups-database:5432/${UPS_POSTGRES_DB:-ups_db}
+      DATABASE_USERNAME: ${UPS_POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${UPS_POSTGRES_PASSWORD:-abc123}
+      REDIS_HOST: ups-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${UPS_REDIS_PASSWORD:-test123}
+      RABBITMQ_HOST: ups-rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${UPS_RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${UPS_RABBITMQ_PASSWORD:-guest}
+      JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_for_development_only}
+      WORLD_SIMULATOR_HOST: world-server
+      WORLD_SIMULATOR_PORT: 12345
+      AMAZON_API_URL: http://amazon-web:8080
+      NUM_TRUCKS: ${NUM_TRUCKS:-5}
+      WORLD_ID: ${WORLD_ID:-}
+    ports:
+      - "8081:8081"
+    depends_on:
+      ups-database:
+        condition: service_healthy
+      ups-redis:
+        condition: service_healthy
+      ups-rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - mini-ups-network
+
+  # React前端 (UPS)
+  ups-frontend:
+    image: ${UPS_FRONTEND_IMAGE:-mini-ups-frontend:latest}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mini-ups-frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:8081/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - ups-backend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - mini-ups-network
+
+  # ===== Amazon Services (不修改原有配置) =====
+  # Amazon PostgreSQL数据库
+  amazon-db:
+    image: postgres:12-alpine3.15
+    container_name: mini-amazon-db
+    volumes:
+      - amazon_postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_PASSWORD: abc123
+      POSTGRES_USER: postgres
+      POSTGRES_DB: mini_amazon
+    ports:
+      - "15432:5432"
+    networks:
+      - mini-ups-network
+
+  # Amazon Web服务
+  amazon-web:
+    build: ./knowledge/amazon/.
+    container_name: mini-amazon-web
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./knowledge/amazon:/app
+    environment:
+      FLASK_APP: app
+      FLASK_ENV: production
+      FLASK_RUN_PORT: 8080
+      DATABASE_URL: postgresql://postgres:abc123@amazon-db:5432/mini_amazon
+      SECRET_KEY: ${AMAZON_SECRET_KEY:-production_secret_key}
+      WORLD_HOST: world-server
+      WORLD_PORT: "23456"
+      UPS_API_URL: http://ups-backend:8081/api
+    depends_on:
+      - amazon-db
+      - world-server
+    restart: unless-stopped
+    networks:
+      - mini-ups-network
+
+  # ===== World Simulator Services (不修改原有配置) =====
+  # World Simulator PostgreSQL数据库
+  world-db:
+    image: postgres
+    container_name: world-simulator-db
+    environment:
+      POSTGRES_PASSWORD: abc123
+      POSTGRES_USER: postgres
+      POSTGRES_DB: worldSim
+    ports:
+      - "5433:5432"
+    volumes:
+      - world_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - mini-ups-network
+
+  # World Simulator服务器
+  world-server:
+    build: ./knowledge/world_simulator_exec/docker_deploy/.
+    container_name: world-simulator-server
+    command: bash -c "./wait-for-it.sh world-db:5432 --strict -- ./server 12345 23456 0"
+    ports:
+      - "12345:12345"  # UPS connection
+      - "23456:23456"  # Amazon connection
+    depends_on:
+      - world-db
+    restart: unless-stopped
+    networks:
+      - mini-ups-network
+
+volumes:
+  ups_postgres_data:
+    name: mini-ups-postgres-data
+  ups_rabbitmq_data:
+    name: mini-ups-rabbitmq-data
+  amazon_postgres_data:
+    name: mini-amazon-postgres-data
+  world_postgres_data:
+    name: mini-world-postgres-data
+
+networks:
+  mini-ups-network:
+    name: mini-ups-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,26 +1,15 @@
 package com.miniups.security;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-
-import java.util.Arrays;
-import java.util.Date;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for JwtTokenProvider.
@@ -146,7 +135,7 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("Should handle expired token")
-    void testValidateToken_ExpiredToken() {
+    void testValidateToken_ExpiredToken() throws InterruptedException {
         // Given - Create provider with very short expiration
         JwtTokenProvider shortExpirationProvider = new JwtTokenProvider();
         ReflectionTestUtils.setField(shortExpirationProvider, "jwtSecret", TEST_SECRET);
@@ -155,6 +144,9 @@ class JwtTokenProviderTest {
         
         String username = "testuser";
         String expiredToken = shortExpirationProvider.generateToken(username);
+        
+        // Wait to ensure token is expired
+        Thread.sleep(5);
 
         // When
         boolean isValid = jwtTokenProvider.validateToken(expiredToken);
@@ -182,21 +174,17 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("Should generate different tokens for same user at different times")
-    void testGenerateToken_DifferentTimes() {
+    void testGenerateToken_DifferentTimes() throws InterruptedException {
         // Given
         String username = "testuser";
-        long baseTime = System.currentTimeMillis();
-        long laterTime = baseTime + 1000; // 1 second later
 
-        // When - Mock different timestamps
-        String token1, token2;
-        try (MockedStatic<System> systemMock = Mockito.mockStatic(System.class)) {
-            systemMock.when(System::currentTimeMillis).thenReturn(baseTime);
-            token1 = jwtTokenProvider.generateToken(username);
-            
-            systemMock.when(System::currentTimeMillis).thenReturn(laterTime);
-            token2 = jwtTokenProvider.generateToken(username);
-        }
+        // When - Generate tokens with a small time gap
+        String token1 = jwtTokenProvider.generateToken(username);
+        
+        // Sleep for a short time to ensure different timestamp
+        Thread.sleep(10);
+        
+        String token2 = jwtTokenProvider.generateToken(username);
 
         // Then
         assertThat(token1).isNotEqualTo(token2);
@@ -256,11 +244,9 @@ class JwtTokenProviderTest {
         // Given
         String invalidToken = "invalid.jwt.token";
 
-        // When
-        String result = jwtTokenProvider.getUsernameFromToken(invalidToken);
-        
-        // Then
-        assertThat(result).isNull();
+        // When & Then
+        assertThatThrownBy(() -> jwtTokenProvider.getUsernameFromToken(invalidToken))
+                .isInstanceOf(MalformedJwtException.class);
     }
 
     @Test
@@ -290,24 +276,8 @@ class JwtTokenProviderTest {
         ReflectionTestUtils.setField(provider, "jwtExpirationInMs", Math.toIntExact(TEST_EXPIRATION));
 
         // When & Then - Should fail initialization due to short secret
-        assertThatThrownBy(() -> provider.validateJwtConfiguration())
+        assertThatThrownBy(provider::validateJwtConfiguration)
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    /**
-     * Helper method to create mock Authentication object.
-     */
-    private Authentication createMockAuthentication(String username) {
-        Authentication authentication = mock(Authentication.class);
-        
-        com.miniups.model.entity.User user = new com.miniups.model.entity.User();
-        user.setUsername(username);
-
-        CustomUserDetailsService.CustomUserPrincipal principal = new CustomUserDetailsService.CustomUserPrincipal(user);
-        
-        when(authentication.getPrincipal()).thenReturn(principal);
-        when(authentication.getName()).thenReturn(username);
-        
-        return authentication;
-    }
 }

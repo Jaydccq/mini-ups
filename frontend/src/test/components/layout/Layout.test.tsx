@@ -1,3 +1,4 @@
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
@@ -5,8 +6,14 @@ import { Layout } from '@/components/layout/Layout'
 
 // Mock the auth store
 const mockUseAuthStore = vi.fn()
-vi.mock('@/stores/authStore', () => ({
+vi.mock('@/stores/auth-store', () => ({
   useAuthStore: () => mockUseAuthStore()
+}))
+
+// Mock the navigation hook
+const mockUseNavigation = vi.fn()
+vi.mock('@/hooks/use-navigation', () => ({
+  useNavigation: () => mockUseNavigation()
 }))
 
 // Mock React Router
@@ -34,13 +41,27 @@ vi.mock('@radix-ui/react-navigation-menu', () => ({
 
 vi.mock('@radix-ui/react-dropdown-menu', () => ({
   Root: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Trigger: ({ children, ...props }: { children: React.ReactNode }) => 
-    <button data-testid="user-menu-trigger" {...props}>{children}</button>,
+  Trigger: React.forwardRef<HTMLElement, { children: React.ReactNode; asChild?: boolean }>((props, ref) => {
+    if (props.asChild) {
+      return React.cloneElement(React.Children.only(props.children) as React.ReactElement, {
+        'data-testid': 'user-menu-trigger',
+        ref
+      })
+    }
+    return <button data-testid="user-menu-trigger" ref={ref as React.RefObject<HTMLButtonElement>}>{props.children}</button>
+  }),
   Content: ({ children }: { children: React.ReactNode }) => 
     <div data-testid="user-menu-content">{children}</div>,
-  Item: ({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) => 
-    <button onClick={onClick} data-testid="menu-item">{children}</button>,
-  Separator: () => <hr data-testid="menu-separator" />
+  Item: React.forwardRef<HTMLElement, { children: React.ReactNode; onClick?: () => void; asChild?: boolean }>((props, ref) => {
+    if (props.asChild) {
+      return React.cloneElement(React.Children.only(props.children) as React.ReactElement, {
+        'data-testid': 'menu-item',
+        ref
+      })
+    }
+    return <button onClick={props.onClick} data-testid="menu-item" ref={ref as React.RefObject<HTMLButtonElement>}>{props.children}</button>
+  }),
+  Separator: ({ className }: { className?: string }) => <hr data-testid="menu-separator" className={className} />
 }))
 
 const renderWithRouter = (children: React.ReactNode) => {
@@ -58,8 +79,15 @@ describe('Layout', () => {
     vi.clearAllMocks()
     mockUseAuthStore.mockReturnValue({
       isAuthenticated: true,
-      user: { id: 1, username: 'testuser', role: 'USER' },
+      user: { id: '1', name: 'testuser', email: 'test@example.com', role: 'USER' },
       logout: mockLogout
+    })
+    mockUseNavigation.mockReturnValue({
+      visibleNavigation: [
+        { path: '/dashboard', label: 'Dashboard', icon: () => null, roles: ['USER', 'ADMIN'], inNav: true },
+        { path: '/tracking', label: 'Track Package', icon: () => null, roles: [], inNav: true },
+        { path: '/shipments', label: 'My Shipments', icon: () => null, roles: ['USER', 'ADMIN'], inNav: true }
+      ]
     })
   })
 
@@ -108,8 +136,15 @@ describe('Layout', () => {
     // Given
     mockUseAuthStore.mockReturnValue({
       isAuthenticated: true,
-      user: { id: 1, username: 'admin', role: 'ADMIN' },
+      user: { id: '1', name: 'admin', email: 'admin@example.com', role: 'ADMIN' },
       logout: mockLogout
+    })
+    mockUseNavigation.mockReturnValue({
+      visibleNavigation: [
+        { path: '/dashboard', label: 'Dashboard', icon: () => null, roles: ['USER', 'ADMIN'], inNav: true },
+        { path: '/admin', label: 'Admin Center', icon: () => null, roles: ['ADMIN'], inNav: true },
+        { path: '/trucks', label: 'Truck Management', icon: () => null, roles: ['ADMIN'], inNav: true }
+      ]
     })
 
     // When
@@ -125,13 +160,7 @@ describe('Layout', () => {
   })
 
   it('should not render admin links for regular users', () => {
-    // Given
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
-      user: { id: 1, username: 'user', role: 'USER' },
-      logout: mockLogout
-    })
-
+    // Given - using default mock from beforeEach which has USER role
     // When
     renderWithRouter(
       <Layout>
@@ -148,8 +177,14 @@ describe('Layout', () => {
     // Given
     mockUseAuthStore.mockReturnValue({
       isAuthenticated: true,
-      user: { id: 1, username: 'driver', role: 'DRIVER' },
+      user: { id: '1', name: 'driver', email: 'driver@example.com', role: 'DRIVER' },
       logout: mockLogout
+    })
+    mockUseNavigation.mockReturnValue({
+      visibleNavigation: [
+        { path: '/deliveries', label: 'Delivery Tasks', icon: () => null, roles: ['DRIVER'], inNav: true },
+        { path: '/truck-status', label: 'Truck Status', icon: () => null, roles: ['DRIVER'], inNav: true }
+      ]
     })
 
     // When
@@ -226,9 +261,7 @@ describe('Layout', () => {
     fireEvent.click(screen.getByTestId('user-menu-trigger'))
 
     // Then
-    const menuItems = screen.getAllByTestId('menu-item')
-    const profileItem = menuItems.find(item => item.textContent?.includes('Profile'))
-    expect(profileItem).toBeInTheDocument()
+    expect(screen.getByText('Profile')).toBeInTheDocument()
   })
 
   it('should render settings link in user menu', () => {
@@ -243,9 +276,7 @@ describe('Layout', () => {
     fireEvent.click(screen.getByTestId('user-menu-trigger'))
 
     // Then
-    const menuItems = screen.getAllByTestId('menu-item')
-    const settingsItem = menuItems.find(item => item.textContent?.includes('Settings'))
-    expect(settingsItem).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
   })
 
   it('should handle unauthenticated state gracefully', () => {
@@ -254,6 +285,9 @@ describe('Layout', () => {
       isAuthenticated: false,
       user: null,
       logout: mockLogout
+    })
+    mockUseNavigation.mockReturnValue({
+      visibleNavigation: []
     })
 
     // When
@@ -275,6 +309,9 @@ describe('Layout', () => {
       isAuthenticated: false,
       user: null,
       logout: mockLogout
+    })
+    mockUseNavigation.mockReturnValue({
+      visibleNavigation: []
     })
 
     // When

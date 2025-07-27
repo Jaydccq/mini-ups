@@ -78,7 +78,7 @@ public class AmazonIntegrationService {
     @Autowired
     private RestTemplate restTemplate;
     
-    @Autowired
+    @Autowired(required = false)
     private EventPublisherService eventPublisher;
     
     @Autowired
@@ -208,8 +208,10 @@ public class AmazonIntegrationService {
             creationPayload.setPackageDescription("");
             // Add other relevant fields as needed
             
-            // Publish event for asynchronous processing
-            eventPublisher.publishShipmentCreationEvent(creationPayload, correlationId);
+            // Publish event for asynchronous processing (if available)
+            if (eventPublisher != null) {
+                eventPublisher.publishShipmentCreationEvent(creationPayload, correlationId);
+            }
             
             // Audit the successful queuing
             Map<String, Object> auditData = Map.of(

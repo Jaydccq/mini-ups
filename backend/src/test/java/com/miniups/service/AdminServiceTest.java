@@ -1,5 +1,6 @@
 package com.miniups.service;
 
+import com.miniups.model.entity.AuditLog;
 import com.miniups.model.entity.Shipment;
 import com.miniups.model.entity.Truck;
 import com.miniups.model.entity.User;
@@ -76,14 +77,12 @@ class AdminServiceTest {
     void getDashboardStatistics_shouldCalculateComprehensiveStats() {
         // Given
         when(shipmentRepository.getStatusCounts()).thenReturn(mockStatusCounts);
-        when(truckRepository.findAll()).thenReturn(testTrucks);
         when(truckRepository.count()).thenReturn((long) testTrucks.size());
         when(truckRepository.countByStatus(TruckStatus.IDLE)).thenReturn(2L);
         when(truckRepository.countByStatus(TruckStatus.TRAVELING)).thenReturn(1L);
         when(userRepository.count()).thenReturn((long) testUsers.size());
         when(userRepository.countByRole(UserRole.ADMIN)).thenReturn(1L);
         when(userRepository.countByRole(UserRole.USER)).thenReturn(2L);
-        when(shipmentRepository.findAll()).thenReturn(testShipments);
 
         // When
         Map<String, Object> statistics = adminService.getDashboardStatistics();
@@ -156,7 +155,6 @@ class AdminServiceTest {
         // Given
         when(shipmentRepository.getStatusCounts()).thenReturn(mockStatusCounts);
         
-        Pageable pageable = PageRequest.of(0, 10, any());
         Page<Shipment> mockPage = new PageImpl<>(testShipments.subList(0, 2));
         when(shipmentRepository.findRecentShipments(any(Pageable.class))).thenReturn(mockPage);
 
@@ -242,7 +240,7 @@ class AdminServiceTest {
     @DisplayName("系统健康状态 - 检查各组件状态")
     void getSystemHealth_shouldReturnSystemComponentsStatus() {
         // Given
-        when(analyticsConsumer.getActiveUserCount()).thenReturn(42);
+        when(analyticsConsumer.getActiveUserCount()).thenReturn(42L);
 
         // When
         Map<String, Object> health = adminService.getSystemHealth();
@@ -259,7 +257,7 @@ class AdminServiceTest {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> appMetrics = (Map<String, Object>) health.get("application");
-        assertThat(appMetrics.get("activeUsers")).isEqualTo(42);
+        assertThat(appMetrics.get("activeUsers")).isEqualTo(42L);
 
         assertThat(health.get("overallStatus")).isEqualTo("HEALTHY");
 
@@ -271,13 +269,31 @@ class AdminServiceTest {
     void getRecentActivities_shouldReturnPaginatedAuditLogs() {
         // Given
         Pageable pageable = PageRequest.of(0, 10);
-        List<MockAuditLog> mockLogs = Arrays.asList(
-            new MockAuditLog(1L, "CREATE", "User", "1", "user123", "Created new user"),
-            new MockAuditLog(2L, "UPDATE", "Shipment", "2", "admin", "Updated shipment status")
-        );
-        Page<MockAuditLog> mockPage = new PageImpl<>(mockLogs, pageable, mockLogs.size());
+        // Create real AuditLog entities
+        AuditLog log1 = new AuditLog();
+        log1.setId(1L);
+        log1.setEventId("event-1");
+        log1.setOperationType("CREATE");
+        log1.setEntityType("User");
+        log1.setEntityId("1");
+        log1.setUserId(123L);
+        log1.setUsername("user123");
+        log1.setOperationDescription("Created new user");
         
-        when(auditLogRepository.findAll(pageable)).thenReturn((Page) mockPage);
+        AuditLog log2 = new AuditLog();
+        log2.setId(2L);
+        log2.setEventId("event-2");
+        log2.setOperationType("UPDATE");
+        log2.setEntityType("Shipment");
+        log2.setEntityId("2");
+        log2.setUserId(456L);
+        log2.setUsername("admin");
+        log2.setOperationDescription("Updated shipment status");
+        
+        List<AuditLog> mockLogs = Arrays.asList(log1, log2);
+        Page<AuditLog> mockPage = new PageImpl<>(mockLogs, pageable, mockLogs.size());
+        
+        when(auditLogRepository.findAll(pageable)).thenReturn(mockPage);
 
         // When
         Map<String, Object> recentActivities = adminService.getRecentActivities(pageable);
@@ -429,12 +445,10 @@ class AdminServiceTest {
     void handleEmptyData_shouldReturnDefaultValues() {
         // Given
         when(shipmentRepository.getStatusCounts()).thenReturn(Collections.emptyList());
-        when(truckRepository.findAll()).thenReturn(Collections.emptyList());
         when(truckRepository.count()).thenReturn(0L);
         when(truckRepository.countByStatus(any())).thenReturn(0L);
         when(userRepository.count()).thenReturn(0L);
         when(userRepository.countByRole(any())).thenReturn(0L);
-        when(shipmentRepository.findAll()).thenReturn(Collections.emptyList());
 
         // When
         Map<String, Object> statistics = adminService.getDashboardStatistics();
@@ -457,9 +471,9 @@ class AdminServiceTest {
 
     private void setupTestTrucks() {
         testTrucks = Arrays.asList(
-            TestDataFactory.createTestTruck("TRUCK001", TruckStatus.IDLE),
-            TestDataFactory.createTestTruck("TRUCK002", TruckStatus.EN_ROUTE),
-            TestDataFactory.createTestTruck("TRUCK003", TruckStatus.IDLE)
+            TestDataFactory.createTestTruck(1L, "TRUCK001", TruckStatus.IDLE),
+            TestDataFactory.createTestTruck(2L, "TRUCK002", TruckStatus.EN_ROUTE),
+            TestDataFactory.createTestTruck(3L, "TRUCK003", TruckStatus.IDLE)
         );
         testTrucks.get(0).setId(1L);
         testTrucks.get(1).setId(2L);
@@ -504,31 +518,4 @@ class AdminServiceTest {
     }
 
     // Mock AuditLog class for testing
-    private static class MockAuditLog {
-        private Long id;
-        private String operationType;
-        private String entityType;
-        private String entityId;
-        private String userId;
-        private String operationDescription;
-
-        public MockAuditLog(Long id, String operationType, String entityType, String entityId, 
-                           String userId, String operationDescription) {
-            this.id = id;
-            this.operationType = operationType;
-            this.entityType = entityType;
-            this.entityId = entityId;
-            this.userId = userId;
-            this.operationDescription = operationDescription;
-        }
-
-        // Getters
-        public Long getId() { return id; }
-        public String getOperationType() { return operationType; }
-        public String getEntityType() { return entityType; }
-        public String getEntityId() { return entityId; }
-        public String getUserId() { return userId; }
-        public String getOperationDescription() { return operationDescription; }
-        public java.time.LocalDateTime getCreatedAt() { return java.time.LocalDateTime.now(); }
-    }
 }

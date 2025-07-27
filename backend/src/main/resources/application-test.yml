@@ -1,0 +1,167 @@
+server:
+  port: 0 # Random port for testing
+
+spring:
+  application:
+    name: mini-ups-backend-test
+  
+  # Use H2 in-memory database for testing (can be overridden by CI environment variables)
+  datasource:
+    url: ${TEST_DATABASE_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MULTI_THREADED=1;LOCK_TIMEOUT=10000}
+    username: ${TEST_DATABASE_USERNAME:sa}
+    password: ${TEST_DATABASE_PASSWORD:}
+    driver-class-name: ${TEST_DATABASE_DRIVER:org.h2.Driver}
+    # High-concurrency connection pool optimizations
+    hikari:
+      maximum-pool-size: 50      # Increased for high-concurrency tests
+      minimum-idle: 15           # Maintain idle connections
+      connection-timeout: 5000   # 5 seconds (fail faster)
+      idle-timeout: 300000       # 5 minutes  
+      leak-detection-threshold: 60000  # 1 minute
+      pool-name: HikariCP-Test
+      max-lifetime: 1800000      # 30 minutes
+  
+  # JPA configuration for H2 (can be overridden for PostgreSQL in CI)
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: ${TEST_DATABASE_DIALECT:org.hibernate.dialect.H2Dialect}
+        format_sql: false
+        # High-concurrency optimizations
+        jdbc:
+          batch_size: 25           # Batch database operations
+          order_inserts: true      # Order inserts for better performance
+          order_updates: true      # Order updates for better performance
+          batch_versioned_data: true
+        connection:
+          provider_disables_autocommit: true  # Performance optimization
+        cache:
+          use_second_level_cache: false       # Disable for testing
+          use_query_cache: false              # Disable for testing
+    open-in-view: false
+  
+  # Test Redis configuration - using embedded Redis or mock (can be overridden by CI)
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:localhost}
+      port: ${TEST_REDIS_PORT:6379}
+      database: 1
+      timeout: 1000ms
+      lettuce:
+        pool:
+          max-active: 4
+          max-idle: 2
+          min-idle: 0
+      repositories:
+        enabled: false
+  
+  # Test RabbitMQ configuration - will use mocks from TestRabbitConfig
+  rabbitmq:
+    host: ${TEST_RABBITMQ_HOST:rabbitmq}  # Use Docker service name, fallback to localhost for local tests
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    connection-timeout: 5000
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+        retry:
+          enabled: false # Disable retries in tests
+  
+  jackson:
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: UTC
+
+# JWT Configuration for testing
+jwt:
+  secret: 9Kj8H7F6E5D4C3B2A1Z9Y8X7W6V5U4T3S2R1Q0P9O8N7M6L5K4J3H2G1F0E9D8C7B6A5Z4Y3X2W1V0U9T8S7R6Q5P4O3N2M1L0 # Minimum 32 characters, secure random for testing
+  expiration: 86400000 # 24 hours in milliseconds
+
+# World Simulator Configuration for testing
+world:
+  simulator:
+    host: localhost
+    port: 12345
+    connection-timeout: 5000
+    default-sim-speed: 1000
+
+# Amazon Integration Configuration for testing
+amazon:
+  base-url: http://localhost:8080
+  webhook:
+    secret: test-webhook-secret-key
+    signature-header: X-Amazon-Signature
+    authentication:
+      enabled: false # Disable authentication for tests
+  webhook-endpoints:
+    truck-arrived: /api/webhooks/truck-arrived
+    truck-dispatched: /api/webhooks/truck-dispatched
+    shipment-delivered: /api/webhooks/shipment-delivered
+    shipment-detail-request: /api/webhooks/shipment-detail-request
+
+# HTTP Client Configuration for testing
+http:
+  client:
+    max-total-connections: 10
+    max-default-per-route: 5
+    connect-timeout-ms: 5000
+    socket-timeout-ms: 10000
+
+# Logging Configuration for testing
+logging:
+  level:
+    com.miniups: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.springframework.boot.test: WARN
+    com.github.tomakehurst.wiremock: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management Endpoints for testing
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# Application-specific Configuration for testing
+app:
+  cors:
+    allowed-origins: http://localhost:3000
+  rabbitmq:
+    test:
+      enabled: true # Enable test mode which uses mocks
+  notifications:
+    enabled: false # Disable notifications in tests
+    email:
+      enabled: false
+    sms:
+      enabled: false
+    push:
+      enabled: false
+  # Performance testing configuration
+  testing:
+    num-trucks: ${TEST_NUM_TRUCKS:20}  # Increase truck pool for performance tests
+    truck-assignment-timeout: 5000     # 5 second timeout for truck assignment
+
+# Rate Limiting Configuration for testing
+rate-limiting:
+  enabled: false # Disable rate limiting in tests
+  shipment-creation:
+    requests-per-minute: 1000
+  general-api:
+    requests-per-minute: 1000

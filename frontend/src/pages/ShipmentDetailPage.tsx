@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Package, RefreshCw, Copy, ExternalLink, AlertCircle } from 'lucide-react'
-import { shipmentApi, Shipment, ShipmentStatusHistory } from '@/services/shipment'
+import { ArrowLeft, Package, RefreshCw, Copy, ExternalLink, AlertCircle, MapPin } from 'lucide-react'
+import { shipmentApi, Shipment, ShipmentStatusHistory, TrackingHistoryResponse } from '@/services/shipment'
 import { TrackingTimeline } from '@/components/shipment/TrackingTimeline'
 import { TrackingMap } from '@/components/tracking/TrackingMap'
 import { StatusIndicator } from '@/components/ui/status-indicator'
@@ -31,23 +31,27 @@ export const ShipmentDetailPage: React.FC = () => {
     isLoading, 
     error: shipmentError,
     refetch: refetchShipment
-  } = useQuery({
+  } = useQuery<Shipment>({
     queryKey: ['shipment', trackingNumber],
     queryFn: () => shipmentApi.getShipmentByTrackingNumber(trackingNumber!),
     enabled: !!trackingNumber,
     refetchInterval: isConnected ? false : 30000, // Poll every 30s if WebSocket is down
-    onError: (err: Error) => {
-      console.error('Failed to fetch shipment details:', err)
+  })
+
+  // Handle shipment fetch errors
+  useEffect(() => {
+    if (shipmentError) {
+      console.error('Failed to fetch shipment details:', shipmentError)
       toast.error('Failed to load shipment details')
     }
-  })
+  }, [shipmentError])
 
   // Fetch tracking history using TanStack Query
   const { 
     data: historyData, 
     isLoading: historyLoading,
     refetch: refetchHistory
-  } = useQuery({
+  } = useQuery<TrackingHistoryResponse>({
     queryKey: ['trackingHistory', trackingNumber],
     queryFn: () => shipmentApi.getTrackingHistory(trackingNumber!),
     enabled: !!trackingNumber,
@@ -90,7 +94,7 @@ export const ShipmentDetailPage: React.FC = () => {
     )
   }
 
-  if (error || !shipment) {
+  if (shipmentError || !shipment) {
     return (
       <div className="p-6 max-w-6xl mx-auto">
         <div className="mb-6">
@@ -103,12 +107,15 @@ export const ShipmentDetailPage: React.FC = () => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || 'Shipment not found'}
+            {shipmentError?.message || 'Shipment not found'}
           </AlertDescription>
         </Alert>
       </div>
     )
   }
+
+  // Type assertion: At this point we know shipment is defined due to the null check above
+  const typedShipment = shipment as Shipment;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -137,17 +144,17 @@ export const ShipmentDetailPage: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-2">
           <h1 className="text-3xl font-bold text-gray-900">Shipment Details</h1>
-          <FlashOnUpdate value={shipment.status} className="transition-colors duration-300">
+          <FlashOnUpdate trigger={typedShipment.status} className="transition-colors duration-300">
             <StatusIndicator 
-              status={shipment.status}
+              status={typedShipment.status}
               showDot={true}
-              animated={!['DELIVERED', 'CANCELLED', 'RETURNED'].includes(shipment.status)}
+              animated={!['DELIVERED', 'CANCELLED', 'RETURNED'].includes(typedShipment.status)}
             />
           </FlashOnUpdate>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-mono text-gray-600">{shipment.tracking_number}</span>
+            <span className="text-lg font-mono text-gray-600">{typedShipment.tracking_number}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -157,7 +164,7 @@ export const ShipmentDetailPage: React.FC = () => {
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <Link to={`/tracking?q=${shipment.tracking_number}`} className="text-blue-600 hover:text-blue-800">
+          <Link to={`/tracking?q=${typedShipment.tracking_number}`} className="text-blue-600 hover:text-blue-800">
             <ExternalLink className="h-4 w-4" />
           </Link>
         </div>
@@ -178,32 +185,32 @@ export const ShipmentDetailPage: React.FC = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Shipment ID</label>
-                  <p className="text-sm text-gray-900">{shipment.shipment_id}</p>
+                  <p className="text-sm text-gray-900">{typedShipment.shipment_id}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <p className="text-sm text-gray-900">{shipment.status_display}</p>
+                  <p className="text-sm text-gray-900">{typedShipment.status_display}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-                  <p className="text-sm text-gray-900">{formatDateTime(shipment.created_at)}</p>
+                  <p className="text-sm text-gray-900">{formatDateTime(typedShipment.created_at)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Delivery</label>
                   <p className="text-sm text-gray-900">
-                    {shipment.estimated_delivery ? formatDateTime(shipment.estimated_delivery) : 'Not available'}
+                    {typedShipment.estimated_delivery ? formatDateTime(typedShipment.estimated_delivery) : 'Not available'}
                   </p>
                 </div>
-                {shipment.actual_delivery && (
+                {typedShipment.actual_delivery && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Actual Delivery</label>
-                    <p className="text-sm text-gray-900">{formatDateTime(shipment.actual_delivery)}</p>
+                    <p className="text-sm text-gray-900">{formatDateTime(typedShipment.actual_delivery)}</p>
                   </div>
                 )}
-                {shipment.pickup_time && (
+                {typedShipment.pickup_time && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Time</label>
-                    <p className="text-sm text-gray-900">{formatDateTime(shipment.pickup_time)}</p>
+                    <p className="text-sm text-gray-900">{formatDateTime(typedShipment.pickup_time)}</p>
                   </div>
                 )}
               </div>
@@ -212,10 +219,10 @@ export const ShipmentDetailPage: React.FC = () => {
 
           {/* Route Map */}
           <TrackingMap 
-            origin={shipment.origin}
-            destination={shipment.destination}
-            currentLocation={shipment.truck?.current_location}
-            truckStatus={shipment.truck?.status}
+            origin={typedShipment.origin}
+            destination={typedShipment.destination}
+            currentLocation={typedShipment.truck?.current_location}
+            truckStatus={typedShipment.truck?.status}
           />
 
           {/* Tracking Timeline */}
@@ -232,7 +239,7 @@ export const ShipmentDetailPage: React.FC = () => {
             <CardContent>
               <TrackingTimeline 
                 history={history}
-                currentStatus={shipment.status}
+                currentStatus={typedShipment.status}
                 loading={historyLoading}
               />
             </CardContent>
@@ -243,17 +250,17 @@ export const ShipmentDetailPage: React.FC = () => {
         <div className="space-y-6">
           {/* Location Information */}
           <LocationInfoCard
-            origin={shipment.origin}
-            destination={shipment.destination}
+            origin={typedShipment.origin}
+            destination={typedShipment.destination}
           />
 
           {/* Truck Information */}
-          {shipment.truck && (
-            <TruckInfoCard truck={shipment.truck} />
+          {typedShipment.truck && (
+            <TruckInfoCard truck={typedShipment.truck} />
           )}
 
           {/* Actions */}
-          <ActionsCard trackingNumber={shipment.tracking_number} />
+          <ActionsCard trackingNumber={typedShipment.tracking_number} />
         </div>
       </div>
     </div>

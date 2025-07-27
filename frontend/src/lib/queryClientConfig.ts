@@ -241,7 +241,7 @@ const createMutationCache = () => new MutationCache({
     // Show success message for important operations
     if (mutation.meta?.showSuccess) {
       const successMessage = mutation.meta.successMessage || 'Operation completed successfully';
-      toast.success(successMessage);
+      toast.success(String(successMessage));
     }
   },
 });
@@ -253,7 +253,7 @@ const createDefaultOptions = (): DefaultOptions => ({
     staleTime: (query) => getStaleTime(query.queryKey),
     
     // Dynamic cache time based on query type
-    gcTime: (query) => getCacheTime(query.queryKey),
+    gcTime: CACHE_TIMES.BUSINESS,
     
     // Don't refetch on window focus for most queries
     refetchOnWindowFocus: false,
@@ -265,14 +265,12 @@ const createDefaultOptions = (): DefaultOptions => ({
     },
     
     // Dynamic retry configuration
-    retry: (failureCount, error, query) => {
-      const retryConfig = getRetryConfig(query.queryKey);
-      return failureCount < retryConfig.retry;
+    retry: (failureCount: number, error: Error) => {
+      return failureCount < 3;
     },
     
-    retryDelay: (attemptIndex, error, query) => {
-      const retryConfig = getRetryConfig(query.queryKey);
-      return retryConfig.retryDelay(attemptIndex);
+    retryDelay: (attemptIndex: number) => {
+      return Math.min(1000 * 2 ** attemptIndex, 10000);
     },
   },
   

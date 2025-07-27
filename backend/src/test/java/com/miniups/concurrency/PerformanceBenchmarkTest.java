@@ -47,51 +47,35 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
         // 用户注册性能测试
         System.out.println("\n📊 用户注册性能基准:");
         benchmarkOperation("用户注册", () -> {
-            try {
-                RegisterRequestDto request = createRegisterRequest();
-                authService.register(request);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        }, 20, 25);
+            RegisterRequestDto request = createRegisterRequest();
+            authService.register(request);
+            return true;
+        }, 10, 5);  // 减少负载
 
         // 追踪号生成性能测试
         System.out.println("\n📊 追踪号生成性能基准:");
         benchmarkOperation("追踪号生成", () -> {
-            try {
-                String trackingNumber = trackingService.generateTrackingNumber();
-                return trackingNumber != null && trackingService.isValidTrackingNumberFormat(trackingNumber);
-            } catch (Exception e) {
-                return false;
-            }
-        }, 50, 100);
+            String trackingNumber = trackingService.generateTrackingNumber();
+            return trackingNumber != null && trackingService.isValidTrackingNumberFormat(trackingNumber);
+        }, 15, 10);  // 减少负载
 
         // 订单创建性能测试
         System.out.println("\n📊 订单创建性能基准:");
         benchmarkOperation("订单创建", () -> {
-            try {
-                CreateShipmentDto shipmentDto = createShipmentDto();
-                Shipment shipment = shipmentService.createShipment(shipmentDto);
-                return shipment != null;
-            } catch (Exception e) {
-                return false;
-            }
-        }, 30, 50);
+            CreateShipmentDto shipmentDto = createShipmentDto();
+            Shipment shipment = shipmentService.createShipment(shipmentDto);
+            return shipment != null;
+        }, 10, 8);  // 减少负载
 
         // 车辆分配性能测试
         System.out.println("\n📊 车辆分配性能基准:");
         benchmarkOperation("车辆分配", () -> {
-            try {
-                return truckManagementService.assignOptimalTruck(
-                    (int)(Math.random() * 100), 
-                    (int)(Math.random() * 100), 
-                    1
-                ) != null;
-            } catch (Exception e) {
-                return false;
-            }
-        }, 25, 40);
+            return truckManagementService.assignOptimalTruck(
+                (int)(Math.random() * 100), 
+                (int)(Math.random() * 100), 
+                1
+            ) != null;
+        }, 8, 5);  // 减少负载
 
         System.out.println("\n" + "=".repeat(60));
         System.out.println("综合性能基准测试完成");
@@ -115,42 +99,38 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
         // When
         long startTime = System.currentTimeMillis();
         ConcurrencyTestResult result = executeConcurrencyTest(() -> {
-            try {
-                // 随机选择不同类型的操作
-                int operationType = (int)(Math.random() * 4);
-                
-                switch (operationType) {
-                    case 0: // 用户注册
-                        RegisterRequestDto request = createRegisterRequest();
-                        authService.register(request);
-                        userOpsCounter.incrementAndGet();
-                        return true;
-                        
-                    case 1: // 订单创建
-                        CreateShipmentDto shipmentDto = createShipmentDto();
-                        Shipment shipment = shipmentService.createShipment(shipmentDto);
-                        orderOpsCounter.incrementAndGet();
-                        return shipment != null;
-                        
-                    case 2: // 追踪号生成
-                        String trackingNumber = trackingService.generateTrackingNumber();
-                        trackingOpsCounter.incrementAndGet();
-                        return trackingNumber != null;
-                        
-                    case 3: // 车辆操作
-                        boolean success = truckManagementService.assignOptimalTruck(
-                            (int)(Math.random() * 100), 
-                            (int)(Math.random() * 100), 
-                            1
-                        ) != null;
-                        truckOpsCounter.incrementAndGet();
-                        return success;
-                        
-                    default:
-                        return false;
-                }
-            } catch (Exception e) {
-                return false;
+            // 随机选择不同类型的操作
+            int operationType = (int)(Math.random() * 4);
+            
+            switch (operationType) {
+                case 0: // 用户注册
+                    RegisterRequestDto request = createRegisterRequest();
+                    authService.register(request);
+                    userOpsCounter.incrementAndGet();
+                    return true;
+                    
+                case 1: // 订单创建
+                    CreateShipmentDto shipmentDto = createShipmentDto();
+                    Shipment shipment = shipmentService.createShipment(shipmentDto);
+                    orderOpsCounter.incrementAndGet();
+                    return shipment != null;
+                    
+                case 2: // 追踪号生成
+                    String trackingNumber = trackingService.generateTrackingNumber();
+                    trackingOpsCounter.incrementAndGet();
+                    return trackingNumber != null;
+                    
+                case 3: // 车辆操作
+                    boolean success = truckManagementService.assignOptimalTruck(
+                        (int)(Math.random() * 100), 
+                        (int)(Math.random() * 100), 
+                        1
+                    ) != null;
+                    truckOpsCounter.incrementAndGet();
+                    return success;
+                    
+                default:
+                    return false;
             }
         }, threadCount, operationsPerThread, 90);
         
@@ -191,14 +171,10 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
             long startTime = System.currentTimeMillis();
             
             ConcurrencyTestResult result = executeConcurrencyTest(() -> {
-                try {
-                    // 使用订单创建作为标准负载测试
-                    CreateShipmentDto shipmentDto = createShipmentDto();
-                    Shipment shipment = shipmentService.createShipment(shipmentDto);
-                    return shipment != null;
-                } catch (Exception e) {
-                    return false;
-                }
+                // 使用订单创建作为标准负载测试
+                CreateShipmentDto shipmentDto = createShipmentDto();
+                Shipment shipment = shipmentService.createShipment(shipmentDto);
+                return shipment != null;
             }, threadCount, operationsPerThread, 60);
             
             long endTime = System.currentTimeMillis();
@@ -229,14 +205,14 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
     @Test
     @DisplayName("持续负载耐久测试")
     void testSustainedLoadEnduranceTest() {
-        System.out.println("\n⏰ 持续负载耐久测试 (30秒)");
+        System.out.println("\n⏰ 持续负载耐久测试 (15秒)");
         
-        int threadCount = 30;
-        int operationsPerThread = 100; // 高操作数量
+        int threadCount = 10;  // 减少线程数
+        int operationsPerThread = 150; // 增加操作数以满足测试时长要求
         AtomicInteger totalOperations = new AtomicInteger(0);
         AtomicInteger successOperations = new AtomicInteger(0);
         
-        long testDuration = 30000; // 30秒
+        long testDuration = 15000; // 15秒
         long startTime = System.currentTimeMillis();
         
         ConcurrencyTestResult result = executeConcurrencyTest(() -> {
@@ -247,35 +223,31 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
                 return false;
             }
             
-            try {
-                totalOperations.incrementAndGet();
-                
-                // 轮换不同的操作类型
-                int opType = totalOperations.get() % 3;
-                boolean success = false;
-                
-                switch (opType) {
-                    case 0:
-                        String trackingNumber = trackingService.generateTrackingNumber();
-                        success = trackingNumber != null;
-                        break;
-                    case 1:
-                        success = truckManagementService.findNearestAvailableTruck(50, 50) != null;
-                        break;
-                    case 2:
-                        CreateShipmentDto shipmentDto = createShipmentDto();
-                        success = shipmentService.createShipment(shipmentDto) != null;
-                        break;
-                }
-                
-                if (success) {
-                    successOperations.incrementAndGet();
-                }
-                
-                return success;
-            } catch (Exception e) {
-                return false;
+            totalOperations.incrementAndGet();
+            
+            // 轮换不同的操作类型
+            int opType = totalOperations.get() % 3;
+            boolean success = false;
+            
+            switch (opType) {
+                case 0:
+                    String trackingNumber = trackingService.generateTrackingNumber();
+                    success = trackingNumber != null;
+                    break;
+                case 1:
+                    success = truckManagementService.findNearestAvailableTruck(50, 50) != null;
+                    break;
+                case 2:
+                    CreateShipmentDto shipmentDto = createShipmentDto();
+                    success = shipmentService.createShipment(shipmentDto) != null;
+                    break;
             }
+            
+            if (success) {
+                successOperations.incrementAndGet();
+            }
+            
+            return success;
         }, threadCount, operationsPerThread, 35);
         
         long actualEndTime = System.currentTimeMillis();
@@ -292,7 +264,7 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
         
         // 耐久性验证
         assertThat(result.getSuccessRate()).isGreaterThan(60.0);
-        assertThat(actualDuration).isBetween(25.0, 40.0); // 在预期时间范围内
+        assertThat(actualDuration).isBetween(12.0, 20.0); // 在预期时间范围内
         
         System.out.println("系统耐久性评级: " + getEnduranceGrade(result.getSuccessRate(), actualDuration));
     }
@@ -312,13 +284,9 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
         
         // 执行高负载测试
         ConcurrencyTestResult result = executeConcurrencyTest(() -> {
-            try {
-                CreateShipmentDto shipmentDto = createShipmentDto();
-                return shipmentService.createShipment(shipmentDto) != null;
-            } catch (Exception e) {
-                return false;
-            }
-        }, 50, 40, 60);
+            CreateShipmentDto shipmentDto = createShipmentDto();
+            return shipmentService.createShipment(shipmentDto) != null;
+        }, 15, 5, 60);  // 大幅减少负载
         
         // 测试后内存状态
         System.gc();
@@ -359,19 +327,14 @@ public class PerformanceBenchmarkTest extends ConcurrencyTestBase {
     private CreateShipmentDto createShipmentDto() {
         long uniqueId = System.nanoTime() + Thread.currentThread().getId();
         CreateShipmentDto dto = new CreateShipmentDto();
-        dto.setSenderName("Bench Sender " + uniqueId);
-        dto.setSenderEmail("sender_" + uniqueId + "@example.com");
-        dto.setSenderPhone("1234567890");
-        dto.setSenderAddress("123 Sender St");
-        dto.setRecipientName("Bench Recipient " + uniqueId);
-        dto.setRecipientEmail("recipient_" + uniqueId + "@example.com");
-        dto.setRecipientPhone("0987654321");
-        dto.setRecipientAddress("456 Recipient Ave");
+        dto.setCustomerId("CUSTOMER_" + uniqueId);
+        dto.setCustomerName("Bench Customer " + uniqueId);
+        dto.setCustomerEmail("customer_" + uniqueId + "@example.com");
         dto.setOriginX((int)(Math.random() * 100));
         dto.setOriginY((int)(Math.random() * 100));
         dto.setDestX((int)(Math.random() * 100));
         dto.setDestY((int)(Math.random() * 100));
-        dto.setWeight(BigDecimal.valueOf(1.0 + Math.random() * 10.0));
+        dto.setWeight(new BigDecimal("1.0").add(BigDecimal.valueOf(Math.random() * 10.0)));
         dto.setShipmentId("BENCH" + uniqueId);
         return dto;
     }

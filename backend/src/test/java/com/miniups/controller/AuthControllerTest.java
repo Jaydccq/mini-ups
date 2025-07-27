@@ -1,49 +1,59 @@
 package com.miniups.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.miniups.exception.BusinessValidationException;
 import com.miniups.exception.InvalidCredentialsException;
 import com.miniups.exception.UserAlreadyExistsException;
 import com.miniups.model.dto.auth.AuthResponseDto;
 import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.dto.auth.PasswordChangeDto;
 import com.miniups.model.dto.auth.RegisterRequestDto;
-import com.miniups.model.dto.user.UserDto;
-import com.miniups.model.enums.UserRole;
 import com.miniups.service.AuthService;
-import com.miniups.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.Mockito;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AuthController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Import(AuthControllerTest.TestConfig.class)
 @DisplayName("AuthController 认证API测试")
 class AuthControllerTest {
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        @Primary
+        public AuthService authService() {
+            return Mockito.mock(AuthService.class);
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private AuthService authService;
-
-    @MockBean
-    private UserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -52,10 +62,11 @@ class AuthControllerTest {
     private LoginRequestDto loginRequest;
     private PasswordChangeDto passwordChangeRequest;
     private AuthResponseDto authResponse;
-    private UserDto userDto;
 
     @BeforeEach
     void setUp() {
+        // Reset mock before each test to avoid interference
+        Mockito.reset(authService);
         registerRequest = new RegisterRequestDto();
         registerRequest.setUsername("testuser");
         registerRequest.setEmail("test@example.com");
@@ -78,12 +89,6 @@ class AuthControllerTest {
         authResponse.setTokenType("Bearer");
         authResponse.setExpiresIn(3600L);
 
-        userDto = new UserDto();
-        userDto.setId(1L);
-        userDto.setUsername("testuser");
-        userDto.setEmail("test@example.com");
-        userDto.setRole(UserRole.USER);
-        userDto.setEnabled(true);
     }
 
     @Test
@@ -99,7 +104,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("User registration successful"))
-                .andExpect(jsonPath("$.data.accessToken").value("jwt-token-123"));
+                .andExpect(jsonPath("$.data.access_token").value("jwt-token-123"));
 
         verify(authService, times(1)).register(any(RegisterRequestDto.class));
     }
@@ -117,7 +122,7 @@ class AuthControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("USER_ALREADY_EXISTS"))
+                .andExpect(jsonPath("$.error").value("USER_ALREADY_EXISTS"))
                 .andExpect(jsonPath("$.message").value("Username already exists"));
 
         verify(authService, times(1)).register(any(RegisterRequestDto.class));
@@ -136,7 +141,7 @@ class AuthControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"))
                 .andExpect(jsonPath("$.message").value("Invalid credentials"));
 
         verify(authService, times(1)).login(any(LoginRequestDto.class));
@@ -144,7 +149,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("测试修改密码 - 密码不匹配")
-    @WithMockUser(username = "testuser", roles = {"USER"})
+    @WithMockUser(username = "testuser")
     void testChangePassword_PasswordMismatch() throws Exception {
         PasswordChangeDto mismatchRequest = new PasswordChangeDto();
         mismatchRequest.setCurrentPassword("Password123!");
@@ -155,17 +160,16 @@ class AuthControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mismatchRequest)))
-                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("PASSWORD_MISMATCH"));
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"));
 
         verify(authService, never()).changePassword(anyString(), any(PasswordChangeDto.class));
     }
 
     @Test
     @DisplayName("测试修改密码 - 当前密码错误")
-    @WithMockUser(username = "testuser", roles = {"USER"})
+    @WithMockUser(username = "testuser")
     void testChangePassword_WrongCurrentPassword() throws Exception {
         doThrow(new InvalidCredentialsException("Current password is incorrect"))
                 .when(authService).changePassword(eq("testuser"), any(PasswordChangeDto.class));
@@ -177,7 +181,7 @@ class AuthControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"))
                 .andExpect(jsonPath("$.message").value("Current password is incorrect"));
 
         verify(authService, times(1)).changePassword(eq("testuser"), any(PasswordChangeDto.class));

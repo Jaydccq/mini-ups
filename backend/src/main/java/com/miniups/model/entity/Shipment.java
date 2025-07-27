@@ -317,11 +317,6 @@ public class Shipment extends BaseEntity {
     
     public void updateStatus(ShipmentStatus newStatus) {
         this.status = newStatus;
-        // Add to status history
-        ShipmentStatusHistory history = new ShipmentStatusHistory();
-        history.setShipment(this);
-        history.setStatus(newStatus);
-        history.setTimestamp(LocalDateTime.now());
-        this.statusHistory.add(history);
+        // Note: Status history is now managed by TrackingService to avoid duplication
     }
 }

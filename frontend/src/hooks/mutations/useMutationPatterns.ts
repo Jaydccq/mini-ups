@@ -345,13 +345,18 @@ export function useSmartMutation<TData = unknown, TError = Error, TVariables = v
   pessimisticConfig?: PessimisticMutationConfig<TData, TError, TVariables>
 ) {
   const risk = assessMutationRisk(operation);
+  const isOptimisticOperation = risk === 'low' || risk === 'medium';
   
-  if (risk === 'low' || risk === 'medium') {
+  // Always call both hooks to avoid conditional hook calls
+  const optimisticMutation = useOptimisticMutation(optimisticConfig || {} as OptimisticMutationConfig<TData, TError, TVariables, TContext>);
+  const pessimisticMutation = usePessimisticMutation(pessimisticConfig || {} as PessimisticMutationConfig<TData, TError, TVariables>);
+  
+  if (isOptimisticOperation) {
     if (!optimisticConfig) {
       throw new Error(`Optimistic config required for ${risk} risk operation: ${operation}`);
     }
     return {
-      mutation: useOptimisticMutation(optimisticConfig),
+      mutation: optimisticMutation,
       pattern: 'optimistic' as const,
       risk,
     };
@@ -360,11 +365,7 @@ export function useSmartMutation<TData = unknown, TError = Error, TVariables = v
       throw new Error(`Pessimistic config required for ${risk} risk operation: ${operation}`);
     }
     return {
-      mutation: usePessimisticMutation({
-        ...pessimisticConfig,
-        criticalOperation: risk === 'critical',
-        requiresConfirmation: risk === 'critical',
-      }),
+      mutation: pessimisticMutation,
       pattern: 'pessimistic' as const,
       risk,
     };

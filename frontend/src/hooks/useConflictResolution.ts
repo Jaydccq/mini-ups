@@ -114,16 +114,11 @@ export const useConflictResolution = () => {
   ) => {
     setIsResolving(true);
     
-    try {
-      await resolveMutation.mutateAsync({
-        conflictId,
-        resolution,
-        originalMutationFn,
-      });
-    } catch (error) {
-      // Error handling is done in the mutation
-      throw error;
-    }
+    await resolveMutation.mutateAsync({
+      conflictId,
+      resolution,
+      originalMutationFn,
+    });
   }, [resolveMutation]);
 
   const cancelConflictResolution = useCallback((conflictId: string) => {
@@ -190,7 +185,7 @@ export const useConflictAwareMutation = <TData, TVariables>(
         // Store the original mutation function for resolution
         (window as any).__conflictResolutionMutations = {
           ...(window as any).__conflictResolutionMutations,
-          [conflictId]: mutationFn,
+          [String(conflictId)]: mutationFn,
         };
       }
     },

@@ -15,7 +15,7 @@ export function useAddShipmentComment() {
   
   return useOptimisticMutation({
     mutationFn: ({ shipmentId, comment }: { shipmentId: string; comment: string }) =>
-      shipmentApi.addComment(shipmentId, comment),
+      shipmentApi.addComment(shipmentId, { comment }),
     
     successMessage: 'Comment added successfully',
     errorMessage: 'Failed to add comment',
@@ -59,6 +59,8 @@ export function useAddShipmentComment() {
 
 // Medium-risk: Updating shipment preferences (optimistic with careful rollback)
 export function useUpdateShipmentPreferences() {
+  const queryClient = useQueryClient();
+  
   return useOptimisticMutation({
     mutationFn: ({ shipmentId, preferences }: { 
       shipmentId: string; 
@@ -74,8 +76,6 @@ export function useUpdateShipmentPreferences() {
     ],
 
     onMutate: async (variables) => {
-      const queryClient = useQueryClient();
-      
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['shipment', variables.shipmentId] });
       
@@ -92,7 +92,6 @@ export function useUpdateShipmentPreferences() {
     },
 
     rollback: (variables, context) => {
-      const queryClient = useQueryClient();
       if (context?.previousShipment) {
         queryClient.setQueryData(['shipment', variables.shipmentId], context.previousShipment);
       }
@@ -233,7 +232,7 @@ export function useUpdateShipmentAddress() {
       trackingNumber: string; 
       newAddress: any; 
       version: number;
-    }) => shipmentApi.updateAddress(trackingNumber, newAddress, version),
+    }) => shipmentApi.updateAddress(trackingNumber, newAddress),
     
     successMessage: 'Delivery address updated successfully',
     

@@ -116,7 +116,7 @@ public class UserController {
      * @return User information
      */
     @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #userId")
+    @PreAuthorize("hasRole('ADMIN') or authentication.principal.user.id == #userId")
     public ResponseEntity<ApiResponse<UserDto>> getUserById(@PathVariable Long userId) {
         logger.debug("Get user information: userId={}", userId);
         

@@ -1,19 +1,19 @@
 /**
  * JWT Security Test
- * 
+ *
  * 目的:
  * - 专门测试 JWT 令牌的生成、验证和安全性
  * - 验证 JWT 令牌提供者的各种边界条件
  * - 确保 JWT 安全机制的可靠性
  * - 测试令牌过期、刷新和撤销机制
- * 
+ *
  * 测试覆盖范围:
  * - JWT 令牌生成和验证
  * - 令牌过期处理
  * - 恶意令牌检测
  * - 令牌刷新机制
  * - 安全头部验证
- * 
+ *
  * @author Mini-UPS Team
  * @version 1.0.0
  */
@@ -21,60 +21,41 @@ package com.miniups.security;
 
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.UserRole;
-import com.miniups.repository.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
-@TestPropertySource(properties = {
-    "spring.datasource.url=jdbc:h2:mem:jwttest",
-    "spring.jpa.hibernate.ddl-auto=create-drop",
-    "app.jwtSecret=mySecretKey",
-    "app.jwtExpirationInMs=86400000"
-})
-@Transactional
 public class JwtSecurityTest {
 
-    @Autowired
     private JwtTokenProvider jwtTokenProvider;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     private User testUser;
 
     @BeforeEach
     void setUp() {
-        userRepository.deleteAll();
+        // Initialize JwtTokenProvider with test configuration
+        jwtTokenProvider = new JwtTokenProvider();
+        ReflectionTestUtils.setField(jwtTokenProvider, "jwtSecret", "mySecretKeyForTestingPurposesOnlyDoNotUseInProduction1234567890");
+        ReflectionTestUtils.setField(jwtTokenProvider, "jwtExpirationInMs", 86400000);
         
+        // Initialize the JWT configuration
+        jwtTokenProvider.validateJwtConfiguration();
+        
+        // Create test user (no need to save to database for JWT tests)
         testUser = new User();
         testUser.setUsername("jwt_test_user");
         testUser.setEmail("jwt@test.com");
-        testUser.setPassword(passwordEncoder.encode("password123"));
+        testUser.setPassword("encoded_password123");
         testUser.setRole(UserRole.USER);
         testUser.setEnabled(true);
-        testUser = userRepository.save(testUser);
     }
 
     // ========================================
@@ -88,7 +69,7 @@ public class JwtSecurityTest {
         
         assertNotNull(token);
         assertFalse(token.isEmpty());
-        assertTrue(token.split("\\.").length == 3); // JWT 应该有 3 个部分
+        assertEquals(3, token.split("\\.").length); // JWT 应该有 3 个部分
     }
 
     @Test
@@ -103,7 +84,6 @@ public class JwtSecurityTest {
     @Test
     @DisplayName("JWT 生成 - 令牌应有正确的过期时间")
     void testGenerateToken_ShouldHaveCorrectExpirationTime() {
-        String token = jwtTokenProvider.generateToken(testUser.getUsername());
         Long expirationTime = jwtTokenProvider.getExpirationTime();
         
         assertNotNull(expirationTime);
@@ -139,21 +119,14 @@ public class JwtSecurityTest {
     void testValidateToken_ShouldReturnFalseForMalformedToken() {
         String malformedToken = "invalid.jwt.token";
         
-        assertThrows(MalformedJwtException.class, () -> {
-            jwtTokenProvider.validateToken(malformedToken);
-        });
+        assertFalse(jwtTokenProvider.validateToken(malformedToken));
     }
 
     @Test
     @DisplayName("JWT 验证 - 空令牌应验证失败")
     void testValidateToken_ShouldReturnFalseForEmptyToken() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            jwtTokenProvider.validateToken("");
-        });
-        
-        assertThrows(IllegalArgumentException.class, () -> {
-            jwtTokenProvider.validateToken(null);
-        });
+        assertFalse(jwtTokenProvider.validateToken(""));
+        assertFalse(jwtTokenProvider.validateToken(null));
     }
 
     // ========================================
@@ -180,13 +153,11 @@ public class JwtSecurityTest {
     }
 
     @Test
-    @DisplayName("JWT 解析 - 格式错误的令牌应抛出异常")
-    void testGetUsernameFromToken_ShouldThrowExceptionForMalformedToken() {
+    @DisplayName("JWT 解析 - 格式错误的令牌应返回null")
+    void testGetUsernameFromToken_ShouldReturnNullForMalformedToken() {
         String malformedToken = "not.a.valid.jwt";
         
-        assertThrows(MalformedJwtException.class, () -> {
-            jwtTokenProvider.getUsernameFromToken(malformedToken);
-        });
+        assertThrows(MalformedJwtException.class, () -> jwtTokenProvider.getUsernameFromToken(malformedToken));
     }
 
     // ========================================
@@ -201,9 +172,7 @@ public class JwtSecurityTest {
         String token = jwtTokenProvider.generateToken(testUser.getUsername());
         String tamperedToken = token.substring(0, token.length() - 5) + "XXXXX";
         
-        assertThrows(SignatureException.class, () -> {
-            jwtTokenProvider.validateToken(tamperedToken);
-        });
+        assertFalse(jwtTokenProvider.validateToken(tamperedToken));
     }
 
     @Test
@@ -241,12 +210,22 @@ public class JwtSecurityTest {
     @Test
     @DisplayName("JWT 过期 - 过期令牌验证应失败")
     void testValidateToken_ShouldFailForExpiredToken() {
-        // 使用一个明显过期的令牌格式进行测试
-        String expiredTokenExample = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0X3VzZXIiLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYwMDAwMDAwMX0.invalid";
+        // Create a token with a very short expiration time
+        JwtTokenProvider shortExpirationProvider = new JwtTokenProvider();
+        ReflectionTestUtils.setField(shortExpirationProvider, "jwtSecret", "mySecretKeyForTestingPurposesOnlyDoNotUseInProduction1234567890");
+        ReflectionTestUtils.setField(shortExpirationProvider, "jwtExpirationInMs", 1); // 1 millisecond
+        shortExpirationProvider.validateJwtConfiguration();
         
-        assertThrows(ExpiredJwtException.class, () -> {
-            jwtTokenProvider.validateToken(expiredTokenExample);
-        });
+        String shortLivedToken = shortExpirationProvider.generateToken(testUser.getUsername());
+        
+        // Wait for token to expire
+        try {
+            Thread.sleep(10); // Wait 10ms to ensure expiration
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        assertFalse(jwtTokenProvider.validateToken(shortLivedToken));
     }
 
     // ========================================
@@ -256,13 +235,8 @@ public class JwtSecurityTest {
     @Test
     @DisplayName("边界条件 - 空用户名应抛出异常")
     void testGenerateToken_ShouldThrowExceptionForEmptyUsername() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            jwtTokenProvider.generateToken("");
-        });
-        
-        assertThrows(IllegalArgumentException.class, () -> {
-            jwtTokenProvider.generateToken(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> jwtTokenProvider.generateToken(""));
+        assertThrows(IllegalArgumentException.class, () -> jwtTokenProvider.generateToken(null));
     }
 
     @Test

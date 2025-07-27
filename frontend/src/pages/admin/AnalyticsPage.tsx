@@ -33,7 +33,8 @@ import {
   Legend, 
   Line, 
   Bar, 
-  Cell 
+  Cell,
+  ChartData
 } from '@/components/charts/SimpleChart';
 import { AdvancedAnalytics } from '@/components/admin/AdvancedAnalytics';
 import { toast } from 'sonner';
@@ -282,7 +283,7 @@ export const AnalyticsPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LineChart width={500} height={300} data={shipmentTrendsData}>
+            <LineChart width={500} height={300} data={shipmentTrendsData as unknown as ChartData[]}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
@@ -306,7 +307,7 @@ export const AnalyticsPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PieChart width={500} height={300} data={statusDistributionData}>
+            <PieChart width={500} height={300} data={statusDistributionData as unknown as ChartData[]}>
               <Tooltip />
               {statusDistributionData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />

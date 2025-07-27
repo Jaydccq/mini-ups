@@ -20,23 +20,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   TrendingUp, 
   TrendingDown,
-  BarChart3, 
   LineChart as LineChartIcon,
-  PieChart as PieChartIcon,
   Activity, 
   Zap,
   Target,
-  Clock,
   Users,
   Truck,
-  Package,
   DollarSign,
   AlertTriangle,
-  CheckCircle,
-  RefreshCw,
-  Filter,
-  Calendar,
-  Download
+  RefreshCw
 } from 'lucide-react';
 
 interface MetricData {
@@ -82,7 +74,6 @@ interface AdvancedAnalyticsProps {
 
 export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({ className = '' }) => {
   const [timeRange, setTimeRange] = useState('30d');
-  const [selectedMetric, setSelectedMetric] = useState<string>('delivery-efficiency');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -282,36 +273,6 @@ export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({ className 
 
   const getMetricsByCategory = (category: string) => {
     return metrics.filter(m => m.category === category);
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'revenue':
-        return <DollarSign className="w-5 h-5" />;
-      case 'operations':
-        return <Truck className="w-5 h-5" />;
-      case 'efficiency':
-        return <Zap className="w-5 h-5" />;
-      case 'satisfaction':
-        return <Users className="w-5 h-5" />;
-      default:
-        return <Activity className="w-5 h-5" />;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'revenue':
-        return 'text-green-600';
-      case 'operations':
-        return 'text-blue-600';
-      case 'efficiency':
-        return 'text-yellow-600';
-      case 'satisfaction':
-        return 'text-purple-600';
-      default:
-        return 'text-gray-600';
-    }
   };
 
   const getTrendIcon = (trend: string) => {

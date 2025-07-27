@@ -19,7 +19,7 @@ export const useUpdateShipmentStatusWithConflictResolution = () => {
       status: string;
       version: number;
       comment?: string;
-    }) => shipmentApi.updateStatus(trackingNumber, status, comment, version),
+    }) => shipmentApi.updateStatus(trackingNumber, status, comment),
     {
       entityType: 'shipment',
       entityIdExtractor: (variables) => variables.trackingNumber,
@@ -38,7 +38,7 @@ export const useUpdateDeliveryAddressWithConflictResolution = () => {
       trackingNumber: string;
       address: any;
       version: number;
-    }) => shipmentApi.updateDeliveryAddress(trackingNumber, address, version),
+    }) => shipmentApi.updateDeliveryAddress(trackingNumber, address),
     {
       entityType: 'shipment',
       entityIdExtractor: (variables) => variables.trackingNumber,
@@ -66,8 +66,8 @@ export const useUpdateDeliveryAddressWithConflictResolution = () => {
     loadingMessage: 'Updating delivery address...',
     
     invalidateQueries: [
-      queryKeys.shipment.detail(variables => variables.trackingNumber),
-      queryKeys.shipment.tracking(variables => variables.trackingNumber),
+      ['shipments', 'detail'],
+      ['shipments', 'tracking'],
     ],
   });
 };
@@ -78,7 +78,7 @@ export const useAddShipmentCommentWithOptimisticUpdates = () => {
   
   const conflictAwareMutation = useConflictAwareMutation(
     ({ shipmentId, comment }: { shipmentId: string; comment: string }) =>
-      shipmentApi.addComment(shipmentId, comment),
+      shipmentApi.addComment(shipmentId, { comment }),
     {
       entityType: 'shipment_comment',
       entityIdExtractor: (variables) => variables.shipmentId,
@@ -97,8 +97,8 @@ export const useAddShipmentCommentWithOptimisticUpdates = () => {
     },
     
     invalidateQueries: [
-      queryKeys.shipment.comments,
-      queryKeys.shipment.detail,
+      ['shipments', 'comments'],
+      ['shipments', 'detail'],
     ],
 
     onMutate: async (variables) => {
@@ -129,7 +129,7 @@ export const useAddShipmentCommentWithOptimisticUpdates = () => {
       return { previousComments, optimisticComment };
     },
 
-    rollback: (variables, context) => {
+    rollback: (variables: any, context: any) => {
       if (context?.previousComments) {
         queryClient.setQueryData(
           queryKeys.shipment.comments(variables.shipmentId), 

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -50,13 +51,12 @@ import java.util.Map;
  * @version 1.0
  * @since 2024
  */
-@Slf4j
 @Service
 public class AsyncAuditService {
     private static final Logger log = LoggerFactory.getLogger(AsyncAuditService.class);
     private final EventPublisherService eventPublisher;
     
-    public AsyncAuditService(EventPublisherService eventPublisher) {
+    public AsyncAuditService(@Autowired(required = false) EventPublisherService eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 
@@ -248,8 +248,10 @@ public class AsyncAuditService {
                 payload.setAdditionalData(additionalData);
             }
             
-            // Publish the event asynchronously
-            eventPublisher.publishAuditLogEvent(payload, requestContext != null ? requestContext.correlationId : null);
+            // Publish the event asynchronously (if available)
+            if (eventPublisher != null) {
+                eventPublisher.publishAuditLogEvent(payload, requestContext != null ? requestContext.correlationId : null);
+            }
             
         } catch (Exception e) {
             // Don't let audit failures break the main business flow

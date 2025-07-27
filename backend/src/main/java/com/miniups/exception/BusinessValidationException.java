@@ -23,13 +23,13 @@ public class BusinessValidationException extends BaseBusinessException {
     private final Map<String, Object> validationDetails;
     
     public BusinessValidationException(String validationType, String message) {
-        super("BUSINESS_VALIDATION_ERROR", message, ExceptionSeverity.LOW);
+        super(validationType, message, ExceptionSeverity.LOW); // 使用 validationType 作为错误码
         this.validationType = validationType;
         this.validationDetails = null;
     }
     
     public BusinessValidationException(String validationType, String message, Map<String, Object> validationDetails) {
-        super("BUSINESS_VALIDATION_ERROR", message, ExceptionSeverity.LOW);
+        super(validationType, message, ExceptionSeverity.LOW); // 使用 validationType 作为错误码
         this.validationType = validationType;
         this.validationDetails = validationDetails;
     }

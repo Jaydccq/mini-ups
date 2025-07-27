@@ -89,6 +89,36 @@ cd frontend && ./run-local.sh
 # - Redis: localhost:6380
 ```
 
+### 🧪 Testing & CI/CD
+
+#### **Running Tests with Java 17** (Recommended)
+```bash
+# Use the dedicated test script (ensures Java 17 compatibility)
+./scripts/test-java17.sh
+
+# Simulate CI environment locally
+./scripts/simulate-ci.sh
+
+# Or manually set JAVA_HOME and run tests
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean test -Dspring.profiles.active=test
+
+# Quick compilation check
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -DskipTests=true
+```
+
+**⚠️ Java Version Compatibility Notes:**
+- Project requires Java 17 (configured in pom.xml)
+- GitHub Actions CI/CD is configured to use Java 17 automatically
+- If you have multiple Java versions installed, Maven might use a different version than your default `java` command
+- Check Maven's Java version: `mvn -version`
+- Both test scripts automatically set JAVA_HOME to Java 17 to avoid compatibility issues
+
+**🚀 GitHub Actions CI/CD:**
+- ✅ Configured for Java 17 (Eclipse Temurin distribution)
+- ✅ Automatic Java version verification in CI
+- ✅ Docker builds use Java 17 (maven:3.9.6-eclipse-temurin-17 and eclipse-temurin:17-jre-alpine)
+- ✅ Compatible with JaCoCo code coverage and Mockito testing framework
+
 ### 🗄️ Database Management
 
 #### **UPS Database Setup**
@@ -650,4 +680,45 @@ docker compose logs -f
 docker compose down
 ```
 
-This project represents a complete, production-ready distributed system with comprehensive documentation, testing, and deployment strategies. All components are fully implemented and documented for easy maintenance and extension.
+<workflow>
+1. 每当我输入新的需求的时候，为了规范需求质量和验收标准，你首先会搞清楚问题和需求
+2. 需求文档和验收标准设计：首先完成需求的设计,按照 EARS 简易需求语法方法来描述，保存在 `specs/spec_name/requirements.md` 中，跟我进行确认，最终确认清楚后，需求定稿，参考格式如下
+
+```markdown
+# 需求文档
+
+## 介绍
+
+需求描述
+
+## 需求
+
+### 需求 1 - 需求名称
+
+**用户故事：** 用户故事内容
+
+#### 验收标准
+
+1. 采用 ERAS 描述的子句 While <可选前置条件>, when <可选触发器>, the <系统名称> shall <系统响应>，例如 When 选择"静音"时，笔记本电脑应当抑制所有音频输出。
+2. ...
+...
+```
+2. 技术方案设计： 在完成需求的设计之后，你会根据当前的技术架构和前面确认好的需求，进行需求的技术方案设计，保存在  `specs/spec_name/design.md`  中，精简但是能够准确的描述技术的架构（例如架构、技术栈、技术选型、数据库/接口设计、测试策略、安全性），必要时可以用 mermaid 来绘图，跟我确认清楚后，才进入下阶段
+3. 任务拆分：在完成技术方案设计后，你会根据需求文档和技术方案，细化具体要做的事情，保存在`specs/spec_name/tasks.md` 中, 跟我确认清楚后，才开始正式执行任务，同时更新任务的状态
+
+格式如下
+
+``` markdown
+# 实施计划
+
+- [ ] 1. 任务信息
+- 具体要做的事情
+- ...
+- _需求: 相关的需求点的编号
+
+```
+</workflow>
+
+Spring 官方在 3.4.0 版本开始将 @MockBean 和 @SpyBean 弃用，是因为推荐 直接使用 Mockito 或其他 mocking 框架来进行更明确的依赖注入，而不是由 Spring 进行测试期间注入，提升测试的控制性与清晰度。
+
+参考文档：Spring Boot 3.4 Release Notes

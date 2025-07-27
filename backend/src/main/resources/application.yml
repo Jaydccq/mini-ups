@@ -25,24 +25,21 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         use_sql_comments: true
     open-in-view: false
   
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6380}
-    database: ${REDIS_DATABASE:0}
-    timeout: ${REDIS_TIMEOUT:2000ms}
-    lettuce:
-      pool:
-        max-active: 10
-        max-idle: 8
-        min-idle: 0
-  
   data:
     redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:2000ms}
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 8
+          min-idle: 0
       repositories:
         enabled: false
   
@@ -137,6 +134,14 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operations-sorter: method
+
+# Rate Limiting Configuration
+rate-limiting:
+  enabled: ${RATE_LIMITING_ENABLED:true}
+  shipment-creation:
+    requests-per-minute: ${RATE_LIMITING_SHIPMENT_CREATION_RPM:10}
+  general-api:
+    requests-per-minute: ${RATE_LIMITING_GENERAL_API_RPM:60}
 
 # Application-specific Configuration
 app:

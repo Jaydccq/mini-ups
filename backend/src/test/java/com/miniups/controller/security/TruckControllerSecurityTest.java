@@ -20,8 +20,11 @@ package com.miniups.controller.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miniups.model.entity.User;
+import com.miniups.model.entity.Truck;
 import com.miniups.model.enums.UserRole;
+import com.miniups.model.enums.TruckStatus;
 import com.miniups.repository.UserRepository;
+import com.miniups.repository.TruckRepository;
 import com.miniups.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,12 +41,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-    "spring.datasource.url=jdbc:h2:mem:trucktest",
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
     "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @Transactional
@@ -64,6 +68,9 @@ public class TruckControllerSecurityTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private TruckRepository truckRepository;
+
     private User adminUser;
     private User normalUser;
     private User driverUser;
@@ -78,7 +85,9 @@ public class TruckControllerSecurityTest {
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
+        truckRepository.deleteAll(); // 清理卡车数据
         setupTestUsers();
+        setupTestTrucks(); // 创建测试卡车
         setupJwtTokens();
     }
 
@@ -127,6 +136,25 @@ public class TruckControllerSecurityTest {
         systemUser.setRole(UserRole.ADMIN);
         systemUser.setEnabled(true);
         systemUser = userRepository.save(systemUser);
+    }
+
+    private void setupTestTrucks() {
+        // Create test trucks with specific IDs that the security tests expect
+        Truck truck1 = new Truck();
+        truck1.setTruckId(1);
+        truck1.setCurrentX(100);
+        truck1.setCurrentY(200);
+        truck1.setStatus(TruckStatus.IDLE);
+        truck1.setCapacity(1000);
+        truckRepository.save(truck1);
+
+        Truck truck2 = new Truck();
+        truck2.setTruckId(2);
+        truck2.setCurrentX(150);
+        truck2.setCurrentY(250);
+        truck2.setStatus(TruckStatus.IDLE);
+        truck2.setCapacity(1000);
+        truckRepository.save(truck2);
     }
 
     private void setupJwtTokens() {
@@ -325,7 +353,7 @@ public class TruckControllerSecurityTest {
     void testAssignTruck_ShouldDenyNormalUser() throws Exception {
         String assignmentRequest = "{"
                 + "\"target_x\":300,"
-                + "\"target_y\":400,"
+                + "\"target_y\":400"
                 + "}";
 
         mockMvc.perform(post("/api/trucks/1/assign")
@@ -340,7 +368,7 @@ public class TruckControllerSecurityTest {
     void testAssignTruck_ShouldDenyDriver() throws Exception {
         String assignmentRequest = "{"
                 + "\"target_x\":300,"
-                + "\"target_y\":400,"
+                + "\"target_y\":400"
                 + "}";
 
         mockMvc.perform(post("/api/trucks/1/assign")

@@ -1,8 +1,9 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:upsdb}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ups_db}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:abc123}
+    # Support both legacy format and direct DATABASE_URL format
+    url: ${DATABASE_URL:jdbc:postgresql://${POSTGRES_HOST:upsdb}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ups_db}}
+    username: ${DATABASE_USERNAME:${POSTGRES_USER:postgres}}
+    password: ${DATABASE_PASSWORD:${POSTGRES_PASSWORD:abc123}}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -15,21 +16,32 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         use_sql_comments: true
+        dialect: ${DATABASE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
     open-in-view: false
   
-  redis:
-    host: ${REDIS_HOST:redis}
-    port: ${REDIS_PORT:6380}
-    database: 0
-    timeout: 2000ms
-    lettuce:
-      pool:
-        max-active: 10
-        max-idle: 8
-        min-idle: 0
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 8
+          min-idle: 0
+  
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    virtual-host: /
+    connection-timeout: 10000
+    requested-heartbeat: 30
 
 jwt:
   secret: ${JWT_SECRET:YourVeryLongSecretKeyThatShouldBeAtLeast256BitsLongForHS256Algorithm}

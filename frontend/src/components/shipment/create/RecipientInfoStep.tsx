@@ -79,7 +79,7 @@ export const RecipientInfoStep: React.FC<RecipientInfoStepProps> = ({ form }) =>
             id="recipientName"
             {...register('recipientName')}
             placeholder="Enter recipient's full name"
-            error={!!errors.recipientName}
+            className={errors.recipientName ? 'border-red-500' : ''}
           />
           {errors.recipientName && (
             <p className="text-sm text-red-600">{errors.recipientName.message}</p>
@@ -96,7 +96,7 @@ export const RecipientInfoStep: React.FC<RecipientInfoStepProps> = ({ form }) =>
             type="email"
             {...register('recipientEmail')}
             placeholder="recipient@example.com"
-            error={!!errors.recipientEmail}
+            className={errors.recipientEmail ? 'border-red-500' : ''}
           />
           {errors.recipientEmail && (
             <p className="text-sm text-red-600">{errors.recipientEmail.message}</p>
@@ -112,7 +112,7 @@ export const RecipientInfoStep: React.FC<RecipientInfoStepProps> = ({ form }) =>
             id="recipientPhone"
             {...register('recipientPhone')}
             placeholder="+1 (555) 987-6543"
-            error={!!errors.recipientPhone}
+            className={errors.recipientPhone ? 'border-red-500' : ''}
           />
           {errors.recipientPhone && (
             <p className="text-sm text-red-600">{errors.recipientPhone.message}</p>
@@ -130,7 +130,7 @@ export const RecipientInfoStep: React.FC<RecipientInfoStepProps> = ({ form }) =>
             onAddressSelect={handleAddressValidation}
             onValidationChange={handleValidationChange}
             placeholder="456 Delivery Ave, City, State, ZIP"
-            error={!!errors.recipientAddress}
+            className={errors.recipientAddress ? 'border-red-500' : ''}
           />
           {errors.recipientAddress && (
             <p className="text-sm text-red-600">{errors.recipientAddress.message}</p>
@@ -158,7 +158,7 @@ export const RecipientInfoStep: React.FC<RecipientInfoStepProps> = ({ form }) =>
               min="-1000"
               max="1000"
               step="0.1"
-              error={!!errors.destinationX}
+              className={errors.destinationX ? 'border-red-500' : ''}
             />
             {errors.destinationX && (
               <p className="text-sm text-red-600">{errors.destinationX.message}</p>
@@ -177,7 +177,7 @@ export const RecipientInfoStep: React.FC<RecipientInfoStepProps> = ({ form }) =>
               min="-1000"
               max="1000"
               step="0.1"
-              error={!!errors.destinationY}
+              className={errors.destinationY ? 'border-red-500' : ''}
             />
             {errors.destinationY && (
               <p className="text-sm text-red-600">{errors.destinationY.message}</p>

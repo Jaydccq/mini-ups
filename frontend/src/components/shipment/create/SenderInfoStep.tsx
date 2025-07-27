@@ -92,7 +92,7 @@ export const SenderInfoStep: React.FC<SenderInfoStepProps> = ({ form }) => {
             id="senderName"
             {...register('senderName')}
             placeholder="Enter your full name"
-            error={!!errors.senderName}
+            className={errors.senderName ? 'border-red-500' : ''}
           />
           {errors.senderName && (
             <p className="text-sm text-red-600">{errors.senderName.message}</p>
@@ -109,7 +109,7 @@ export const SenderInfoStep: React.FC<SenderInfoStepProps> = ({ form }) => {
             type="email"
             {...register('senderEmail')}
             placeholder="your.email@example.com"
-            error={!!errors.senderEmail}
+            className={errors.senderEmail ? 'border-red-500' : ''}
           />
           {errors.senderEmail && (
             <p className="text-sm text-red-600">{errors.senderEmail.message}</p>
@@ -125,7 +125,7 @@ export const SenderInfoStep: React.FC<SenderInfoStepProps> = ({ form }) => {
             id="senderPhone"
             {...register('senderPhone')}
             placeholder="+1 (555) 123-4567"
-            error={!!errors.senderPhone}
+            className={errors.senderPhone ? 'border-red-500' : ''}
           />
           {errors.senderPhone && (
             <p className="text-sm text-red-600">{errors.senderPhone.message}</p>
@@ -143,7 +143,7 @@ export const SenderInfoStep: React.FC<SenderInfoStepProps> = ({ form }) => {
             onAddressSelect={handleAddressValidation}
             onValidationChange={handleValidationChange}
             placeholder="123 Main St, City, State, ZIP"
-            error={!!errors.senderAddress}
+            className={errors.senderAddress ? 'border-red-500' : ''}
           />
           {errors.senderAddress && (
             <p className="text-sm text-red-600">{errors.senderAddress.message}</p>

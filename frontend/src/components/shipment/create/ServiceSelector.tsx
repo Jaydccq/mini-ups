@@ -198,7 +198,7 @@ export const ServiceSelector: React.FC<ServiceSelectorProps> = ({
       breakdown[service.id] = calculatePriceBreakdown(service);
     });
     setPriceBreakdown(breakdown);
-  }, [weight, dimensions, value, distance]);
+  }, [weight, dimensions, value, distance, calculatePriceBreakdown]);
 
   return (
     <div className="space-y-6">

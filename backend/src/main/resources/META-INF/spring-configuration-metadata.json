@@ -1,0 +1,171 @@
+{
+  "properties": [
+    {
+      "name": "app.cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "允许的CORS来源",
+      "defaultValue": "http://localhost:3000"
+    },
+    {
+      "name": "app.rabbitmq.test.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用RabbitMQ测试模式（使用模拟）",
+      "defaultValue": true
+    },
+    {
+      "name": "app.notifications.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用通知功能",
+      "defaultValue": true
+    },
+    {
+      "name": "app.notifications.email.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用邮件通知",
+      "defaultValue": true
+    },
+    {
+      "name": "app.notifications.sms.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用短信通知",
+      "defaultValue": false
+    },
+    {
+      "name": "app.notifications.push.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用推送通知",
+      "defaultValue": false
+    },
+    {
+      "name": "world.simulator.host",
+      "type": "java.lang.String",
+      "description": "世界模拟器主机地址",
+      "defaultValue": "localhost"
+    },
+    {
+      "name": "world.simulator.port",
+      "type": "java.lang.Integer",
+      "description": "世界模拟器端口",
+      "defaultValue": 12345
+    },
+    {
+      "name": "world.simulator.connection-timeout",
+      "type": "java.lang.Integer",
+      "description": "世界模拟器连接超时时间（毫秒）",
+      "defaultValue": 10000
+    },
+    {
+      "name": "world.simulator.read-timeout",
+      "type": "java.lang.Integer",
+      "description": "世界模拟器读取超时时间（毫秒）",
+      "defaultValue": 10000
+    },
+    {
+      "name": "world.simulator.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用世界模拟器集成",
+      "defaultValue": true
+    },
+    {
+      "name": "world.simulator.default-sim-speed",
+      "type": "java.lang.Integer",
+      "description": "默认模拟速度",
+      "defaultValue": 1000
+    },
+    {
+      "name": "amazon.base-url",
+      "type": "java.lang.String",
+      "description": "Amazon服务基础URL",
+      "defaultValue": "http://localhost:8080"
+    },
+    {
+      "name": "amazon.api.url",
+      "type": "java.lang.String",
+      "description": "Amazon API URL",
+      "defaultValue": "http://localhost:8080"
+    },
+    {
+      "name": "amazon.api.timeout",
+      "type": "java.lang.Integer",
+      "description": "Amazon API超时时间（毫秒）",
+      "defaultValue": 5000
+    },
+    {
+      "name": "amazon.api.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用Amazon API集成",
+      "defaultValue": true
+    },
+    {
+      "name": "amazon.webhook.secret",
+      "type": "java.lang.String",
+      "description": "Amazon Webhook密钥",
+      "defaultValue": "default-webhook-secret-key"
+    },
+    {
+      "name": "amazon.webhook.signature-header",
+      "type": "java.lang.String",
+      "description": "Amazon Webhook签名头",
+      "defaultValue": "X-Amazon-Signature"
+    },
+    {
+      "name": "amazon.webhook.authentication.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用Amazon Webhook认证",
+      "defaultValue": true
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "JWT签名密钥"
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "JWT令牌过期时间（毫秒）",
+      "defaultValue": 86400000
+    },
+    {
+      "name": "rate-limiting.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用速率限制",
+      "defaultValue": true
+    },
+    {
+      "name": "rate-limiting.shipment-creation.requests-per-minute",
+      "type": "java.lang.Integer",
+      "description": "货物创建每分钟请求数限制",
+      "defaultValue": 10
+    },
+    {
+      "name": "rate-limiting.general-api.requests-per-minute",
+      "type": "java.lang.Integer",
+      "description": "通用API每分钟请求数限制",
+      "defaultValue": 60
+    },
+    {
+      "name": "http.client.max-total-connections",
+      "type": "java.lang.Integer",
+      "description": "HTTP客户端最大总连接数",
+      "defaultValue": 100
+    },
+    {
+      "name": "http.client.max-default-per-route",
+      "type": "java.lang.Integer",
+      "description": "HTTP客户端每个路由的默认最大连接数",
+      "defaultValue": 20
+    },
+    {
+      "name": "http.client.connect-timeout-ms",
+      "type": "java.lang.Integer",
+      "description": "HTTP客户端连接超时时间（毫秒）",
+      "defaultValue": 10000
+    },
+    {
+      "name": "http.client.socket-timeout-ms",
+      "type": "java.lang.Integer",
+      "description": "HTTP客户端Socket超时时间（毫秒）",
+      "defaultValue": 30000
+    }
+  ]
+}

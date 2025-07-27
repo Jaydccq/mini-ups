@@ -36,7 +36,9 @@ package com.miniups.repository;
 
 import com.miniups.model.entity.Truck;
 import com.miniups.model.enums.TruckStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -57,4 +59,49 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
     
     @Query("SELECT COUNT(t) FROM Truck t WHERE t.status = :status")
     long countByStatus(@Param("status") TruckStatus status);
+    
+    /**
+     * Find available trucks using PostgreSQL SKIP LOCKED for high concurrency
+     * This prevents deadlocks by skipping already locked trucks
+     */
+    @Query(value = """
+        SELECT * FROM trucks 
+        WHERE status = 'IDLE' 
+        ORDER BY id ASC 
+        FOR UPDATE SKIP LOCKED
+        """, nativeQuery = true)
+    List<Truck> findIdleForUpdateSkipLocked();
+    
+    /**
+     * Find nearest available truck for assignment using SKIP LOCKED
+     * This prevents deadlocks by skipping already locked trucks
+     */
+    @Query(value = """
+        SELECT * FROM trucks 
+        WHERE status = 'IDLE' 
+        AND ABS(current_x - :originX) + ABS(current_y - :originY) < 1000
+        ORDER BY (ABS(current_x - :originX) + ABS(current_y - :originY)) ASC
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+        """, nativeQuery = true)
+    Optional<Truck> findNearestAvailableTruckForAssignment(@Param("originX") Integer originX, @Param("originY") Integer originY);
+    
+    /**
+     * Get the truck that was just assigned atomically
+     */
+    @Query("SELECT t FROM Truck t WHERE t.status = 'EN_ROUTE' ORDER BY t.updatedAt DESC")
+    List<Truck> findRecentlyAssignedTrucks();
+    
+    /**
+     * Find and lock one available truck for assignment - optimized for high concurrency
+     * Uses SKIP LOCKED to prevent blocking when multiple threads compete for trucks
+     */
+    @Query(value = """
+        SELECT * FROM trucks 
+        WHERE status = 'IDLE' 
+        ORDER BY id ASC 
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+        """, nativeQuery = true)
+    Optional<Truck> findAndLockOneAvailableTruck();
 }

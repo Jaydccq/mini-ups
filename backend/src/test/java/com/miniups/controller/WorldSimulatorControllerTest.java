@@ -3,35 +3,50 @@
 package com.miniups.controller;
 
 import com.miniups.service.WorldSimulatorService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.when;
 
-@WebMvcTest(WorldSimulatorController.class)
+@ExtendWith(MockitoExtension.class)
 public class WorldSimulatorControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private WorldSimulatorService worldSimulatorService;
+    
+    @InjectMocks
+    private WorldSimulatorController worldSimulatorController;
+
+    @BeforeEach
+    void setUp() {
+        // Setup common mock behavior
+        when(worldSimulatorService.isConnected()).thenReturn(true);
+    }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
     public void whenSetSpeed_thenServiceIsCalled() throws Exception {
-        mockMvc.perform(post("/api/simulator/speed")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"speed\": 5}"))
-                .andExpect(status().isOk());
-
+        // Arrange
+        Map<String, Object> speedRequest = Map.of("speed", 5);
+        
+        // Act
+        ResponseEntity<Map<String, Object>> response = worldSimulatorController.setSimulationSpeed(speedRequest);
+        
+        // Assert
+        assertEquals(200, response.getStatusCodeValue());
+        assertTrue((Boolean) response.getBody().get("success"));
+        assertEquals("Simulation speed updated successfully", response.getBody().get("message"));
+        assertEquals(5, response.getBody().get("speed"));
+        
         verify(worldSimulatorService).setSimulationSpeed(5);
     }
 }

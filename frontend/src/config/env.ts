@@ -125,10 +125,10 @@ const createEnvConfig = (): EnvironmentConfig => {
     VITE_APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'Mini-UPS Logistics Management System',
     
     // Feature Flags
-    VITE_ENABLE_NOTIFICATIONS: parseBoolean(import.meta.env.VITE_ENABLE_NOTIFICATIONS),
-    VITE_ENABLE_REAL_TIME: parseBoolean(import.meta.env.VITE_ENABLE_REAL_TIME),
-    VITE_ENABLE_ANALYTICS: parseBoolean(import.meta.env.VITE_ENABLE_ANALYTICS),
-    VITE_ENABLE_PWA: parseBoolean(import.meta.env.VITE_ENABLE_PWA),
+    VITE_ENABLE_NOTIFICATIONS: parseBoolean(import.meta.env.VITE_ENABLE_NOTIFICATIONS?.toString()),
+    VITE_ENABLE_REAL_TIME: parseBoolean(import.meta.env.VITE_ENABLE_REAL_TIME?.toString()),
+    VITE_ENABLE_ANALYTICS: parseBoolean(import.meta.env.VITE_ENABLE_ANALYTICS?.toString()),
+    VITE_ENABLE_PWA: parseBoolean(import.meta.env.VITE_ENABLE_PWA?.toString()),
     
     // External Services
     VITE_ANALYTICS_ID: import.meta.env.VITE_ANALYTICS_ID,
@@ -138,13 +138,13 @@ const createEnvConfig = (): EnvironmentConfig => {
     
     // Security & Auth
     VITE_JWT_SECRET_KEY: import.meta.env.VITE_JWT_SECRET_KEY,
-    VITE_SESSION_TIMEOUT: parseNumber(import.meta.env.VITE_SESSION_TIMEOUT, 3600000), // 1 hour default
-    VITE_ENABLE_HTTPS: parseBoolean(import.meta.env.VITE_ENABLE_HTTPS),
+    VITE_SESSION_TIMEOUT: parseNumber(import.meta.env.VITE_SESSION_TIMEOUT?.toString(), 3600000), // 1 hour default
+    VITE_ENABLE_HTTPS: parseBoolean(import.meta.env.VITE_ENABLE_HTTPS?.toString()),
     
     // Performance & Debugging
-    VITE_LOG_LEVEL: (import.meta.env.VITE_LOG_LEVEL as any) || 'info',
-    VITE_ENABLE_SOURCE_MAPS: parseBoolean(import.meta.env.VITE_ENABLE_SOURCE_MAPS),
-    VITE_ENABLE_BUNDLE_ANALYZER: parseBoolean(import.meta.env.VITE_ENABLE_BUNDLE_ANALYZER),
+    VITE_LOG_LEVEL: (import.meta.env.VITE_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info',
+    VITE_ENABLE_SOURCE_MAPS: parseBoolean(import.meta.env.VITE_ENABLE_SOURCE_MAPS?.toString()),
+    VITE_ENABLE_BUNDLE_ANALYZER: parseBoolean(import.meta.env.VITE_ENABLE_BUNDLE_ANALYZER?.toString()),
     
     // CDN & Assets
     VITE_CDN_URL: import.meta.env.VITE_CDN_URL,

@@ -55,7 +55,7 @@ public class TruckManagementService {
     private WorldSimulatorService worldSimulatorService;
     
     /**
-     * Intelligently assign truck to shipment order
+     * Intelligently assign truck to shipment order using high-performance atomic assignment
      * 
      * @param originX Origin X coordinate
      * @param originY Origin Y coordinate
@@ -63,33 +63,73 @@ public class TruckManagementService {
      * @return Assigned truck, null if no available trucks
      */
     public Truck assignOptimalTruck(Integer originX, Integer originY, Integer priority) {
+        // Try atomic assignment first
+        Truck truck = doAssignOptimalTruckAtomic(originX, originY, priority);
+        if (truck != null) {
+            return truck;
+        }
+        
+        // Fallback to pessimistic approach if atomic fails
+        return doAssignOptimalTruckPessimistic(originX, originY, priority);
+    }
+    
+    /**
+     * High-performance atomic truck assignment using database-level locking
+     * This method provides the best concurrency performance by avoiding application-level locks
+     */
+    private Truck doAssignOptimalTruckAtomic(Integer originX, Integer originY, Integer priority) {
         try {
-            // Find all available trucks
-            List<Truck> availableTrucks = truckRepository.findByStatus(TruckStatus.IDLE);
+            // Step 1: Find nearest available truck with SKIP LOCKED
+            Optional<Truck> truckOpt = truckRepository.findNearestAvailableTruckForAssignment(originX, originY);
             
-            if (availableTrucks.isEmpty()) {
-                logger.warn("No available trucks for assignment");
-                return null;
-            }
-            
-            // Sort by distance and other factors to select best truck
-            Truck bestTruck = findBestTruck(availableTrucks, originX, originY, priority);
-            
-            if (bestTruck != null) {
-                // Update truck status to busy
-                bestTruck.setStatus(TruckStatus.EN_ROUTE);
-                bestTruck = truckRepository.save(bestTruck);
+            if (truckOpt.isPresent()) {
+                // Step 2: Update the truck status in same transaction
+                Truck truck = truckOpt.get();
+                truck.setStatus(TruckStatus.EN_ROUTE);
+                truck = truckRepository.save(truck);
                 
-                logger.info("Assigned truck {} to pickup at ({}, {})", 
-                           bestTruck.getTruckId(), originX, originY);
+                logger.info("Atomically assigned truck {} to pickup at ({}, {})", 
+                           truck.getTruckId(), originX, originY);
+                return truck;
             }
             
-            return bestTruck;
-            
+            logger.debug("No available trucks for atomic assignment at ({}, {})", originX, originY);
+            return null;
         } catch (Exception e) {
-            logger.error("Error assigning truck", e);
+            // If atomic assignment fails for any reason (database issues, locking conflicts, etc.),
+            // return null to allow fallback to pessimistic approach
+            logger.warn("Atomic truck assignment failed at ({}, {}): {}", originX, originY, e.getMessage());
             return null;
         }
+    }
+    
+    /**
+     * Fallback truck assignment using pessimistic locking
+     * This method is used when atomic assignment is not available or fails
+     */
+    private Truck doAssignOptimalTruckPessimistic(Integer originX, Integer originY, Integer priority) {
+        // Find all available trucks with SKIP LOCKED to prevent deadlocks
+        List<Truck> availableTrucks = truckRepository.findIdleForUpdateSkipLocked();
+        
+        if (availableTrucks.isEmpty()) {
+            logger.debug("No available trucks for assignment at ({}, {})", originX, originY);
+            return null;
+        }
+        
+        // Sort by distance and other factors to select best truck
+        Truck bestTruck = findBestTruck(availableTrucks, originX, originY, priority);
+        
+        if (bestTruck != null) {
+            // Update truck status to busy
+            bestTruck.setStatus(TruckStatus.EN_ROUTE);
+            bestTruck = truckRepository.save(bestTruck);
+            
+            logger.info("Assigned truck {} to pickup at ({}, {})", 
+                       bestTruck.getTruckId(), originX, originY);
+            return bestTruck;
+        }
+        
+        return null;
     }
     
     /**
@@ -162,7 +202,7 @@ public class TruckManagementService {
             return true;
             
         } catch (Exception e) {
-            logger.error("Error updating truck status", e);
+            logger.error("Error updating truck status for truck {}", truckId, e);
             return false;
         }
     }

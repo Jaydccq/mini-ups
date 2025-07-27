@@ -2,7 +2,6 @@ package com.miniups.concurrency;
 
 import com.miniups.model.dto.auth.RegisterRequestDto;
 import com.miniups.service.AuthService;
-import com.miniups.util.TestDataFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * 用户注册并发测试

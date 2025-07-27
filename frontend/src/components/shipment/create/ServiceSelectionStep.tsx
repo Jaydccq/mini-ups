@@ -44,7 +44,7 @@ export const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({ form
     : undefined;
 
   const handleServiceSelect = (service: string) => {
-    setValue('deliverySpeed', service);
+    setValue('deliverySpeed', service as 'STANDARD' | 'EXPRESS' | 'OVERNIGHT');
   };
 
   const handleTimeWindowSelect = (timeWindow: {

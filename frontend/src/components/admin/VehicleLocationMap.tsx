@@ -12,7 +12,7 @@
  * @author Mini-UPS Team
  * @version 1.0.0
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,16 +20,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MapPin, 
   Truck, 
-  Navigation, 
   RefreshCw, 
   Eye, 
   EyeOff,
-  Filter,
   Users,
-  Clock,
-  Route,
-  AlertTriangle,
-  CheckCircle
+  Route
 } from 'lucide-react';
 
 interface VehicleLocation {

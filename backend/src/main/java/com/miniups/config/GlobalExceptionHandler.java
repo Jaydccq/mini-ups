@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -184,6 +185,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
+        return buildErrorResponse(ex, "ACCESS_DENIED", "You do not have permission to perform this operation", HttpStatus.FORBIDDEN, null);
+    }
+
+    /**
+     * Handle authorization denied exception (Spring Security 6.x)
+     */
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthorizationDeniedException(
+            AuthorizationDeniedException ex, WebRequest request) {
         return buildErrorResponse(ex, "ACCESS_DENIED", "You do not have permission to perform this operation", HttpStatus.FORBIDDEN, null);
     }
 

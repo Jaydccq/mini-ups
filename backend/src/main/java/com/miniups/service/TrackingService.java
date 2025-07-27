@@ -29,6 +29,9 @@ import com.miniups.repository.ShipmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @Transactional
@@ -51,16 +55,17 @@ public class TrackingService {
     private ShipmentRepository shipmentRepository;
     
     private final Random random = new Random();
+    private final AtomicLong sequenceCounter = new AtomicLong(0);
     
     /**
      * Generate unique UPS tracking number
      * 
-     * Format: UPS + YYYYMMDDHHMMSS + 4-digit random number
-     * Example: UPS202401151030451234
+     * Format: UPS + YYYYMMDDHHMMSS + 4-digit sequence number
+     * Example: UPS202401151030450001
      * 
      * @return Unique tracking number
      */
-    public String generateTrackingNumber() {
+    public synchronized String generateTrackingNumber() {
         int attempts = 0;
         
         while (attempts < MAX_RETRY_ATTEMPTS) {
@@ -76,8 +81,8 @@ public class TrackingService {
             logger.warn("Tracking number collision, attempt {}: {}", attempts, trackingNumber);
         }
         
-        // If we still have collisions after max attempts, add system timestamp
-        String fallbackNumber = createTrackingNumber() + System.nanoTime() % 10000;
+        // If we still have collisions after max attempts, add nanosecond timestamp
+        String fallbackNumber = createTrackingNumber() + String.format("%04d", System.nanoTime() % 10000);
         logger.warn("Used fallback tracking number generation: {}", fallbackNumber);
         return fallbackNumber;
     }
@@ -98,14 +103,23 @@ public class TrackingService {
     }
     
     /**
-     * Update package status
+     * Update package status with retry mechanism for optimistic locking
      * 
      * @param trackingNumber UPS tracking number
      * @param newStatus New status
      * @param comment Status change comment
      * @return Whether update was successful
      */
+    @Retryable(
+        value = {OptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 50, multiplier = 1.5, maxDelay = 500)
+    )
     public boolean updateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String comment) {
+        return doUpdateShipmentStatus(trackingNumber, newStatus, comment);
+    }
+    
+    private boolean doUpdateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String comment) {
         try {
             Optional<Shipment> shipmentOpt = findByTrackingNumber(trackingNumber);
             
@@ -125,7 +139,7 @@ public class TrackingService {
             }
             
             // Update status
-            shipment.updateStatus(newStatus);
+            shipment.setStatus(newStatus);
             
             // Add status history entry with comment
             ShipmentStatusHistory history = new ShipmentStatusHistory();
@@ -148,6 +162,9 @@ public class TrackingService {
             
             return true;
             
+        } catch (OptimisticLockingFailureException e) {
+            logger.debug("Optimistic locking failure for tracking number: {}, will retry", trackingNumber);
+            throw e; // Re-throw to trigger retry
         } catch (Exception e) {
             logger.error("Error updating shipment status for tracking number: " + trackingNumber, e);
             return false;
@@ -216,17 +233,30 @@ public class TrackingService {
         // Get current timestamp
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         
-        // Generate 4-digit random number
-        int randomNum = 1000 + random.nextInt(9000);
+        // Use atomic counter for thread-safe sequence generation
+        long sequence = sequenceCounter.incrementAndGet() % 10000;
         
-        return TRACKING_PREFIX + timestamp + randomNum;
+        // Format sequence to 4 digits with leading zeros
+        String sequenceStr = String.format("%04d", sequence);
+        
+        return TRACKING_PREFIX + timestamp + sequenceStr;
     }
     
     private boolean isValidStatusTransition(ShipmentStatus fromStatus, ShipmentStatus toStatus) {
         // Define valid state transitions
         switch (fromStatus) {
             case CREATED:
-                return toStatus == ShipmentStatus.PICKED_UP || toStatus == ShipmentStatus.CANCELLED;
+                return toStatus == ShipmentStatus.TRUCK_DISPATCHED || 
+                       toStatus == ShipmentStatus.PICKED_UP || 
+                       toStatus == ShipmentStatus.CANCELLED;
+                
+            case TRUCK_DISPATCHED:
+                return toStatus == ShipmentStatus.PICKED_UP || 
+                       toStatus == ShipmentStatus.IN_TRANSIT || 
+                       toStatus == ShipmentStatus.OUT_FOR_DELIVERY ||
+                       toStatus == ShipmentStatus.DELIVERED ||
+                       toStatus == ShipmentStatus.CANCELLED ||
+                       toStatus == ShipmentStatus.EXCEPTION;
                 
             case PICKED_UP:
                 return toStatus == ShipmentStatus.IN_TRANSIT || toStatus == ShipmentStatus.CANCELLED;

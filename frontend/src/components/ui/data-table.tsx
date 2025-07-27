@@ -209,7 +209,7 @@ export function DataTable<T extends Record<string, any>>({
                 {actions.map((action, index) => (
                   <Button
                     key={index}
-                    variant={action.variant || 'secondary'}
+                    variant={action.variant === 'primary' ? 'default' : action.variant || 'secondary'}
                     size="sm"
                     onClick={() => {
                       const selectedData = Array.from(selectedRows).map(i => processedData[i]);

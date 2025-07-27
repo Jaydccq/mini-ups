@@ -2,7 +2,6 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { splitVendorChunkPlugin } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
@@ -22,15 +21,14 @@ export default defineConfig(({ command, mode }) => {
         babel: isProd ? {
           plugins: [
             // Remove PropTypes in production
-            ['transform-react-remove-prop-types', { removeImport: true }],
+            ['babel-plugin-transform-react-remove-prop-types', { removeImport: true }],
             // Remove development-only code
-            ['transform-remove-console', { exclude: ['error', 'warn'] }]
+            ['babel-plugin-transform-remove-console', { exclude: ['error', 'warn'] }]
           ]
         } : undefined
       }),
       
-      // Vendor chunk splitting for better caching
-      splitVendorChunkPlugin(),
+      // Manual chunk splitting is configured in rollupOptions.output.manualChunks
       
       // Bundle analyzer for production builds
       isProd && visualizer({
@@ -90,8 +88,8 @@ export default defineConfig(({ command, mode }) => {
       // Generate sourcemaps for production debugging
       sourcemap: isProd ? 'hidden' : true,
       
-      // Build optimizations
-      minify: isProd ? 'esbuild' : false,
+      // Build optimizations  
+      minify: isProd ? 'terser' : false,
       cssMinify: isProd,
       
       // Increase chunk size warning limit
@@ -127,7 +125,7 @@ export default defineConfig(({ command, mode }) => {
               }
               
               // Socket.io and real-time libraries
-              if (id.includes('socket.io') || id.includes('ws')) {
+              if (id.includes('node_modules/socket.io') || id.includes('node_modules/ws/')) {
                 return 'realtime-vendor'
               }
               
