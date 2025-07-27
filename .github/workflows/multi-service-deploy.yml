@@ -704,9 +704,9 @@ jobs:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.AWS_EC2_HOST }}
-          username: ${{ secrets.AWS_EC2_USER }}
-          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           timeout: 300s
           script: |
             set -e
@@ -786,25 +786,25 @@ jobs:
             
             echo "🎉 Deployment completed successfully!"
             echo "📍 Access URLs:"
-            echo "   UPS Frontend: http://${{ secrets.AWS_EC2_HOST }}:3000"
-            echo "   Amazon Service: http://${{ secrets.AWS_EC2_HOST }}:8080"
-            echo "   UPS API: http://${{ secrets.AWS_EC2_HOST }}:8081"
+            echo "   UPS Frontend: http://${{ secrets.EC2_HOST }}:3000"
+            echo "   Amazon Service: http://${{ secrets.EC2_HOST }}:8080"
+            echo "   UPS API: http://${{ secrets.EC2_HOST }}:8081"
 
       - name: Copy Docker images to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.AWS_EC2_HOST }}
-          username: ${{ secrets.AWS_EC2_USER }}
-          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           source: "*.tar.gz"
           target: "/home/ubuntu/mini-ups/images/"
 
       - name: Load Docker images on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.AWS_EC2_HOST }}
-          username: ${{ secrets.AWS_EC2_USER }}
-          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/mini-ups/images/
             echo "📦 Loading Docker images..."
@@ -833,10 +833,10 @@ jobs:
         run: |
           echo "🎉 Multi-service deployment completed successfully!"
           echo "📍 Services are accessible at:"
-          echo "   🌐 UPS Frontend: http://${{ secrets.AWS_EC2_HOST }}:3000"
-          echo "   🛒 Amazon Service: http://${{ secrets.AWS_EC2_HOST }}:8080"  
-          echo "   🔌 UPS API: http://${{ secrets.AWS_EC2_HOST }}:8081"
-          echo "   📊 RabbitMQ Management: http://${{ secrets.AWS_EC2_HOST }}:15672"
+          echo "   🌐 UPS Frontend: http://${{ secrets.EC2_HOST }}:3000"
+          echo "   🛒 Amazon Service: http://${{ secrets.EC2_HOST }}:8080"  
+          echo "   🔌 UPS API: http://${{ secrets.EC2_HOST }}:8081"
+          echo "   📊 RabbitMQ Management: http://${{ secrets.EC2_HOST }}:15672"
 
       - name: Notify Failure
         if: needs.deploy-aws.result == 'failure' || needs.integration-test.result == 'failure'
