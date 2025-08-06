@@ -280,29 +280,39 @@ export const DashboardPage: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="text-sm font-medium">Package delivered</p>
-                      <p className="text-xs text-muted-foreground">UPS123456789 • 2 hours ago</p>
-                    </div>
+                {stats && stats.recent_shipments && stats.recent_shipments.length > 0 ? (
+                  <div className="space-y-3">
+                    {stats.recent_shipments.map((shipment) => (
+                      <div key={shipment.tracking_number} className="flex items-start gap-3">
+                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                          shipment.status === 'DELIVERED' ? 'bg-green-500' :
+                          shipment.status === 'IN_TRANSIT' ? 'bg-blue-500' :
+                          shipment.status === 'PENDING' ? 'bg-yellow-500' :
+                          'bg-gray-500'
+                        }`}></div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {shipment.status === 'DELIVERED' ? 'Package delivered' :
+                             shipment.status === 'IN_TRANSIT' ? 'Package in transit' :
+                             shipment.status === 'PENDING' ? 'Pickup scheduled' :
+                             shipment.status_display}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {shipment.tracking_number} • {new Date(shipment.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="text-sm font-medium">New shipment created</p>
-                      <p className="text-xs text-muted-foreground">UPS987654321 • 4 hours ago</p>
-                    </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Activity className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                    <p className="text-sm text-muted-foreground">No recent activity</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Create your first shipment to see activity here
+                    </p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="text-sm font-medium">Pickup scheduled</p>
-                      <p className="text-xs text-muted-foreground">UPS456789123 • 6 hours ago</p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

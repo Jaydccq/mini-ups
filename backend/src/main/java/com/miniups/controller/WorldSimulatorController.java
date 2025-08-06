@@ -43,7 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @RestController
-@RequestMapping("/api/world")
+@RequestMapping("/world")
 @CrossOrigin(origins = "*")
 public class WorldSimulatorController {
     

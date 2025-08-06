@@ -14,7 +14,7 @@ import { authApi } from '@/services/auth'
 import { toast } from 'sonner'
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  usernameOrEmail: z.string().min(1, 'Username or email is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
@@ -45,8 +45,26 @@ export const LoginPage: React.FC = () => {
     
     try {
       const response = await authApi.login(data)
-      login(response.user, response.token)
+      console.log('Login response:', response)
+      
+      // Map backend user data to frontend User interface
+      const mappedUser = {
+        id: response.user.id.toString(),
+        email: response.user.email,
+        name: response.user.displayName || `${response.user.firstName} ${response.user.lastName}`.trim(),
+        role: response.user.role as 'USER' | 'ADMIN'
+      }
+      
+      console.log('Mapped user:', mappedUser)
+      console.log('Token:', response.access_token)
+      
+      login(mappedUser, response.access_token)
       toast.success('Login successful!')
+      
+      // Debug: Check auth state after login
+      setTimeout(() => {
+        console.log('Auth state after login:', useAuthStore.getState())
+      }, 100)
     } catch (err: unknown) {
       let errorMessage = 'Login failed, please try again later'
       if (typeof err === 'object' && err !== null && 'response' in err) {
@@ -85,23 +103,23 @@ export const LoginPage: React.FC = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="usernameOrEmail">Username or Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="Enter your email"
+                  id="usernameOrEmail"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="Enter your username or email"
                   className="pl-10"
-                  {...register('email')}
-                  aria-invalid={errors.email ? 'true' : 'false'}
-                  aria-describedby="email-error"
+                  {...register('usernameOrEmail')}
+                  aria-invalid={errors.usernameOrEmail ? 'true' : 'false'}
+                  aria-describedby="usernameOrEmail-error"
                 />
               </div>
-              {errors.email && (
-                <p id="email-error" className="text-sm text-red-500" role="alert">
-                  {errors.email.message}
+              {errors.usernameOrEmail && (
+                <p id="usernameOrEmail-error" className="text-sm text-red-500" role="alert">
+                  {errors.usernameOrEmail.message}
                 </p>
               )}
             </div>

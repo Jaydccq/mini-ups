@@ -4,7 +4,7 @@ echo "=== Mini-UPS Local Development Setup ==="
 
 # Check if PostgreSQL is running
 if ! pg_isready -h localhost -p 5432 2>/dev/null; then
-    echo "❌ PostgreSQL is not running on localhost:5432"
+    echo "❌ PostgreSQL is not running on localhost:5432 (redis-server --port 6380 --daemonize yes)"
     echo "Please start PostgreSQL first:"
     echo "  - macOS: brew services start postgresql"
     echo "  - Ubuntu: sudo systemctl start postgresql"
@@ -33,13 +33,14 @@ export SPRING_PROFILES_ACTIVE=local
 export DATABASE_URL=jdbc:postgresql://localhost:5432/ups_db
 export REDIS_HOST=localhost
 export REDIS_PORT=6380
+export JWT_SECRET=your-very-long-secret-key-for-jwt-signing-should-be-at-least-256-bits-long
 
 echo "🚀 Starting services..."
 
 # Start backend in background
 echo "Starting Spring Boot backend..."
 cd backend
-./mvnw spring-boot:run &
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.jvmArguments="--add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED" &
 BACKEND_PID=$!
 cd ..
 
@@ -57,8 +58,8 @@ cd ..
 echo ""
 echo "=== Services Started ==="
 echo "🔧 Backend:  http://localhost:8081"
-echo "🌐 Frontend: http://localhost:3000"
-echo "🗄️  Database: postgresql://localhost:5432/miniups"
+echo "🌐 Frontend: http://localhost:3001"
+echo "🗄️  Database: postgresql://localhost:5432/ups_db"
 echo "📦 Redis:    localhost:6380"
 echo ""
 echo "Press Ctrl+C to stop all services"

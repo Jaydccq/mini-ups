@@ -331,7 +331,7 @@ public class TokenBlacklistService {
     private static final String BLACKLIST_PREFIX = "blacklisted_token:";
     
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private <String, Object> redisTemplate;
     
     /**
      * 将token添加到黑名单

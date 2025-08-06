@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/trucks")
+@RequestMapping("/trucks")
 @CrossOrigin(origins = "*")
 public class TruckManagementController {
     

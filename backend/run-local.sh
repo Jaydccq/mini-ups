@@ -31,4 +31,4 @@ echo "📦 Redis: localhost:6380"
 echo "🌐 Server: http://localhost:8081/api"
 echo ""
 
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.jvmArguments="--add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED"

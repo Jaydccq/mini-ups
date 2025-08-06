@@ -189,12 +189,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
                 .requestMatchers("/", "/index.html", "/favicon.ico").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/public/**").permitAll()
-                .requestMatchers("/api/tracking/**").permitAll() // Allow tracking without auth
-                .requestMatchers("/api/webhooks/**").permitAll() // Amazon webhooks
-                .requestMatchers("/api/users/*/public").permitAll() // Public user profiles
-                .requestMatchers("/api/shipment", "/api/shipment_loaded", "/api/shipment_status", "/api/address_change").permitAll() // Amazon integration endpoints
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/public/**").permitAll()
+                .requestMatchers("/tracking/**").permitAll() // Allow tracking without auth
+                .requestMatchers("/webhooks/**").permitAll() // Amazon webhooks
+                .requestMatchers("/users/*/public").permitAll() // Public user profiles
+                .requestMatchers("/shipment", "/shipment_loaded", "/shipment_status", "/address_change").permitAll() // Amazon integration endpoints
                 
                 // API Documentation
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -203,10 +203,10 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health", "/actuator/info", "/actuator/**").permitAll()
                 
                 // Admin endpoints
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 
                 // Driver endpoints
-                .requestMatchers("/api/driver/**").hasAnyRole("DRIVER", "ADMIN")
+                .requestMatchers("/driver/**").hasAnyRole("DRIVER", "ADMIN")
                 
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

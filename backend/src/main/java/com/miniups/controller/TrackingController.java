@@ -42,7 +42,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/tracking")
+@RequestMapping("/tracking")
 @CrossOrigin(origins = "*")
 public class TrackingController {
     
@@ -110,7 +110,7 @@ public class TrackingController {
      * @return List of all packages for the user
      */
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #userId")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUserShipments(@PathVariable Long userId) {
         logger.info("Getting shipments for user: {}", userId);
         

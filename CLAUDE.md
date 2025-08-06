@@ -722,3 +722,5 @@ docker compose down
 Spring 官方在 3.4.0 版本开始将 @MockBean 和 @SpyBean 弃用，是因为推荐 直接使用 Mockito 或其他 mocking 框架来进行更明确的依赖注入，而不是由 Spring 进行测试期间注入，提升测试的控制性与清晰度。
 
 参考文档：Spring Boot 3.4 Release Notes
+
+所有项目中的代码，除非我要求 否则全用英文。
