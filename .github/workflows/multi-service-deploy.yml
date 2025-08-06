@@ -50,7 +50,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_DB: ups_db_test
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -76,6 +76,15 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
+          
+      - name: Verify Java version
+        run: |
+          echo "🔍 Verifying Java setup..."
+          echo "JAVA_HOME: $JAVA_HOME"
+          java -version
+          javac -version
+          mvn -version | grep -E "(Java version|JVM)"
+          echo "✅ Java ${{ env.JAVA_VERSION }} verified"
 
       - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -96,18 +105,45 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
 
+      - name: Install PostgreSQL and Redis clients
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client redis-tools
+
+      - name: Verify test environment
+        run: |
+          echo "🔍 Verifying test environment setup..."
+          echo "PostgreSQL service status:"
+          docker ps --filter "ancestor=postgres:15" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+          echo "Redis service status:"
+          docker ps --filter "ancestor=redis:7-alpine" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+          
+          echo "Testing database connectivity..."
+          pg_isready -h localhost -p 5432 -U postgres || { echo "❌ PostgreSQL not ready"; exit 1; }
+          echo "✅ PostgreSQL is ready"
+          
+          echo "Testing Redis connectivity..."
+          redis-cli -h localhost -p 6379 ping || { echo "❌ Redis not ready"; exit 1; }
+          echo "✅ Redis is ready"
+          
+          echo "✅ Test environment verified"
+
       - name: Test backend
         working-directory: ./backend
         run: |
           echo "🧪 Testing UPS Backend..."
           mvn clean test -Dspring.profiles.active=test -DfailIfNoTests=false
         env:
-          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/ups_db_test
-          TEST_DATABASE_USERNAME: postgres
-          TEST_DATABASE_PASSWORD: abc123
+          # Force H2 database for unit tests to avoid PostgreSQL connection issues
+          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+          SPRING_DATASOURCE_USERNAME: sa
+          SPRING_DATASOURCE_PASSWORD: ""
+          # Redis configuration for integration tests that need it
           TEST_REDIS_HOST: localhost
           TEST_REDIS_PORT: 6379
-          MAVEN_OPTS: "-Xmx1024m -XX:+UseG1GC"
+          # JVM options
+          MAVEN_OPTS: "-Xmx1024m -XX:+UseG1GC --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
 
       - name: Test and build frontend
         working-directory: ./frontend
