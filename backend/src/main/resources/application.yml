@@ -108,7 +108,7 @@ http:
 # Logging Configuration
 logging:
   level:
-    com.miniups: DEBUG
+    com.miniups: WARN
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
   pattern:
