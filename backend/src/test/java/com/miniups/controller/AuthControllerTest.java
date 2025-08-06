@@ -8,6 +8,9 @@ import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.dto.auth.PasswordChangeDto;
 import com.miniups.model.dto.auth.RegisterRequestDto;
 import com.miniups.service.AuthService;
+import com.miniups.service.UserService;
+import com.miniups.service.TokenBlacklistService;
+import com.miniups.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +49,24 @@ class AuthControllerTest {
         @Primary
         public AuthService authService() {
             return Mockito.mock(AuthService.class);
+        }
+        
+        @Bean
+        @Primary
+        public UserService userService() {
+            return Mockito.mock(UserService.class);
+        }
+        
+        @Bean
+        @Primary
+        public TokenBlacklistService tokenBlacklistService() {
+            return Mockito.mock(TokenBlacklistService.class);
+        }
+        
+        @Bean
+        @Primary
+        public JwtTokenProvider jwtTokenProvider() {
+            return Mockito.mock(JwtTokenProvider.class);
         }
     }
 
@@ -96,7 +117,7 @@ class AuthControllerTest {
     void testRegisterUser_Success() throws Exception {
         when(authService.register(any(RegisterRequestDto.class))).thenReturn(authResponse);
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/auth/register")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerRequest)))
@@ -115,7 +136,7 @@ class AuthControllerTest {
         when(authService.register(any(RegisterRequestDto.class)))
                 .thenThrow(new UserAlreadyExistsException("Username already exists"));
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/auth/register")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerRequest)))
@@ -134,7 +155,7 @@ class AuthControllerTest {
         when(authService.login(any(LoginRequestDto.class)))
                 .thenThrow(new InvalidCredentialsException("Invalid credentials"));
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
@@ -156,7 +177,7 @@ class AuthControllerTest {
         mismatchRequest.setNewPassword("NewPassword123!");
         mismatchRequest.setConfirmPassword("DifferentPassword123!");
 
-        mockMvc.perform(post("/api/auth/change-password")
+        mockMvc.perform(post("/auth/change-password")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mismatchRequest)))
@@ -174,7 +195,7 @@ class AuthControllerTest {
         doThrow(new InvalidCredentialsException("Current password is incorrect"))
                 .when(authService).changePassword(eq("testuser"), any(PasswordChangeDto.class));
 
-        mockMvc.perform(post("/api/auth/change-password")
+        mockMvc.perform(post("/auth/change-password")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(passwordChangeRequest)))
