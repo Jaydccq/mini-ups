@@ -166,7 +166,11 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn spring-boot:run -Dspring-boot.run.profiles=local)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.jvmArguments=\"--add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED\")",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac -cp \"backend/target/classes:$(find backend/target/dependency -name \"*.jar\" | tr ''\\n'' '':'')\" test_password.java)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH java -cp \".:backend/target/classes:$(find backend/target/dependency -name \"*.jar\" | tr ''\\n'' '':'')\" TestPassword)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH java -cp \".:backend/target/classes:$(find backend/target/dependency -name \"*.jar\" | tr ''\\n'' '':'')\" TestPassword)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=CustomUserDetailsServiceTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=*ServiceTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"*ServiceTest\" -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"CustomUserDetailsServiceTest,AuthServiceTest,UserServiceTest\" -Dspring.profiles.active=test)"
     ],
     "deny": []
   }

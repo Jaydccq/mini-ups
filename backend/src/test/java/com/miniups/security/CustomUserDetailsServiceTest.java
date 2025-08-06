@@ -194,13 +194,14 @@ class CustomUserDetailsServiceTest {
     void testLoadUserByUsername_NullUsername() {
         // Given
         String username = null;
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> customUserDetailsService.loadUserByUsername(username))
-                .isInstanceOf(UsernameNotFoundException.class);
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessageContaining("User not found: null");
 
-        verify(userRepository).findByUsername(username);
+        // Verify repository is not called due to early validation
+        verifyNoInteractions(userRepository);
     }
 
     @Test
@@ -208,14 +209,14 @@ class CustomUserDetailsServiceTest {
     void testLoadUserByUsername_EmptyUsername() {
         // Given
         String username = "";
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> customUserDetailsService.loadUserByUsername(username))
                 .isInstanceOf(UsernameNotFoundException.class)
                 .hasMessageContaining("User not found: ");
 
-        verify(userRepository).findByUsername(username);
+        // Verify repository is not called due to early validation
+        verifyNoInteractions(userRepository);
     }
 
     @Test

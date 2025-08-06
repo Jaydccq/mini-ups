@@ -54,15 +54,19 @@ public class CustomUserDetailsService implements UserDetailsService {
     
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+        if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
+            throw new UsernameNotFoundException("User not found: " + usernameOrEmail);
+        }
+        
         User user;
         
         // Check if the input contains '@' to determine if it's an email
         if (usernameOrEmail.contains("@")) {
             user = userRepository.findByEmail(usernameOrEmail)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + usernameOrEmail));
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
         } else {
             user = userRepository.findByUsername(usernameOrEmail)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + usernameOrEmail));
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
         }
         
         return new CustomUserPrincipal(user);
