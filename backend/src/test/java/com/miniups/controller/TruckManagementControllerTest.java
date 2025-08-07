@@ -5,19 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miniups.model.entity.Truck;
 import com.miniups.model.enums.TruckStatus;
 import com.miniups.service.TruckManagementService;
+import com.miniups.controller.TruckManagementController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.ActiveProfiles;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,35 +25,26 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Import(TruckManagementControllerTest.TestConfig.class)
+@ExtendWith(MockitoExtension.class)
 public class TruckManagementControllerTest {
 
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        @Primary
-        public TruckManagementService truckManagementService() {
-            return mock(TruckManagementService.class);
-        }
-    }
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
+    @Mock
     private TruckManagementService truckManagementService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private TruckManagementController truckManagementController;
+
+    private MockMvc mockMvc;
+    
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private Truck testTruck1;
     private Truck testTruck2;
 
     @BeforeEach
     void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(truckManagementController).build();
+        
         testTruck1 = new Truck();
         testTruck1.setId(1L);
         testTruck1.setStatus(TruckStatus.IDLE);
@@ -67,7 +55,6 @@ public class TruckManagementControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
     public void whenGetAllTrucks_thenReturnJsonArray() throws Exception {
         List<Map<String, Object>> allTrucks = Arrays.asList(
             Map.of("truck_id", "TRUCK001", "status", "IDLE", "status_display", "Idle", "current_x", 10, "current_y", 20, "capacity", 1000, "available", true),
@@ -75,7 +62,7 @@ public class TruckManagementControllerTest {
         );
         when(truckManagementService.getAllTruckStatuses()).thenReturn(allTrucks);
 
-        mockMvc.perform(get("/api/trucks")
+        mockMvc.perform(get("/trucks")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

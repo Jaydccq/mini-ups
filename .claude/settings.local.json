@@ -174,7 +174,14 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ExceptionMetricsConfigTest -Dspring.profiles.active=test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ConcurrentTrackingNumberGenerationTest -Dspring.profiles.active=test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthControllerTest -Dspring.profiles.active=test)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthControllerTest -Dspring.profiles.active=test -q)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthControllerTest -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=TruckManagementControllerTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=UserControllerTest -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"TruckManagementControllerTest,AuthServiceTest\" -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"TruckManagementControllerTest,AdminControllerSecurityTest,TruckControllerSecurityTest\" -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"TruckControllerSecurityTest,AdminControllerSecurityTest,TruckManagementControllerTest,UserControllerTest\")",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"UserControllerTest\")"
     ],
     "deny": []
   }
