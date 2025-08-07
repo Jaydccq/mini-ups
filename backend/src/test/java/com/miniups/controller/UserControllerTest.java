@@ -18,9 +18,6 @@ import org.mockito.Mock;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -108,4 +105,91 @@ class UserControllerTest {
 
         verify(userService, times(1)).getUserById(2L);
     }
+
+    @Test
+    @DisplayName("创建新用户 - 成功")
+    void testCreateUser_Success() throws Exception {
+        CreateUserDto createUserDto = new CreateUserDto();
+        createUserDto.setUsername("newuser");
+        createUserDto.setEmail("newuser@example.com");
+        createUserDto.setPassword("password123");
+        createUserDto.setRole(UserRole.USER);
+        
+        UserDto newUserDto = new UserDto();
+        newUserDto.setId(2L);
+        newUserDto.setUsername("newuser");
+        newUserDto.setEmail("newuser@example.com");
+        newUserDto.setRole(UserRole.USER);
+        newUserDto.setEnabled(true);
+        
+        when(userService.createUser(any(CreateUserDto.class))).thenReturn(newUserDto);
+
+        mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createUserDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User created successfully"))
+                .andExpect(jsonPath("$.data.id").value(2))
+                .andExpect(jsonPath("$.data.username").value("newuser"))
+                .andExpect(jsonPath("$.data.email").value("newuser@example.com"));
+
+        verify(userService, times(1)).createUser(any(CreateUserDto.class));
+    }
+
+    @Test
+    @DisplayName("更新用户信息 - 成功")
+    void testUpdateUser_Success() throws Exception {
+        UpdateUserDto updateDto = new UpdateUserDto();
+        updateDto.setEmail("updated@example.com");
+        updateDto.setPhoneNumber("123-456-7890");
+        
+        UserDto updatedUser = new UserDto();
+        updatedUser.setId(1L);
+        updatedUser.setUsername("testuser");
+        updatedUser.setEmail("updated@example.com");
+        updatedUser.setRole(UserRole.USER);
+        updatedUser.setEnabled(true);
+        
+        when(userService.updateUser(eq(1L), any(UpdateUserDto.class))).thenReturn(updatedUser);
+
+        mockMvc.perform(put("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User information updated successfully"))
+                .andExpect(jsonPath("$.data.email").value("updated@example.com"));
+
+        verify(userService, times(1)).updateUser(eq(1L), any(UpdateUserDto.class));
+    }
+
+    @Test
+    @DisplayName("禁用用户 - 成功")
+    void testDisableUser_Success() throws Exception {
+        doNothing().when(userService).deleteUser(1L);
+
+        mockMvc.perform(delete("/users/1")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User has been disabled"));
+
+        verify(userService, times(1)).deleteUser(1L);
+    }
+
+    @Test
+    @DisplayName("启用用户 - 成功")
+    void testEnableUser_Success() throws Exception {
+        doNothing().when(userService).enableUser(1L);
+
+        mockMvc.perform(post("/users/1/enable")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User has been enabled"));
+
+        verify(userService, times(1)).enableUser(1L);
+    }
+
 }

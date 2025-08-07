@@ -90,10 +90,12 @@ public class AdminControllerSecurityTest {
     void testFleetOverview_ShouldWork() throws Exception {
         Map<String, Object> mockFleet = new HashMap<>();
         mockFleet.put("totalFleet", 15);
+        mockFleet.put("activeFleet", 12);
         when(adminService.getFleetOverview()).thenReturn(mockFleet);
         
         mockMvc.perform(get("/admin/fleet/overview"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
                 
         verify(adminService).getFleetOverview();
     }

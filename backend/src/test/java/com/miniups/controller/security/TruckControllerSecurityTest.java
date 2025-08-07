@@ -107,7 +107,9 @@ public class TruckControllerSecurityTest {
         mockMvc.perform(put("/trucks/1/status")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(statusUpdate))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Truck status updated successfully"));
                 
         verify(truckManagementService).updateTruckStatus(1, 100, 200, "BUSY");
     }

@@ -1,4 +1,3 @@
-
 package com.miniups.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,6 +7,7 @@ import com.miniups.service.TruckManagementService;
 import com.miniups.controller.TruckManagementController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.InjectMocks;
@@ -55,6 +55,7 @@ public class TruckManagementControllerTest {
     }
 
     @Test
+    @DisplayName("获取所有卡车状态 - 正常情况")
     public void whenGetAllTrucks_thenReturnJsonArray() throws Exception {
         List<Map<String, Object>> allTrucks = Arrays.asList(
             Map.of("truck_id", "TRUCK001", "status", "IDLE", "status_display", "Idle", "current_x", 10, "current_y", 20, "capacity", 1000, "available", true),
@@ -76,5 +77,31 @@ public class TruckManagementControllerTest {
                 .andExpect(jsonPath("$.data.trucks[1].truck_id").value("TRUCK002"))
                 .andExpect(jsonPath("$.data.trucks[1].status").value("EN_ROUTE"))
                 .andExpect(jsonPath("$.data.trucks[1].available").value(false));
+        
+        verify(truckManagementService).getAllTruckStatuses();
+    }
+
+    @Test
+    @DisplayName("获取车队统计信息 - 正常情况")
+    public void whenGetFleetStatistics_thenReturnStatistics() throws Exception {
+        Map<String, Object> statistics = Map.of(
+            "total_trucks", 5,
+            "available_trucks", 3,
+            "busy_trucks", 2,
+            "utilization_rate", 40.0
+        );
+        when(truckManagementService.getFleetStatistics()).thenReturn(statistics);
+
+        mockMvc.perform(get("/trucks/statistics")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Fleet statistics retrieved successfully"))
+                .andExpect(jsonPath("$.data.total_trucks").value(5))
+                .andExpect(jsonPath("$.data.available_trucks").value(3))
+                .andExpect(jsonPath("$.data.busy_trucks").value(2))
+                .andExpect(jsonPath("$.data.utilization_rate").value(40.0));
+        
+        verify(truckManagementService).getFleetStatistics();
     }
 }

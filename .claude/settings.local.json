@@ -181,7 +181,14 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"TruckManagementControllerTest,AdminControllerSecurityTest,TruckControllerSecurityTest\" -Dspring.profiles.active=test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"TruckControllerSecurityTest,AdminControllerSecurityTest,TruckManagementControllerTest,UserControllerTest\")",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"UserControllerTest\")"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"UserControllerTest\")",
+      "Bash(docker network:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"TruckManagementControllerTest,AdminControllerSecurityTest,TruckControllerSecurityTest,UserControllerTest\")",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"TruckManagementControllerTest,AdminControllerSecurityTest,TruckControllerSecurityTest,UserControllerTest\" -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean test -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"*ControllerTest\" -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"UserControllerSecurityTest\" -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"*ControllerTest,*ControllerSecurityTest\" -q)"
     ],
     "deny": []
   }
