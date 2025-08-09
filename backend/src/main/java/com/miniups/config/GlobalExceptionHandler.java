@@ -334,6 +334,20 @@ public class GlobalExceptionHandler {
     }
 
 
+    /**\n     * Handle runtime exceptions\n     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRuntimeException(
+            RuntimeException ex, WebRequest request) {
+        // Check if this is a business validation exception in disguise
+        if (ex.getMessage() != null && (
+                ex.getMessage().contains("用户注册失败") || 
+                ex.getMessage().contains("登录失败") || 
+                ex.getMessage().contains("密码修改失败"))) {
+            return buildErrorResponse(ex, "SYSTEM_ERROR", "Internal server error, please try again later", HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+        return buildErrorResponse(ex, "SYSTEM_ERROR", "Internal server error, please try again later", HttpStatus.INTERNAL_SERVER_ERROR, null);
+    }
+
     /**
      * Handle all other uncaught exceptions
      */

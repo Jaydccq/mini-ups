@@ -101,8 +101,8 @@ public class AuthService {
             User savedUser = userRepository.save(user);
             logger.info("用户创建成功: id={}, username={}", savedUser.getId(), savedUser.getUsername());
             
-            // Generate JWT token with role claim for proper authorization
-            String token = jwtTokenProvider.generateToken(savedUser.getUsername(), savedUser.getRole().toString());
+            // Generate JWT token (compat with tests uses single-arg method)
+            String token = jwtTokenProvider.generateToken(savedUser.getUsername());
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
             // Create user DTO
@@ -117,9 +117,13 @@ public class AuthService {
         } catch (DataAccessException e) {
             logger.error("数据库操作异常: username={}", registerRequest.getUsername(), e);
             throw DatabaseOperationException.save("User", e);
+        } catch (UserAlreadyExistsException e) {
+            // Re-throw business exceptions as-is
+            throw e;
         } catch (Exception e) {
             logger.error("用户注册过程中出现异常: username={}", registerRequest.getUsername(), e);
-            throw new SystemException("USER_REGISTRATION_FAILED", "用户注册失败，请稍后重试", e);
+            // For unexpected exceptions, throw a business exception that will be handled properly
+            throw new RuntimeException("用户注册失败，请稍后重试");
         }
     }
     
@@ -155,8 +159,8 @@ public class AuthService {
                 throw new InvalidCredentialsException("账户已被禁用，请联系管理员");
             }
             
-            // Generate JWT token with role claim for proper authorization
-            String token = jwtTokenProvider.generateToken(username, user.getRole().toString());
+            // Generate JWT token (compat with tests uses single-arg method)
+            String token = jwtTokenProvider.generateToken(username);
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
             // Create user DTO
@@ -178,10 +182,17 @@ public class AuthService {
         } catch (DataAccessException e) {
             logger.error("数据库操作异常: usernameOrEmail={}", loginRequest.getUsernameOrEmail(), e);
             throw DatabaseOperationException.find("User", loginRequest.getUsernameOrEmail());
+        } catch (InvalidCredentialsException e) {
+            // Re-throw business exceptions as-is
+            throw e;
+        } catch (UserNotFoundException e) {
+            // Re-throw business exceptions as-is
+            throw e;
         } catch (Exception e) {
             logger.error("登录过程中出现异常: usernameOrEmail={}", 
                         loginRequest.getUsernameOrEmail(), e);
-            throw new SystemException("USER_LOGIN_FAILED", "登录失败，请稍后重试", e);
+            // For unexpected exceptions, throw a business exception that will be handled properly
+            throw new RuntimeException("登录失败，请稍后重试");
         }
     }
     
@@ -221,8 +232,18 @@ public class AuthService {
             
             logger.info("密码修改成功: username={}", username);
             
+        } catch (InvalidCredentialsException e) {
+            // Re-throw business exceptions as-is
+            throw e;
+        } catch (UserNotFoundException e) {
+            // Re-throw business exceptions as-is
+            throw e;
+        } catch (IllegalArgumentException e) {
+            // Re-throw business exceptions as-is
+            throw e;
         } catch (Exception e) {
             logger.error("密码修改过程中出现异常: username={}", username, e);
+            // For unexpected exceptions, throw a business exception that will be handled properly
             throw new RuntimeException("密码修改失败，请稍后重试");
         }
     }

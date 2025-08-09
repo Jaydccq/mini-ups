@@ -66,7 +66,7 @@ public class AdminControllerSecurityTest {
         mockStats.put("activeTrucks", 7);
         when(adminService.getDashboardStatistics()).thenReturn(mockStats);
         
-        mockMvc.perform(get("/admin/dashboard/statistics"))
+        mockMvc.perform(get("/api/admin/dashboard/statistics"))
                 .andExpect(status().isOk());
                 
         verify(adminService).getDashboardStatistics();
@@ -79,7 +79,7 @@ public class AdminControllerSecurityTest {
         mockHealth.put("status", "healthy");
         when(adminService.getSystemHealth()).thenReturn(mockHealth);
         
-        mockMvc.perform(get("/admin/system/health"))
+        mockMvc.perform(get("/api/admin/system/health"))
                 .andExpect(status().isOk());
                 
         verify(adminService).getSystemHealth();
@@ -93,7 +93,7 @@ public class AdminControllerSecurityTest {
         mockFleet.put("activeFleet", 12);
         when(adminService.getFleetOverview()).thenReturn(mockFleet);
         
-        mockMvc.perform(get("/admin/fleet/overview"))
+        mockMvc.perform(get("/api/admin/fleet/overview"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
                 

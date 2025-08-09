@@ -117,7 +117,7 @@ class AuthControllerTest {
     void testRegisterUser_Success() throws Exception {
         when(authService.register(any(RegisterRequestDto.class))).thenReturn(authResponse);
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerRequest)))
@@ -136,7 +136,7 @@ class AuthControllerTest {
         when(authService.register(any(RegisterRequestDto.class)))
                 .thenThrow(new UserAlreadyExistsException("Username already exists"));
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerRequest)))
@@ -155,7 +155,7 @@ class AuthControllerTest {
         when(authService.login(any(LoginRequestDto.class)))
                 .thenThrow(new InvalidCredentialsException("Invalid credentials"));
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
@@ -177,7 +177,7 @@ class AuthControllerTest {
         mismatchRequest.setNewPassword("NewPassword123!");
         mismatchRequest.setConfirmPassword("DifferentPassword123!");
 
-        mockMvc.perform(post("/auth/change-password")
+        mockMvc.perform(post("/api/auth/change-password")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mismatchRequest)))
@@ -195,7 +195,7 @@ class AuthControllerTest {
         doThrow(new InvalidCredentialsException("Current password is incorrect"))
                 .when(authService).changePassword(eq("testuser"), any(PasswordChangeDto.class));
 
-        mockMvc.perform(post("/auth/change-password")
+        mockMvc.perform(post("/api/auth/change-password")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(passwordChangeRequest)))
