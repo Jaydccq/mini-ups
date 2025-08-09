@@ -1,6 +1,12 @@
 spring:
   application:
     name: mini-ups
+
+# Enable World Simulator debugging in local development
+app:
+  debug:
+    world-simulator:
+      enabled: true
   
   datasource:
     url: jdbc:postgresql://localhost:5432/ups_db

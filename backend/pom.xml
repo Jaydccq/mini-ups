@@ -45,11 +45,7 @@
             <version>1.5.13</version>
         </dependency>
         
-        <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-core</artifactId>
-            <version>10.1.35</version>
-        </dependency>
+        
         
         <dependency>
             <groupId>org.springframework.security</groupId>
@@ -101,6 +97,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-messaging</artifactId>
         </dependency>
         
         <dependency>
@@ -208,6 +209,12 @@
             <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
         
+        <!-- Caffeine Cache (for debug message retention) -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+        
         <!-- Testing Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -291,6 +298,13 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
+            <version>4.29.2</version>
+        </dependency>
+        
+        <!-- Google Protocol Buffers JSON utility -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
             <version>4.29.2</version>
         </dependency>
     </dependencies>

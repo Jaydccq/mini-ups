@@ -9,7 +9,7 @@ spring:
     active: dev
   
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/mini_ups}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ups_db}
     username: ${DATABASE_USERNAME:postgres}
     password: ${DATABASE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -80,8 +80,14 @@ world:
   simulator:
     host: ${WORLD_SIMULATOR_HOST:host.docker.internal}
     port: ${WORLD_SIMULATOR_PORT:12345}
-    connection-timeout: ${WORLD_SIMULATOR_CONNECTION_TIMEOUT:10000}
+    connection-timeout: ${WORLD_SIMULATOR_CONNECTION_TIMEOUT:60000}  # Increased to 60 seconds
     default-sim-speed: ${WORLD_SIMULATOR_DEFAULT_SPEED:1000}
+    reconnection:
+      enabled: ${WORLD_SIMULATOR_RECONNECTION_ENABLED:true}
+      initial-delay: ${WORLD_SIMULATOR_RECONNECTION_INITIAL_DELAY:2000}  # Increased to 2 seconds
+      max-delay: ${WORLD_SIMULATOR_RECONNECTION_MAX_DELAY:60000}  # Increased to 60 seconds  
+      multiplier: ${WORLD_SIMULATOR_RECONNECTION_MULTIPLIER:1.5}  # Reduced for gentler backoff
+      max-attempts: ${WORLD_SIMULATOR_RECONNECTION_MAX_ATTEMPTS:5}  # Reduced attempts
 
 # Amazon Integration Configuration  
 amazon:
@@ -158,3 +164,8 @@ app:
       enabled: ${SMS_NOTIFICATIONS_ENABLED:false}
     push:
       enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}
+  debug:
+    world-simulator:
+      enabled: ${DEBUG_WORLD_SIMULATOR:true}
+      buffer-size: ${DEBUG_BUFFER_SIZE:5000}
+      retention-seconds: ${DEBUG_RETENTION_SECONDS:300}

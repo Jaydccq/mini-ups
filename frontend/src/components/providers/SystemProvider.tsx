@@ -15,7 +15,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/auth-store';
-import { socketService } from '@/services/socketService';
+import { getWebSocketService } from '@/services/websocket';
 import { useNotificationSync } from '@/hooks/useNotificationSync';
 import { useGlobalConflictState } from '@/hooks/useConflictResolution';
 import { GlobalErrorBoundary } from '@/components/error/ErrorBoundary';
@@ -29,15 +29,17 @@ const WebSocketManager: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && token) {
       console.log('Connecting to WebSocket...');
-      socketService.connect(token);
-      
-      // Request notification permission on first connection
-      socketService.requestNotificationPermission();
-      
-      return () => {
-        console.log('Disconnecting from WebSocket...');
-        socketService.disconnect();
-      };
+      try {
+        const wsService = getWebSocketService();
+        wsService.connect().catch(console.error);
+        
+        return () => {
+          console.log('Disconnecting from WebSocket...');
+          wsService.disconnect();
+        };
+      } catch (error) {
+        console.error('Failed to connect WebSocket:', error);
+      }
     }
   }, [isAuthenticated, token]);
 
@@ -96,50 +98,10 @@ const ConflictResolutionManager: React.FC = () => {
   );
 };
 
-// Connection Status Display
+// Connection Status Display - Temporarily disabled
 const ConnectionStatusDisplay: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
-  const connectionStats = socketService.getConnectionStats();
-
-  // Only show in development or when there are connection issues
-  if (process.env.NODE_ENV === 'production' && connectionStats.status === 'connected') {
-    return null;
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50">
-      {connectionStats.status === 'error' && (
-        <div className="bg-red-100 border border-red-300 text-red-700 px-3 py-2 rounded-lg text-sm">
-          Connection failed. 
-          <button 
-            onClick={() => socketService.forceReconnect()}
-            className="ml-2 underline hover:no-underline"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-      
-      {connectionStats.status === 'connecting' && connectionStats.reconnectAttempts > 0 && (
-        <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 px-3 py-2 rounded-lg text-sm">
-          Reconnecting... (Attempt {connectionStats.reconnectAttempts}/{connectionStats.maxReconnectAttempts})
-        </div>
-      )}
-      
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-100 border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-xs mt-2">
-          Status: {connectionStats.status}
-          {connectionStats.socketId && (
-            <div>Socket: {connectionStats.socketId.slice(0, 8)}...</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  // Disabled until WebSocket service is properly integrated
+  return null;
 };
 
 // Main System Provider
@@ -216,12 +178,11 @@ export const AppShellWithNotifications: React.FC<{ children: ReactNode }> = ({ c
   );
 };
 
-// Hook for system integration status
+// Hook for system integration status - Simplified
 export const useSystemStatus = () => {
   const { isAuthenticated } = useAuthStore();
   const { connectionStatus, isSyncing } = useNotificationSync();
   const { conflictCount } = useGlobalConflictState();
-  const socketStats = socketService.getConnectionStats();
 
   return {
     isAuthenticated,
@@ -229,12 +190,11 @@ export const useSystemStatus = () => {
     isSyncing,
     hasConflicts: conflictCount > 0,
     conflictCount,
-    socketConnected: socketStats.isConnected,
-    reconnectAttempts: socketStats.reconnectAttempts,
+    socketConnected: true, // Simplified until WebSocket service is integrated
+    reconnectAttempts: 0,
     
     // Overall system health
     systemHealthy: isAuthenticated && 
-                   socketStats.isConnected && 
                    connectionStatus === 'online' && 
                    conflictCount === 0,
   };

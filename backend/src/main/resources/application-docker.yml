@@ -4,6 +4,7 @@ spring:
     url: ${DATABASE_URL:jdbc:postgresql://${POSTGRES_HOST:upsdb}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ups_db}}
     username: ${DATABASE_USERNAME:${POSTGRES_USER:postgres}}
     password: ${DATABASE_PASSWORD:${POSTGRES_PASSWORD:abc123}}
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -35,7 +36,7 @@ spring:
           min-idle: 0
   
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
+    host: ${SPRING_RABBITMQ_HOST:rabbitmq}
     port: ${SPRING_RABBITMQ_PORT:5672}
     username: ${SPRING_RABBITMQ_USERNAME:guest}
     password: ${SPRING_RABBITMQ_PASSWORD:guest}
@@ -51,8 +52,14 @@ world:
   simulator:
     host: ${WORLD_HOST:host.docker.internal}
     port: ${WORLD_PORT:12345}
-    connection-timeout: 10000
+    connection-timeout: 60000  # Increased to 60 seconds to prevent timeout during idle periods
     default-sim-speed: 1000
+    reconnection:
+      enabled: true
+      initial-delay: 2000  # Wait 2 seconds before first reconnection attempt
+      max-delay: 60000    # Maximum delay between attempts
+      multiplier: 1.5     # Gentler exponential backoff
+      max-attempts: 5     # Fewer reconnection attempts to avoid spam
 
 amazon:
   base-url: ${AMAZON_API_URL:http://host.docker.internal:8080}
@@ -74,3 +81,11 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+# Enable debug features in Docker
+app:
+  debug:
+    world-simulator:
+      enabled: true
+      buffer-size: 5000
+      retention-seconds: 300

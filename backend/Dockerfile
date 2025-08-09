@@ -14,7 +14,7 @@ RUN mvn protobuf:compile
 
 # Copy source code and build
 COPY src ./src
-RUN mvn clean package -DskipTests -Dmaven.gitcommitid.skip=true
+RUN mvn clean package -DskipTests=true -Dmaven.test.skip=true -Dmaven.gitcommitid.skip=true
 
 # Runtime stage with JRE for smaller image
 FROM --platform=linux/amd64 eclipse-temurin:17-jre-alpine

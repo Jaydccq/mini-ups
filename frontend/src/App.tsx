@@ -20,9 +20,12 @@ const CreateShipmentPage = lazy(() => import('@/pages/CreateShipmentPage').then(
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(module => ({ default: module.ProfilePage })))
 
 // Lazy load admin pages
+const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then(module => ({ default: module.default })))
 const UserManagementPage = lazy(() => import('@/pages/admin/UserManagementPage').then(module => ({ default: module.UserManagementPage })))
 const ShipmentManagementPage = lazy(() => import('@/pages/admin/ShipmentManagementPage').then(module => ({ default: module.ShipmentManagementPage })))
+const FleetManagementPage = lazy(() => import('@/pages/admin/FleetManagementPage').then(module => ({ default: module.default })))
 const AnalyticsPage = lazy(() => import('@/pages/admin/AnalyticsPage').then(module => ({ default: module.AnalyticsPage })))
+const WorldSimulatorDebugPage = lazy(() => import('@/pages/admin/WorldSimulatorDebugPage').then(module => ({ default: module.WorldSimulatorDebugPage })))
 
 // Loading component
 const PageLoader = () => (
@@ -62,9 +65,12 @@ function App() {
             
             {/* Admin routes */}
             <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/admin/shipments" element={<ShipmentManagementPage />} />
               <Route path="/admin/analytics" element={<AnalyticsPage />} />
+              <Route path="/admin/debug/simulator" element={<WorldSimulatorDebugPage />} />
+              <Route path="/trucks" element={<FleetManagementPage />} />
             </Route>
           </Routes>
         </Suspense>

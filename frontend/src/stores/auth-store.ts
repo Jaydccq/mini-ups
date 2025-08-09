@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { socketService } from '@/services/socketService'
+import { getWebSocketService } from '@/services/websocket'
 
 interface User {
   id: string
@@ -38,7 +38,12 @@ export const useAuthStore = create<AuthState>()(
           status: 'authenticated'
         })
         // Connect WebSocket after successful login
-        socketService.connect(token)
+        try {
+          const wsService = getWebSocketService()
+          wsService.connect().catch(console.error)
+        } catch (error) {
+          console.error('Failed to connect WebSocket:', error)
+        }
       },
 
       logout: () => {
@@ -49,7 +54,12 @@ export const useAuthStore = create<AuthState>()(
           status: 'unauthenticated'
         })
         // Disconnect WebSocket on logout
-        socketService.disconnect()
+        try {
+          const wsService = getWebSocketService()
+          wsService.disconnect()
+        } catch (error) {
+          console.error('Failed to disconnect WebSocket:', error)
+        }
       },
 
       setLoading: (loading) => {

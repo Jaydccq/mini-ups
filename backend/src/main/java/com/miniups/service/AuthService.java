@@ -101,8 +101,8 @@ public class AuthService {
             User savedUser = userRepository.save(user);
             logger.info("用户创建成功: id={}, username={}", savedUser.getId(), savedUser.getUsername());
             
-            // Generate JWT token
-            String token = jwtTokenProvider.generateToken(savedUser.getUsername());
+            // Generate JWT token with role claim for proper authorization
+            String token = jwtTokenProvider.generateToken(savedUser.getUsername(), savedUser.getRole().toString());
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
             // Create user DTO
@@ -155,8 +155,8 @@ public class AuthService {
                 throw new InvalidCredentialsException("账户已被禁用，请联系管理员");
             }
             
-            // Generate JWT token
-            String token = jwtTokenProvider.generateToken(username);
+            // Generate JWT token with role claim for proper authorization
+            String token = jwtTokenProvider.generateToken(username, user.getRole().toString());
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
             // Create user DTO

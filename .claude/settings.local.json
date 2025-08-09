@@ -188,7 +188,23 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean test -Dspring.profiles.active=test -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"*ControllerTest\" -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"UserControllerSecurityTest\" -q)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"*ControllerTest,*ControllerSecurityTest\" -q)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"*ControllerTest,*ControllerSecurityTest\" -q)",
+      "Bash(open:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(nc:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker volume:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn spring-boot:run -Dspring-boot.run.profiles=local -DskipTests=true)",
+      "Bash(docker builder:*)",
+      "Bash(true)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 timeout 20 mvn spring-boot:run -Dspring-boot.run.profiles=local)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 timeout 20 mvn spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.jvmArguments=\"--add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED\")",
+      "Bash(JWT_SECRET=\"mini-ups-development-jwt-secret-key-32-chars-minimum-length-for-security\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 timeout 15 mvn spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.jvmArguments=\"--add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED\")",
+      "Bash(docker restart:*)",
+      "Bash(npm run:*)",
+      "Bash(docker inspect:*)",
+      "Bash(docker port:*)",
+      "Bash(docker ps:*)"
     ],
     "deny": []
   }

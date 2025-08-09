@@ -42,8 +42,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/tracking")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/tracking")
 public class TrackingController {
     
     private static final Logger logger = LoggerFactory.getLogger(TrackingController.class);

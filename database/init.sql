@@ -1,11 +1,11 @@
 -- Mini UPS Database Initialization Script
 
 -- Create database if not exists
-SELECT 'CREATE DATABASE mini_ups'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mini_ups')\gexec
+SELECT 'CREATE DATABASE ups_db'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ups_db')\gexec
 
 -- Connect to the database
-\c mini_ups;
+\c ups_db;
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -20,7 +20,7 @@ END
 $$;
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE mini_ups TO ups_user;
+GRANT ALL PRIVILEGES ON DATABASE ups_db TO ups_user;
 GRANT ALL ON SCHEMA public TO ups_user;
 
 -- Create sequences for custom ID generation
@@ -50,68 +50,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Insert default admin user (password: admin123)
-INSERT INTO users (username, email, password, first_name, last_name, role, enabled, created_at, updated_at)
-VALUES (
-    'admin',
-    'admin@miniups.com',
-    '$2a$10$DQw4w9WgXcQ/L1h1ZGMW/.xPgFEKqCv1CgOYNqQ5Z5y4UZ8LgGZCi', -- admin123
-    'System',
-    'Administrator',
-    'ADMIN',
-    true,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
-)
-ON CONFLICT (username) DO NOTHING;
-
--- Insert default operator user (password: operator123)
-INSERT INTO users (username, email, password, first_name, last_name, role, enabled, created_at, updated_at)
-VALUES (
-    'operator',
-    'operator@miniups.com',
-    '$2a$10$8Y8Y8Y8YXcQ/L1h1ZGMW/.xPgFEKqCv1CgOYNqQ5Z5y4UZ8LgGZCi', -- operator123
-    'UPS',
-    'Operator',
-    'OPERATOR',
-    true,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
-)
-ON CONFLICT (username) DO NOTHING;
-
--- Insert some initial trucks
-INSERT INTO trucks (truck_id, status, current_x, current_y, capacity, created_at, updated_at)
-VALUES 
-    (generate_truck_id(), 'IDLE', 0, 0, 100, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (generate_truck_id(), 'IDLE', 10, 10, 150, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (generate_truck_id(), 'IDLE', 20, 20, 200, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (generate_truck_id(), 'IDLE', 30, 30, 120, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (generate_truck_id(), 'IDLE', 40, 40, 180, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (truck_id) DO NOTHING;
-
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-
-CREATE INDEX IF NOT EXISTS idx_shipments_shipment_id ON shipments(shipment_id);
-CREATE INDEX IF NOT EXISTS idx_shipments_tracking_id ON shipments(ups_tracking_id);
-CREATE INDEX IF NOT EXISTS idx_shipments_status ON shipments(status);
-CREATE INDEX IF NOT EXISTS idx_shipments_user_id ON shipments(user_id);
-CREATE INDEX IF NOT EXISTS idx_shipments_created_at ON shipments(created_at);
-
-CREATE INDEX IF NOT EXISTS idx_trucks_truck_id ON trucks(truck_id);
-CREATE INDEX IF NOT EXISTS idx_trucks_status ON trucks(status);
-
-CREATE INDEX IF NOT EXISTS idx_packages_package_id ON packages(package_id);
-CREATE INDEX IF NOT EXISTS idx_packages_shipment_id ON packages(shipment_id);
-
-CREATE INDEX IF NOT EXISTS idx_shipment_status_history_shipment_id ON shipment_status_history(shipment_id);
-CREATE INDEX IF NOT EXISTS idx_shipment_status_history_timestamp ON shipment_status_history(timestamp);
-
-CREATE INDEX IF NOT EXISTS idx_address_changes_shipment_id ON address_changes(shipment_id);
-CREATE INDEX IF NOT EXISTS idx_address_changes_status ON address_changes(status);
+-- Note: Table creation and data insertion will be handled by Spring Boot JPA
+-- This script only sets up database-level configurations and functions
 
 -- Create audit triggers for logging changes
 CREATE OR REPLACE FUNCTION audit_trigger_function()
@@ -136,3 +76,5 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ups_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ups_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO ups_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO ups_user;
+
+-- Note: Test users and initial data will be created by Spring Boot on first startup

@@ -130,7 +130,9 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
     
+    // Legacy method - DO NOT USE - kept only for test compatibility
     public String generateToken(String username) {
+        logger.warn("DEPRECATED: Using single-parameter generateToken method without role claim!");
         if (username == null || username.trim().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be null or empty");
         }
@@ -143,6 +145,34 @@ public class JwtTokenProvider {
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .id(java.util.UUID.randomUUID().toString()) // Add unique token ID
+                .signWith(getSigningKey())
+                .compact();
+    }
+    
+    /**
+     * Generate JWT token with role claim for proper authorization
+     * 
+     * @param username User's username
+     * @param role User's role (ADMIN, USER, etc.)
+     * @return JWT token with role claim
+     */
+    public String generateToken(String username, String role) {
+        if (username == null || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (role == null || role.trim().isEmpty()) {
+            throw new IllegalArgumentException("Role cannot be null or empty");
+        }
+        
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        
+        return Jwts.builder()
+                .subject(username)
+                .claim("role", role) // Add role claim for Spring Security
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .id(java.util.UUID.randomUUID().toString())
                 .signWith(getSigningKey())
                 .compact();
     }

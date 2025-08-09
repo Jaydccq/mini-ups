@@ -184,9 +184,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .exceptionHandling(exception -> 
                 exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-            .sessionManagement(session -> 
+            .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints
                 .requestMatchers("/", "/index.html", "/favicon.ico").permitAll()
                 .requestMatchers("/api/auth/**", "/auth/**").permitAll() // Fixed: Add /api/auth/** pattern
@@ -196,19 +197,19 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/*/public", "/users/*/public").permitAll() // Public user profiles
                 .requestMatchers("/api/shipment", "/api/shipment_loaded", "/api/shipment_status", "/api/address_change").permitAll() // Amazon integration endpoints
                 .requestMatchers("/shipment", "/shipment_loaded", "/shipment_status", "/address_change").permitAll() // Amazon integration endpoints
-                
+
                 // API Documentation
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                
+
                 // Health check
                 .requestMatchers("/actuator/health", "/actuator/info", "/actuator/**").permitAll()
-                
+
                 // Admin endpoints
                 .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
-                
+
                 // Driver endpoints
                 .requestMatchers("/api/driver/**", "/driver/**").hasAnyRole("DRIVER", "ADMIN")
-                
+
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             );

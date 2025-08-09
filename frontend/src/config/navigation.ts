@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Users,
   BarChart3,
+  Activity,
   type LucideIcon
 } from 'lucide-react'
 
@@ -95,6 +96,13 @@ export const navigationConfig: NavItem[] = [
         path: '/admin/analytics',
         label: 'Analytics',
         icon: BarChart3,
+        roles: ['ADMIN'],
+        inNav: true,
+      },
+      {
+        path: '/admin/debug/simulator',
+        label: 'World Simulator Debug',
+        icon: Activity,
         roles: ['ADMIN'],
         inNav: true,
       },

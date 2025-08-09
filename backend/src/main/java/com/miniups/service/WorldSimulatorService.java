@@ -133,6 +133,18 @@ public class WorldSimulatorService {
         this.messageQueue = new LinkedBlockingQueue<>();
         
         logger.info("WorldSimulatorService initialized");
+        
+        // Automatically connect to World Simulator on startup
+        executorService.submit(() -> {
+            try {
+                // Small delay to ensure Spring context is fully initialized
+                Thread.sleep(2000);
+                logger.info("Initiating connection to World Simulator...");
+                connect(null); // null means create new world or reuse via WORLD_ID env var
+            } catch (Exception e) {
+                logger.error("Error during automatic World Simulator connection", e);
+            }
+        });
     }
     
     @PreDestroy
@@ -180,15 +192,19 @@ public class WorldSimulatorService {
             
             if (worldId != null) {
                 connectBuilder.setWorldid(worldId);
-            }
-            
-            // Add truck initialization information
-            for (Truck truck : availableTrucks) {
-                WorldUpsProto.UInitTruck.Builder truckBuilder = WorldUpsProto.UInitTruck.newBuilder();
-                truckBuilder.setId(truck.getTruckId());
-                truckBuilder.setX(truck.getCurrentX() != null ? truck.getCurrentX() : 0);
-                truckBuilder.setY(truck.getCurrentY() != null ? truck.getCurrentY() : 0);
-                connectBuilder.addTrucks(truckBuilder.build());
+                // When connecting to existing world (for Amazon-UPS collaboration), 
+                // don't reinitialize trucks to avoid ID conflicts
+                logger.info("Connecting to existing world {}, skipping truck initialization", worldId);
+            } else {
+                // Only add truck initialization for new worlds
+                for (Truck truck : availableTrucks) {
+                    WorldUpsProto.UInitTruck.Builder truckBuilder = WorldUpsProto.UInitTruck.newBuilder();
+                    truckBuilder.setId(truck.getTruckId());
+                    truckBuilder.setX(truck.getCurrentX() != null ? truck.getCurrentX() : 0);
+                    truckBuilder.setY(truck.getCurrentY() != null ? truck.getCurrentY() : 0);
+                    connectBuilder.addTrucks(truckBuilder.build());
+                }
+                logger.info("Creating new world, initializing {} trucks", availableTrucks.size());
             }
             
             WorldUpsProto.UConnect connectMessage = connectBuilder.build();
@@ -936,8 +952,9 @@ public class WorldSimulatorService {
                 }
                 
                 // Attempt to reconnect
+                // Reconnect to the same world to maintain Amazon-UPS collaboration
                 if (connect(worldId)) {
-                    logger.info("Successfully reconnected to World Simulator");
+                    logger.info("Successfully reconnected to World Simulator with world ID: " + worldId);
                     reconnectionInProgress = false;
                     return;
                 }
@@ -966,6 +983,7 @@ public class WorldSimulatorService {
      */
     private void cleanupConnection() {
         connected = false;
+        // Keep worldId to allow reconnection to the same world for Amazon-UPS collaboration
         
         // Stop message processing threads
         stopMessageProcessing();
