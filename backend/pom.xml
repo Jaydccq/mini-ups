@@ -59,15 +59,10 @@
             <version>6.4.3</version>
         </dependency>
         
+        <!-- Netty for TCP client implementation -->
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-common</artifactId>
-            <version>4.1.117.Final</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
+            <artifactId>netty-all</artifactId>
             <version>4.1.117.Final</version>
         </dependency>
         
