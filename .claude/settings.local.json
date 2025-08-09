@@ -204,7 +204,8 @@
       "Bash(npm run:*)",
       "Bash(docker inspect:*)",
       "Bash(docker port:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthServiceTest -Dspring.profiles.active=test -f backend/pom.xml)"
     ],
     "deny": []
   }

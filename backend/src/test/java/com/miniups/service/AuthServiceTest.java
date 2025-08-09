@@ -197,10 +197,10 @@ class AuthServiceTest {
         when(userRepository.findByUsername(testUser.getUsername())).thenReturn(Optional.of(testUser));
 
         // When & Then
-        // 基于实际运行结果，禁用用户会触发异常并被包装成SystemException
+        // 禁用用户会直接触发InvalidCredentialsException
         assertThatThrownBy(() -> authService.login(validLoginRequest))
-            .isInstanceOf(SystemException.class)
-            .hasMessageContaining("登录失败，请稍后重试");
+            .isInstanceOf(InvalidCredentialsException.class)
+            .hasMessageContaining("账户已被禁用，请联系管理员");
 
         verify(userRepository).findByUsername(testUser.getUsername());
         verify(jwtTokenProvider, never()).generateToken(anyString());
