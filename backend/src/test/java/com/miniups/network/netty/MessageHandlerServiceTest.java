@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -114,7 +115,7 @@ class MessageHandlerServiceTest {
 
         when(mockTruckRepository.findByTruckId(100)).thenReturn(Optional.of(testTruck));
         when(mockTruckRepository.save(any(Truck.class))).thenReturn(testTruck);
-        when(mockShipmentRepository.findByTruck(testTruck)).thenReturn(Optional.of(testShipment));
+        when(mockShipmentRepository.findByTruck(testTruck)).thenReturn(List.of(testShipment));
 
         // Act
         messageHandlerService.handleTruckCompletion(completion);

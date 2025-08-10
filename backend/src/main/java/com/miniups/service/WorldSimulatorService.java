@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
@@ -59,6 +60,11 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
+@ConditionalOnProperty(
+    name = "world.simulator.client.type", 
+    havingValue = "socket", 
+    matchIfMissing = true
+)
 public class WorldSimulatorService {
     
     private static final Logger logger = LoggerFactory.getLogger(WorldSimulatorService.class);
@@ -222,6 +228,10 @@ public class WorldSimulatorService {
                 this.running = true;
                 
                 logger.info("Successfully connected to World Simulator with world ID: {}", this.worldId);
+                
+                // Set timeout to infinite for the long-running receiver loop
+                socket.setSoTimeout(0);
+                logger.info("Socket timeout set to 0 (infinite) for message receiver loop");
                 
                 // Start message processing threads
                 startMessageProcessing();
@@ -651,10 +661,22 @@ public class WorldSimulatorService {
             truck.setCurrentY(completion.getY());
             
             // 根据状态更新卡车状态
-            if ("idle".equals(completion.getStatus())) {
+            if ("idle".equalsIgnoreCase(completion.getStatus())) {
                 truck.setStatus(TruckStatus.IDLE);
-            } else if ("arrive warehouse".equals(completion.getStatus())) {
+            } else if ("arrive warehouse".equalsIgnoreCase(completion.getStatus())) {
                 truck.setStatus(TruckStatus.AT_WAREHOUSE);
+                
+                // Update shipment status to PICKED_UP when truck arrives at warehouse
+                List<Shipment> shipments = shipmentRepository.findByTruck(truck);
+                if (!shipments.isEmpty()) {
+                    for (Shipment shipment : shipments) {
+                        shipment.setStatus(ShipmentStatus.PICKED_UP);
+                        shipmentRepository.save(shipment);
+                        logger.info("Updated shipment {} status to PICKED_UP - truck {} arrived at warehouse",
+                                   shipment.getShipmentId(), truck.getTruckId());
+                    }
+                }
+                
                 // 通知Amazon卡车已到达
                 notifyAmazonTruckArrived(truck, completion);
             }
@@ -754,18 +776,27 @@ public class WorldSimulatorService {
     
     private void notifyAmazonTruckArrived(Truck truck, WorldUpsProto.UFinished completion) {
         // 查找这个卡车正在处理的运输订单
-        Optional<Shipment> shipmentOpt = shipmentRepository.findByTruck(truck);
-        if (shipmentOpt.isPresent()) {
-            Shipment shipment = shipmentOpt.get();
-            // 假设仓库ID可以从坐标推断，或者需要额外的映射
-            // 这里简化处理，使用坐标作为仓库ID
-            String warehouseId = completion.getX() + "_" + completion.getY();
-            
-            getAmazonIntegrationService().notifyTruckArrived(
-                truck.getId().toString(), 
-                warehouseId, 
-                shipment.getShipmentId()
-            );
+        List<Shipment> shipments = shipmentRepository.findByTruck(truck);
+        if (!shipments.isEmpty()) {
+            for (Shipment shipment : shipments) {
+                // Use the warehouse ID from the shipment metadata
+                String warehouseId = shipment.getWarehouseId();
+                if (warehouseId == null) {
+                    // Fallback: derive from coordinates (not ideal but better than failing)
+                    warehouseId = completion.getX() + "_" + completion.getY();
+                }
+                
+                getAmazonIntegrationService().notifyTruckArrived(
+                    truck.getId().toString(), 
+                    warehouseId, 
+                    shipment.getShipmentId()
+                );
+                
+                logger.info("Notified Amazon: truck {} arrived at warehouse {} for shipment {}", 
+                           truck.getId(), warehouseId, shipment.getShipmentId());
+            }
+        } else {
+            logger.warn("No shipments found for truck {} - cannot notify Amazon", truck.getTruckId());
         }
     }
     

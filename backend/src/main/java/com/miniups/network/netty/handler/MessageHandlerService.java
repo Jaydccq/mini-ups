@@ -12,10 +12,14 @@ import com.miniups.repository.ShipmentRepository;
 import com.miniups.repository.TruckRepository;
 import com.miniups.service.AmazonIntegrationService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,9 +43,10 @@ import java.util.Optional;
  * @author Mini-UPS System
  * @version 1.0
  */
-@Slf4j
 @Service
 public class MessageHandlerService {
+
+    private static final Logger log = LoggerFactory.getLogger(MessageHandlerService.class);
 
     private final TruckRepository truckRepository;
     private final ShipmentRepository shipmentRepository;
@@ -49,7 +54,7 @@ public class MessageHandlerService {
 
     public MessageHandlerService(TruckRepository truckRepository,
                                ShipmentRepository shipmentRepository,
-                               AmazonIntegrationService amazonIntegrationService) {
+                               @Lazy AmazonIntegrationService amazonIntegrationService) {
         this.truckRepository = truckRepository;
         this.shipmentRepository = shipmentRepository;
         this.amazonIntegrationService = amazonIntegrationService;
@@ -232,14 +237,15 @@ public class MessageHandlerService {
      */
     private void notifyAmazonTruckArrived(Truck truck, UFinished completion) {
         try {
-            // Find the shipment this truck is handling
-            Optional<Shipment> shipmentOpt = shipmentRepository.findByTruck(truck);
-            if (shipmentOpt.isEmpty()) {
+            // Find the shipments this truck is handling
+            List<Shipment> shipments = shipmentRepository.findByTruck(truck);
+            if (shipments.isEmpty()) {
                 log.warn("No active shipment found for truck {} arrival notification", truck.getTruckId());
                 return;
             }
             
-            Shipment shipment = shipmentOpt.get();
+            // Handle the first/primary shipment
+            Shipment shipment = shipments.get(0);
             
             // Generate warehouse ID from coordinates
             // This is a simplified approach - in a real system, you might have

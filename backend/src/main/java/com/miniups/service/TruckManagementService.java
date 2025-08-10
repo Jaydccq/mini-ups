@@ -51,8 +51,35 @@ public class TruckManagementService {
     @Autowired
     private ShipmentRepository shipmentRepository;
     
-    @Autowired
+    @Autowired(required = false)
     private WorldSimulatorService worldSimulatorService;
+    
+    @Autowired(required = false)
+    private com.miniups.network.netty.service.NettyWorldSimulatorService nettyWorldSimulatorService;
+    
+    /**
+     * Helper method to check if any world simulator is connected.
+     */
+    private boolean isWorldSimulatorConnected() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.isConnected();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected();
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to get world ID from the available service.
+     */
+    private Long getWorldId() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.getWorldId();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.getWorldId();
+        }
+        return null;
+    }
     
     /**
      * Intelligently assign truck to shipment order using high-performance atomic assignment
@@ -133,6 +160,30 @@ public class TruckManagementService {
     }
     
     /**
+     * Assign any available truck without considering location optimization.
+     * Used when warehouse coordinates are unknown.
+     * 
+     * @return Available truck or null if none available
+     */
+    @Transactional
+    public Truck assignAnyAvailableTruck() {
+        // Use existing method to find and lock one available truck
+        Optional<Truck> truckOpt = truckRepository.findAndLockOneAvailableTruck();
+        
+        if (truckOpt.isPresent()) {
+            Truck truck = truckOpt.get();
+            truck.setStatus(TruckStatus.EN_ROUTE);
+            truck = truckRepository.save(truck);
+            
+            logger.info("Assigned any available truck {}", truck.getTruckId());
+            return truck;
+        }
+        
+        logger.warn("No available trucks for assignment");
+        return null;
+    }
+    
+    /**
      * Get real-time status of all trucks
      * 
      * @return List of truck statuses
@@ -151,10 +202,11 @@ public class TruckManagementService {
             status.put("capacity", truck.getCapacity());
             status.put("available", truck.isAvailable());
             
-            // Get currently assigned shipment
-            Optional<Shipment> currentShipment = shipmentRepository.findByTruck(truck);
-            if (currentShipment.isPresent()) {
-                Shipment shipment = currentShipment.get();
+            // Get currently assigned shipments
+            List<Shipment> currentShipments = shipmentRepository.findByTruck(truck);
+            if (!currentShipments.isEmpty()) {
+                // For status display, show the first/primary shipment
+                Shipment shipment = currentShipments.get(0);
                 status.put("current_shipment", Map.of(
                     "shipment_id", shipment.getShipmentId(),
                     "tracking_number", shipment.getUpsTrackingId(),
@@ -237,8 +289,8 @@ public class TruckManagementService {
         statistics.put("utilization_rate", Math.round(utilizationRate * 100.0) / 100.0);
         statistics.put("truck_status_breakdown", statusCounts);
         statistics.put("shipment_status_breakdown", shipmentStatusCounts);
-        statistics.put("world_connected", worldSimulatorService.isConnected());
-        statistics.put("world_id", worldSimulatorService.getWorldId());
+        statistics.put("world_connected", isWorldSimulatorConnected());
+        statistics.put("world_id", getWorldId());
         statistics.put("generated_at", LocalDateTime.now());
         
         return statistics;

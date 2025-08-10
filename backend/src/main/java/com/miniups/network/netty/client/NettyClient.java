@@ -5,10 +5,14 @@ import com.miniups.network.netty.handler.ClientChannelInitializer;
 import com.miniups.network.netty.handler.MessageHandlerService;
 import com.miniups.proto.WorldUpsProto.UCommands;
 import com.miniups.proto.WorldUpsProto.UResponses;
+import com.miniups.proto.WorldUpsProto.UConnect;
+import com.miniups.proto.WorldUpsProto.UConnected;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -37,13 +41,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Mini-UPS System
  * @version 1.0
  */
-@Slf4j
 @Component
 @ConditionalOnProperty(
     name = "world.simulator.client.type",
     havingValue = "netty"
 )
 public class NettyClient {
+
+    private static final Logger log = LoggerFactory.getLogger(NettyClient.class);
 
     private final EventLoopGroup workerGroup;
     private final NettyProperties nettyProperties;
@@ -159,6 +164,61 @@ public class NettyClient {
                  command.getQueriesCount());
         
         return channel.writeAndFlush(command);
+    }
+    
+    /**
+     * Send a UConnect message to the World Simulator.
+     * 
+     * @param connectMessage the UConnect protobuf message to send
+     * @return ChannelFuture for monitoring the send operation
+     */
+    public ChannelFuture sendConnectMessage(UConnect connectMessage) {
+        if (!isConnected()) {
+            return channel.newFailedFuture(new IllegalStateException("Not connected to World Simulator"));
+        }
+        
+        log.debug("Sending UConnect message with {} trucks", connectMessage.getTrucksCount());
+        
+        return channel.writeAndFlush(connectMessage);
+    }
+    
+    /**
+     * Send a UConnect message and wait for UConnected response.
+     * 
+     * @param connectMessage the UConnect message to send
+     * @param timeoutMs timeout in milliseconds
+     * @return CompletableFuture with the UConnected response
+     */
+    public CompletableFuture<UConnected> sendConnectAndWait(UConnect connectMessage, long timeoutMs) {
+        CompletableFuture<Object> responseFuture = new CompletableFuture<>();
+        
+        // Use a special sequence number for connection responses
+        final long CONNECTION_SEQUENCE = -1;
+        pendingResponses.put(CONNECTION_SEQUENCE, responseFuture);
+        
+        // Schedule timeout
+        workerGroup.schedule(() -> {
+            CompletableFuture<Object> timeoutFuture = pendingResponses.remove(CONNECTION_SEQUENCE);
+            if (timeoutFuture != null && !timeoutFuture.isDone()) {
+                timeoutFuture.completeExceptionally(
+                    new RuntimeException("Connection timeout after " + timeoutMs + "ms"));
+            }
+        }, timeoutMs, TimeUnit.MILLISECONDS);
+        
+        // Send the connect message
+        sendConnectMessage(connectMessage).addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) {
+                if (!future.isSuccess()) {
+                    CompletableFuture<Object> failedFuture = pendingResponses.remove(CONNECTION_SEQUENCE);
+                    if (failedFuture != null && !failedFuture.isDone()) {
+                        failedFuture.completeExceptionally(future.cause());
+                    }
+                }
+            }
+        });
+        
+        return responseFuture.thenApply(response -> (UConnected) response);
     }
 
     /**

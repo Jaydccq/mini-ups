@@ -4,6 +4,8 @@ import com.miniups.network.netty.client.NettyClient;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,8 +29,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mini-UPS System
  * @version 1.0
  */
-@Slf4j
 public class ReconnectionHandler extends ChannelInboundHandlerAdapter {
+
+    private static final Logger log = LoggerFactory.getLogger(ReconnectionHandler.class);
 
     private final NettyClient nettyClient;
     private final AtomicInteger reconnectionAttempts = new AtomicInteger(0);

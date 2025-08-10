@@ -1,6 +1,8 @@
 package com.miniups.network.netty.config;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +16,8 @@ import org.springframework.stereotype.Component;
  * @author Mini-UPS System
  * @version 1.0
  */
-@Data
+@Getter
+@Setter
 @Component
 @ConfigurationProperties(prefix = "world.simulator.netty")
 public class NettyProperties {

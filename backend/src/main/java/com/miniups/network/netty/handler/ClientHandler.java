@@ -6,11 +6,14 @@ import com.miniups.proto.WorldUpsProto.UFinished;
 import com.miniups.proto.WorldUpsProto.UDeliveryMade;
 import com.miniups.proto.WorldUpsProto.UTruck;
 import com.miniups.proto.WorldUpsProto.UErr;
+import com.miniups.proto.WorldUpsProto.UConnected;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -32,8 +35,9 @@ import java.util.concurrent.CompletableFuture;
  * @author Mini-UPS System
  * @version 1.0
  */
-@Slf4j
 public class ClientHandler extends ChannelInboundHandlerAdapter {
+
+    private static final Logger log = LoggerFactory.getLogger(ClientHandler.class);
 
     private final MessageHandlerService messageHandlerService;
     private final Map<Long, CompletableFuture<Object>> pendingResponses;
@@ -61,6 +65,17 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg instanceof UConnected) {
+            // Handle connection response
+            UConnected connected = (UConnected) msg;
+            log.info("Received UConnected: result='{}', world_id={}", 
+                     connected.getResult(), connected.getWorldid());
+            
+            // Complete the connection future (use special sequence number -1)
+            completePendingResponse(-1, connected);
+            return;
+        }
+        
         if (!(msg instanceof UResponses)) {
             log.warn("Received unexpected message type: {}", msg.getClass().getSimpleName());
             return;

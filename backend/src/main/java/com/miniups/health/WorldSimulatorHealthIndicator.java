@@ -18,6 +18,8 @@
 package com.miniups.health;
 
 import com.miniups.service.WorldSimulatorService;
+import com.miniups.network.netty.service.NettyWorldSimulatorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
@@ -30,16 +32,67 @@ public class WorldSimulatorHealthIndicator implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(WorldSimulatorHealthIndicator.class);
     
     private final WorldSimulatorService worldSimulatorService;
+    private final NettyWorldSimulatorService nettyWorldSimulatorService;
 
-    public WorldSimulatorHealthIndicator(WorldSimulatorService worldSimulatorService) {
+    public WorldSimulatorHealthIndicator(@Autowired(required = false) WorldSimulatorService worldSimulatorService,
+                                       @Autowired(required = false) NettyWorldSimulatorService nettyWorldSimulatorService) {
         this.worldSimulatorService = worldSimulatorService;
+        this.nettyWorldSimulatorService = nettyWorldSimulatorService;
+    }
+    
+    /**
+     * Helper method to check if any world simulator is connected.
+     */
+    private boolean isWorldSimulatorConnected() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.isConnected();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected();
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to check if world simulator connection is healthy.
+     */
+    private boolean isWorldSimulatorHealthy() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.isConnectionHealthy();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected(); // For Netty, connected = healthy
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to get world ID from the available service.
+     */
+    private Long getWorldId() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.getWorldId();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.getWorldId();
+        }
+        return null;
+    }
+    
+    /**
+     * Helper method to get implementation type.
+     */
+    private String getImplementationType() {
+        if (worldSimulatorService != null) {
+            return "socket";
+        } else if (nettyWorldSimulatorService != null) {
+            return "netty";
+        }
+        return "none";
     }
 
     @Override
     public Health health() {
         try {
-            boolean connected = worldSimulatorService.isConnected();
-            boolean healthy = worldSimulatorService.isConnectionHealthy();
+            boolean connected = isWorldSimulatorConnected();
+            boolean healthy = isWorldSimulatorHealthy();
             
             // Don't fail health check if World Simulator is intentionally not connected
             // This allows the application to start normally without external dependencies
@@ -48,12 +101,14 @@ public class WorldSimulatorHealthIndicator implements HealthIndicator {
             builder.withDetail("connected", connected)
                    .withDetail("healthy", healthy);
             
-            Long worldId = worldSimulatorService.getWorldId();
+            Long worldId = getWorldId();
             if (worldId != null) {
                 builder.withDetail("worldId", worldId);
             } else {
                 builder.withDetail("worldId", "Not connected");
             }
+            
+            builder.withDetail("implementation", getImplementationType());
             
             if (connected && healthy) {
                 builder.withDetail("message", "World Simulator connection is healthy");

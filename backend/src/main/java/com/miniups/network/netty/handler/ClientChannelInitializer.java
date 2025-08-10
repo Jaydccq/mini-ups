@@ -11,6 +11,8 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -36,8 +38,9 @@ import java.util.concurrent.CompletableFuture;
  * @author Mini-UPS System
  * @version 1.0
  */
-@Slf4j
 public class ClientChannelInitializer extends ChannelInitializer<SocketChannel> {
+
+    private static final Logger log = LoggerFactory.getLogger(ClientChannelInitializer.class);
 
     private final MessageHandlerService messageHandlerService;
     private final Map<Long, CompletableFuture<Object>> pendingResponses;

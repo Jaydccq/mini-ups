@@ -17,6 +17,8 @@
  */
 package com.miniups.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -29,9 +31,11 @@ public class AmazonMessageDto {
     @NotBlank(message = "Message type is required")
     @Pattern(regexp = "ShipmentCreated|ShipmentLoaded|ShipmentStatusRequest|AddressChange", 
              message = "Invalid message type")
+    @JsonProperty("message_type")
     private String messageType;
     
     @NotNull(message = "Timestamp is required")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     private LocalDateTime timestamp;
     
     @NotNull(message = "Payload is required")

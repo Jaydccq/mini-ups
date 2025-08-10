@@ -3,6 +3,8 @@ package com.miniups.network.netty.config;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +26,6 @@ import jakarta.annotation.PreDestroy;
  * @author Mini-UPS System
  * @version 1.0
  */
-@Slf4j
 @Configuration
 @EnableConfigurationProperties(NettyProperties.class)
 @ConditionalOnProperty(
@@ -33,6 +34,8 @@ import jakarta.annotation.PreDestroy;
     matchIfMissing = false
 )
 public class NettyConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(NettyConfig.class);
 
     private final NettyProperties nettyProperties;
     private EventLoopGroup workerGroup;

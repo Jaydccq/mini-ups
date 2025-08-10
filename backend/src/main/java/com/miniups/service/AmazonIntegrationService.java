@@ -27,6 +27,7 @@ import com.miniups.model.dto.AmazonMessageDto;
 import com.miniups.model.dto.ShipmentCreatedDto;
 import com.miniups.model.dto.UpsResponseDto;
 import com.miniups.model.event.ShipmentCreationPayload;
+import com.miniups.model.entity.CommunicationLog;
 import com.miniups.model.entity.Shipment;
 import com.miniups.model.entity.Truck;
 import com.miniups.model.entity.User;
@@ -69,8 +70,11 @@ public class AmazonIntegrationService {
     @Autowired
     private TrackingService trackingService;
     
-    @Autowired
+    @Autowired(required = false)
     private WorldSimulatorService worldSimulatorService;
+    
+    @Autowired(required = false)
+    private com.miniups.network.netty.service.NettyWorldSimulatorService nettyWorldSimulatorService;
     
     @Autowired
     private TruckManagementService truckManagementService;
@@ -84,8 +88,47 @@ public class AmazonIntegrationService {
     @Autowired
     private AsyncAuditService asyncAuditService;
     
+    @Autowired
+    private CommunicationLogService communicationLogService;
+    
     @Value("${amazon.base-url:http://host.docker.internal:8080}")
     private String amazonBaseUrl;
+    
+    /**
+     * Helper method to check if any world simulator is connected.
+     */
+    private boolean isWorldSimulatorConnected() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.isConnected();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected();
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to send truck to pickup using the available service.
+     */
+    private java.util.concurrent.CompletableFuture<Boolean> sendTruckToPickup(Integer truckId, Integer warehouseId) {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.sendTruckToPickup(truckId, warehouseId);
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.sendTruckToPickup(truckId, warehouseId);
+        }
+        return java.util.concurrent.CompletableFuture.completedFuture(false);
+    }
+    
+    /**
+     * Helper method to send truck to deliver using the available service.
+     */
+    private java.util.concurrent.CompletableFuture<Boolean> sendTruckToDeliver(Integer truckId, java.util.Map<Long, int[]> deliveries) {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.sendTruckToDeliver(truckId, deliveries);
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.sendTruckToDeliver(truckId, deliveries);
+        }
+        return java.util.concurrent.CompletableFuture.completedFuture(false);
+    }
     
     /**
      * Handle Amazon's ShipmentCreated message
@@ -208,10 +251,16 @@ public class AmazonIntegrationService {
             creationPayload.setPackageDescription("");
             // Add other relevant fields as needed
             
-            // Publish event for asynchronous processing (if available)
-            if (eventPublisher != null) {
-                eventPublisher.publishShipmentCreationEvent(creationPayload, correlationId);
+            // Publish event for asynchronous processing
+            if (eventPublisher == null) {
+                String errorMessage = "EventPublisherService is not available. Cannot process shipment asynchronously.";
+                logger.error("{} CorrelationId: {}", errorMessage, correlationId);
+                asyncAuditService.auditFailure("shipment.async_create", dto.getShipmentId(), 
+                                             "EventPublisherService not available", 
+                                             startTime, new IllegalStateException(errorMessage));
+                return UpsResponseDto.error(500, "Internal configuration error: unable to queue shipment for processing.");
             }
+            eventPublisher.publishShipmentCreationEvent(creationPayload, correlationId);
             
             // Audit the successful queuing
             Map<String, Object> auditData = Map.of(
@@ -254,7 +303,15 @@ public class AmazonIntegrationService {
      */
     public UpsResponseDto handleShipmentLoaded(AmazonMessageDto message) {
         try {
+            // Handle shipment_id as either string or integer
             String shipmentId = message.getPayloadString("shipment_id");
+            if (shipmentId == null) {
+                // Try to get as integer and convert to string
+                Integer shipmentIdInt = message.getPayloadInteger("shipment_id");
+                if (shipmentIdInt != null) {
+                    shipmentId = String.valueOf(shipmentIdInt);
+                }
+            }
             
             if (shipmentId == null) {
                 return UpsResponseDto.error(1001, "Missing shipment_id");
@@ -428,8 +485,23 @@ public class AmazonIntegrationService {
             dto.setUserId(((Number) userIdObj).longValue());
         }
         
-        dto.setEmail((String) payload.get("email"));
-        dto.setShipmentId((String) payload.get("shipment_id"));
+        // Handle email (should be String, but safety check)
+        Object emailObj = payload.get("email");
+        if (emailObj instanceof String) {
+            dto.setEmail((String) emailObj);
+        } else if (emailObj != null) {
+            dto.setEmail(String.valueOf(emailObj));
+        }
+        
+        // Handle shipment_id (could be Integer or String)
+        Object shipmentIdObj = payload.get("shipment_id");
+        if (shipmentIdObj instanceof Number) {
+            dto.setShipmentId(String.valueOf(shipmentIdObj));
+        } else if (shipmentIdObj instanceof String) {
+            dto.setShipmentId((String) shipmentIdObj);
+        } else if (shipmentIdObj != null) {
+            dto.setShipmentId(String.valueOf(shipmentIdObj));
+        }
         
         // Handle warehouse_id
         Object warehouseIdObj = payload.get("warehouse_id");
@@ -448,7 +520,13 @@ public class AmazonIntegrationService {
             dto.setDestinationY(((Number) destYObj).intValue());
         }
         
-        dto.setUpsAccount((String) payload.get("ups_account"));
+        // Handle ups_account (could be Integer or String)
+        Object upsAccountObj = payload.get("ups_account");
+        if (upsAccountObj instanceof Number) {
+            dto.setUpsAccount(String.valueOf(upsAccountObj));
+        } else if (upsAccountObj instanceof String) {
+            dto.setUpsAccount((String) upsAccountObj);
+        }
         
         return dto;
     }
@@ -462,6 +540,7 @@ public class AmazonIntegrationService {
         
         // Create new user if not found
         User newUser = new User();
+        newUser.setUsername("amazon_user_" + dto.getUserId()); // Generate unique username based on Amazon user ID
         newUser.setEmail(dto.getEmail());
         newUser.setPassword("temp_password"); // This should be handled properly in a real system
         newUser.setFirstName("Amazon User");
@@ -474,8 +553,10 @@ public class AmazonIntegrationService {
         Shipment shipment = new Shipment();
         shipment.setShipmentId(dto.getShipmentId());
         shipment.setUser(user);
-        shipment.setOriginX(dto.getWarehouseId().intValue()); // Simplified: using warehouse_id as origin coordinates
-        shipment.setOriginY(dto.getWarehouseId().intValue());
+        shipment.setWarehouseId(String.valueOf(dto.getWarehouseId())); // Store warehouse ID
+        // Note: We don't know the actual warehouse coordinates, World Simulator will handle routing
+        shipment.setOriginX(0); // Placeholder - actual coordinates will come from World Simulator
+        shipment.setOriginY(0); // Placeholder - actual coordinates will come from World Simulator
         shipment.setDestX(dto.getDestinationX());
         shipment.setDestY(dto.getDestinationY());
         shipment.setStatus(ShipmentStatus.CREATED);
@@ -484,20 +565,18 @@ public class AmazonIntegrationService {
     }
     
     private Truck assignTruck(Long warehouseId) {
-        // Use intelligent truck assignment from TruckManagementService
-        // Assume warehouse coordinates - in real system this would come from warehouse data
-        Integer warehouseX = warehouseId.intValue(); // Simplified mapping
-        Integer warehouseY = warehouseId.intValue(); // Simplified mapping
-        
-        return truckManagementService.assignOptimalTruck(warehouseX, warehouseY, 3); // Normal priority
+        // For now, assign any available truck since we don't know warehouse coordinates
+        // The World Simulator will handle the routing based on warehouse ID
+        // TODO: Implement proper warehouse coordinate mapping system
+        return truckManagementService.assignAnyAvailableTruck();
     }
     
     private void sendTruckToWarehouse(Truck truck, Long warehouseId, Shipment shipment) {
         // Send truck to warehouse via World Simulator
-        if (worldSimulatorService.isConnected()) {
+        if (isWorldSimulatorConnected()) {
             try {
                 // Send pickup command to World Simulator
-                worldSimulatorService.sendTruckToPickup(truck.getTruckId(), warehouseId.intValue())
+                sendTruckToPickup(truck.getTruckId(), warehouseId.intValue())
                     .thenAccept(success -> {
                         if (success) {
                             logger.info("Successfully sent truck {} to warehouse {}", truck.getTruckId(), warehouseId);
@@ -528,16 +607,16 @@ public class AmazonIntegrationService {
         shipment.updateStatus(ShipmentStatus.IN_TRANSIT);
         
         // Send delivery command to World Simulator
-        if (shipment.getTruck() != null && worldSimulatorService.isConnected()) {
+        if (shipment.getTruck() != null && isWorldSimulatorConnected()) {
             try {
                 // Prepare delivery locations
                 Map<Long, int[]> deliveries = new HashMap<>();
-                // Use shipment ID as package ID for World Simulator
-                Long packageId = Long.valueOf(shipment.getShipmentId().hashCode() & 0x7FFFFFFF);
+                // Use shipment ID directly as package ID (Amazon uses shipment_id as package_id)
+                Long packageId = Long.valueOf(shipment.getShipmentId());
                 deliveries.put(packageId, new int[]{shipment.getDestX(), shipment.getDestY()});
                 
                 // Send delivery command
-                worldSimulatorService.sendTruckToDeliver(shipment.getTruck().getTruckId(), deliveries)
+                sendTruckToDeliver(shipment.getTruck().getTruckId(), deliveries)
                     .thenAccept(success -> {
                         if (success) {
                             logger.info("Successfully started delivery for shipment {}", shipment.getShipmentId());
@@ -563,17 +642,19 @@ public class AmazonIntegrationService {
     
     private void updateTruckDestination(Truck truck, Integer newDestX, Integer newDestY) {
         // Update truck destination via World Simulator
-        if (worldSimulatorService.isConnected()) {
+        if (isWorldSimulatorConnected()) {
             try {
                 // Cancel current delivery and send new delivery command
                 Map<Long, int[]> newDeliveries = new HashMap<>();
-                // Find the shipment being delivered
-                Optional<Shipment> currentShipment = shipmentRepository.findByTruck(truck);
-                if (currentShipment.isPresent()) {
-                    Long packageId = Long.valueOf(currentShipment.get().getShipmentId().hashCode() & 0x7FFFFFFF);
+                // Find the shipments being delivered
+                List<Shipment> currentShipments = shipmentRepository.findByTruck(truck);
+                if (!currentShipments.isEmpty()) {
+                    // Handle the first/primary shipment for destination update
+                    Shipment currentShipment = currentShipments.get(0);
+                    Long packageId = Long.valueOf(currentShipment.getShipmentId());
                     newDeliveries.put(packageId, new int[]{newDestX, newDestY});
                     
-                    worldSimulatorService.sendTruckToDeliver(truck.getTruckId(), newDeliveries)
+                    sendTruckToDeliver(truck.getTruckId(), newDeliveries)
                         .thenAccept(success -> {
                             if (success) {
                                 logger.info("Successfully updated truck {} destination to ({}, {})", truck.getTruckId(), newDestX, newDestY);
@@ -597,18 +678,34 @@ public class AmazonIntegrationService {
     }
     
     private void sendNotificationToAmazon(String endpoint, UpsResponseDto notification) {
+        long startTime = System.currentTimeMillis();
+        CommunicationLog log = null;
+        
         try {
             String url = amazonBaseUrl + endpoint;
             
+            logger.info("Sending notification to Amazon: URL={}, Data={}", url, notification);
+            
+            // Log outgoing webhook
+            log = communicationLogService.logOutgoingMessage(notification.getMessageType(), endpoint, notification);
+            
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("User-Agent", "UPS-Service/1.0");
             
             HttpEntity<UpsResponseDto> request = new HttpEntity<>(notification, headers);
             
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             
+            // Update log with response
+            if (log != null) {
+                long processingTime = System.currentTimeMillis() - startTime;
+                int statusCode = response.getStatusCode().value();
+                communicationLogService.updateLogWithResponse(log, response.getBody(), statusCode, processingTime);
+            }
+            
             if (response.getStatusCode().is2xxSuccessful()) {
-                logger.debug("Successfully sent notification to Amazon: {}", endpoint);
+                logger.info("Successfully sent notification to Amazon: {}", endpoint);
             } else {
                 logger.warn("Amazon responded with status {}: {}", 
                            response.getStatusCode(), response.getBody());
@@ -616,6 +713,11 @@ public class AmazonIntegrationService {
             
         } catch (Exception e) {
             logger.error("Failed to send notification to Amazon at {}: {}", endpoint, e.getMessage());
+            
+            // Mark log as error if exists
+            if (log != null) {
+                communicationLogService.markLogAsError(log, e.getMessage(), null);
+            }
         }
     }
 }
