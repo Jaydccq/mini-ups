@@ -1,445 +1,446 @@
-# 🚚 Mini-UPS 企业级分布式物流系统
+# 🚚 Mini-UPS Enterprise Distributed Logistics System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue.svg)](https://www.typescriptlang.org/)
 [![AWS](https://img.shields.io/badge/AWS-Cloud%20Native-orange.svg)](https://aws.amazon.com/)
 
-> 🏗️ **生产就绪的企业级分布式物流管理系统**  
-> 采用微服务架构，支持Protocol Buffer高性能通信、实时追踪、智能调度，具备完整的CI/CD流水线和AWS云原生部署能力。
+> 🏗️ **Production-Ready Enterprise Distributed Logistics Management System**  
+> Built with microservices architecture, supporting Protocol Buffer high-performance communication, real-time tracking, intelligent scheduling, with complete CI/CD pipeline and AWS cloud-native deployment capabilities.
 
-## ✨ 核心特性
+## ✨ Core Features
 
-🚀 **企业级微服务架构**
-- Spring Boot 3.2 + React 18 现代技术栈
-- JWT认证 + RBAC权限控制
-- 高性能Protocol Buffer通信
-- 智能卡车调度算法
+🚀 **Enterprise Microservices Architecture**
+- Spring Boot 3.4 + React 18 Modern Tech Stack
+- JWT Authentication + RBAC Access Control
+- High-performance Protocol Buffer Communication
+- Intelligent Truck Scheduling Algorithms
 
-🌐 **分布式系统集成**
-- World Simulator TCP实时通信 (端口12345)
-- Amazon电商平台REST API集成
-- 异步消息处理 + 事件驱动架构
-- WebSocket实时状态推送
+🌐 **Distributed System Integration**
+- World Simulator TCP Real-time Communication (Port 12345)
+- Amazon E-commerce Platform REST API Integration
+- Asynchronous Message Processing + Event-driven Architecture
+- WebSocket Real-time Status Push
 
-☁️ **云原生部署架构**
-- Docker容器化 + AWS ECS Fargate
-- CloudFormation基础设施即代码
-- GitHub Actions自动化CI/CD
-- 多环境支持 (开发/测试/生产)
+☁️ **Cloud Native Deployment Architecture**
+- Docker Containerization + AWS ECS Fargate
+- CloudFormation Infrastructure as Code
+- GitHub Actions Automated CI/CD
+- Multi-environment Support (Development/Test/Production)
 
-📊 **生产级监控体系**
-- CloudWatch全面监控告警
-- 应用性能指标收集
-- 分布式日志聚合
-- 健康检查 + 自动恢复
+📊 **Production-grade Monitoring System**
+- CloudWatch Comprehensive Monitoring and Alerts
+- Application Performance Metrics Collection
+- Distributed Log Aggregation
+- Health Checks + Auto Recovery
 
 ---
 
-## 🏛️ 系统架构
+## 🏛️ System Architecture
 
-### 🎯 企业级分层架构设计
+### 🎯 Enterprise Layered Architecture Design
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    Mini-UPS 企业级分布式系统架构                      │
+│                    Mini-UPS Enterprise Distributed System Architecture                      │
 ├─────────────────────────────────────────────────────────────────────┤
-│  📱 表现层 (Presentation)                                            │
+│  📱 Presentation Layer (Presentation)                                            │
 │     React 18 + TypeScript + Radix UI + Tailwind CSS                │
-│     ├── 用户界面组件 ├── 状态管理 ├── 路由控制 ├── API集成           │
+│     ├── User Interface Components ├── State Management ├── Routing Control ├── API Integration           │
 ├─────────────────────────────────────────────────────────────────────┤
-│  🌐 网关层 (Gateway)                                                 │
-│     Nginx + ALB + SSL终端 + API网关 + 负载均衡                      │
-│     ├── 请求路由 ├── SSL终端 ├── 跨域处理 ├── 静态资源服务           │
+│  🌐 Gateway Layer (Gateway)                                                 │
+│     Nginx + ALB + SSL Termination + API Gateway + Load Balancing                      │
+│     ├── Request Routing ├── SSL Termination ├── CORS Handling ├── Static Resource Serving           │
 ├─────────────────────────────────────────────────────────────────────┤
-│  🚀 应用层 (Application) - Spring Boot 微服务架构                    │
+│  🚀 Application Layer (Application) - Spring Boot Microservices Architecture                    │
 │     ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐     │
-│     │  🎮 控制器层     │ │  💼 服务层       │ │  🔒 安全层       │     │
+│     │  🎮 Controller Layer     │ │  💼 Service Layer       │ │  🔒 Security Layer       │     │
 │     │  @RestController│ │  @Service       │ │  Spring Security│     │
-│     │  • API端点      │ │  • 业务逻辑      │ │  • JWT认证      │     │
-│     │  • 请求验证      │ │  • 事务管理      │ │  • 权限控制      │     │
-│     │  • 响应格式化    │ │  • 异常处理      │ │  • 会话管理      │     │
+│     │  • API Endpoints      │ │  • Business Logic      │ │  • JWT Authentication      │     │
+│     │  • Request Validation      │ │  • Transaction Management      │ │  • Access Control      │     │
+│     │  • Response Formatting    │ │  • Exception Handling      │ │  • Session Management      │     │
 │     └─────────────────┘ └─────────────────┘ └─────────────────┘     │
 ├─────────────────────────────────────────────────────────────────────┤
-│  📊 数据访问层 (Data Access)                                         │
-│     Spring Data JPA + Repository Pattern + 查询优化                │
-│     ├── JPA实体映射 ├── Repository接口 ├── 自定义查询 ├── 分页排序   │
+│  📊 Data Access Layer (Data Access)                                         │
+│     Spring Data JPA + Repository Pattern + Query Optimization                │
+│     ├── JPA Entity Mapping ├── Repository Interfaces ├── Custom Queries ├── Pagination and Sorting   │
 ├─────────────────────────────────────────────────────────────────────┤
-│  🗄️ 数据层 (Data Storage)                                           │
-│     PostgreSQL 15 (主数据库) + Redis 7 (缓存) + 连接池优化          │
-│     ├── ACID事务 ├── 索引优化 ├── 备份恢复 ├── 读写分离              │
+│  🗄️ Data Layer (Data Storage)                                           │
+│     PostgreSQL 15 (Primary Database) + Redis 7 (Cache) + Connection Pool Optimization          │
+│     ├── ACID Transactions ├── Index Optimization ├── Backup and Recovery ├── Read-Write Separation              │
 ├─────────────────────────────────────────────────────────────────────┤
-│  🔗 集成层 (Integration)                                             │
+│  🔗 Integration Layer (Integration)                                             │
 │     Protocol Buffer + TCP Socket + REST API + WebSocket + Webhook   │
-│     ├── 外部系统集成 ├── 消息队列 ├── 事件驱动 ├── 实时通信           │
+│     ├── External System Integration ├── Message Queue ├── Event-driven ├── Real-time Communication           │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 🌐 分布式服务通信架构
+### 🌐 Distributed Service Communication Architecture
 
 ```
     ┌─────────────────────────────────────────────────────────────┐
-    │                      外部系统集成                            │
+    │                      External System Integration                            │
     └─────────────────────────────────────────────────────────────┘
               │                    │                    │
     ┌─────────▼─────────┐ ┌────────▼────────┐ ┌────────▼────────┐
-    │  World Simulator  │ │   UPS 核心服务   │ │  Amazon 电商    │
+    │  World Simulator  │ │   UPS Core Service   │ │  Amazon E-commerce    │
     │  (TCP:12345)      │ │ (Spring Boot)   │ │  (Flask API)    │
     │                   │ │                 │ │                 │
-    │ 🌍 环境模拟        │ │ 🚚 物流管理      │ │ 🛒 订单管理      │
-    │ • GPS位置追踪     │ │ • 智能调度算法   │ │ • 商品目录       │
-    │ • 卡车状态同步    │◄┤ • 包裹生命周期   │◄┤ • 订单处理       │
-    │ • 仓库容量管理    │ │ • 用户权限管理   │ │ • 状态回调       │
-    │ • 路径规划       │ │ • 实时状态追踪   │ │ • 地址变更       │
+    │ 🌍 Environment Simulation        │ │ 🚚 Logistics Management      │ │ 🛒 Order Management      │
+    │ • GPS Location Tracking     │ │ • Intelligent Scheduling Algorithm   │ │ • Product Catalog       │
+    │ • Truck Status Synchronization    │◄┤ • Package Lifecycle   │◄┤ • Order Processing       │
+    │ • Warehouse Capacity Management    │ │ • User Permission Management   │ │ • Status Callback       │
+    │ • Route Planning       │ │ • Real-time Status Tracking   │ │ • Address Changes       │
     │                   │ │                 │ │                 │
     │ Protocol Buffer  │ │ REST API        │ │ REST + Webhook  │
     │ Binary Stream    │ │ JSON/HTTP       │ │ JSON/HTTP       │
     └───────────────────┘ └─────────────────┘ └─────────────────┘
 ```
 
-### 🏗️ Spring Boot 应用内部架构
+### 🏗️ Spring Boot Application Internal Architecture
 
 ```
 📁 backend/src/main/java/com/miniups/
-├── 🚀 MiniUpsApplication.java          # 应用启动类
+├── 🚀 MiniUpsApplication.java          # Application Startup Class
 │
-├── 📁 config/                          # 🔧 配置层
-│   ├── SecurityConfig.java            # JWT + Spring Security 配置
-│   ├── JpaConfig.java                 # 数据库连接和JPA配置  
-│   ├── RedisConfig.java               # Redis缓存配置
-│   ├── WebSocketConfig.java           # WebSocket实时通信配置
-│   └── CorsConfig.java                # 跨域资源共享配置
+├── 📁 config/                          # 🔧 Configuration Layer
+│   ├── SecurityConfig.java            # JWT + Spring Security Configuration
+│   ├── JpaConfig.java                 # Database Connection and JPA Configuration  
+│   ├── RedisConfig.java               # Redis Cache Configuration
+│   ├── WebSocketConfig.java           # WebSocket Real-time Communication Configuration
+│   └── CorsConfig.java                # Cross-Origin Resource Sharing Configuration
 │
-├── 📁 controller/                      # 🎮 表现层 - REST API
-│   ├── AuthController.java            # 认证登录API (/api/auth)
-│   ├── UserController.java            # 用户管理API (/api/users)
-│   ├── ShipmentController.java        # 订单管理API (/api/shipments)
-│   ├── TruckController.java           # 卡车管理API (/api/trucks)
-│   └── TrackingController.java        # 包裹追踪API (/api/tracking)
+├── 📁 controller/                      # 🎮 Presentation Layer - REST API
+│   ├── AuthController.java            # Authentication Login API (/api/auth)
+│   ├── UserController.java            # User Management API (/api/users)
+│   ├── ShipmentController.java        # Order Management API (/api/shipments)
+│   ├── TruckController.java           # Truck Management API (/api/trucks)
+│   └── TrackingController.java        # Package Tracking API (/api/tracking)
 │
-├── 📁 service/                         # 💼 业务逻辑层
-│   ├── UserService.java               # 用户业务逻辑 + 权限管理
-│   ├── AuthService.java               # 认证业务 + JWT令牌管理
-│   ├── ShipmentService.java           # 订单业务 + 状态机管理
-│   ├── TruckService.java              # 车辆调度 + 路径优化算法
-│   ├── NotificationService.java       # 消息通知 + 邮件/短信发送
-│   └── WorldSimulatorService.java     # 外部系统集成服务
+├── 📁 service/                         # 💼 Business Logic Layer
+│   ├── UserService.java               # User Business Logic + Permission Management
+│   ├── AuthService.java               # Authentication Business + JWT Token Management
+│   ├── ShipmentService.java           # Order Business + State Machine Management
+│   ├── TruckService.java              # Vehicle Dispatching + Route Optimization Algorithm
+│   ├── NotificationService.java       # Message Notification + Email/SMS Sending
+│   └── WorldSimulatorService.java     # External System Integration Service
 │
-├── 📁 repository/                      # 🗃️ 数据访问层
-│   ├── UserRepository.java            # 用户数据访问
-│   ├── ShipmentRepository.java        # 订单数据访问 + 复杂查询
-│   ├── TruckRepository.java           # 车辆数据访问
-│   ├── PackageRepository.java         # 包裹数据访问
-│   └── AuditLogRepository.java        # 审计日志数据访问
+├── 📁 repository/                      # 🗃️ Data Access Layer
+│   ├── UserRepository.java            # User Data Access
+│   ├── ShipmentRepository.java        # Order Data Access + Complex Queries
+│   ├── TruckRepository.java           # Vehicle Data Access
+│   ├── PackageRepository.java         # Package Data Access
+│   └── AuditLogRepository.java        # Audit Log Data Access
 │
-├── 📁 model/                          # 📊 数据模型层
-│   ├── 📁 entity/                     # JPA实体类
-│   │   ├── BaseEntity.java           # 基础实体 (ID + 审计字段)
-│   │   ├── User.java                 # 用户实体 + 角色权限
-│   │   ├── Shipment.java             # 订单实体 + 状态流转
-│   │   ├── Package.java              # 包裹实体 + 详细信息
-│   │   ├── Truck.java                # 车辆实体 + GPS位置
-│   │   └── ShipmentStatusHistory.java # 状态历史记录
-│   ├── 📁 dto/                       # 数据传输对象
-│   │   ├── UserDto.java              # 用户DTO + 安全字段过滤
-│   │   ├── ShipmentDto.java          # 订单DTO + 视图优化
-│   │   ├── CreateShipmentDto.java    # 创建订单请求DTO
-│   │   └── UpdateShipmentDto.java    # 更新订单请求DTO
-│   └── 📁 enums/                     # 枚举类型
-│       ├── UserRole.java             # 用户角色枚举
-│       ├── ShipmentStatus.java       # 订单状态枚举
-│       └── TruckStatus.java          # 车辆状态枚举
+├── 📁 model/                          # 📊 Data Model Layer
+│   ├── 📁 entity/                     # JPA Entity Classes
+│   │   ├── BaseEntity.java           # Base Entity (ID + Audit Fields)
+│   │   ├── User.java                 # User Entity + Role Permissions
+│   │   ├── Shipment.java             # Order Entity + Status Transitions
+│   │   ├── Package.java              # Package Entity + Detailed Information
+│   │   ├── Truck.java                # Vehicle Entity + GPS Location
+│   │   └── ShipmentStatusHistory.java # Status History Records
+│   ├── 📁 dto/                       # Data Transfer Objects
+│   │   ├── UserDto.java              # User DTO + Security Field Filtering
+│   │   ├── ShipmentDto.java          # Order DTO + View Optimization
+│   │   ├── CreateShipmentDto.java    # Create Order Request DTO
+│   │   └── UpdateShipmentDto.java    # Update Order Request DTO
+│   └── 📁 enums/                     # Enum Types
+│       ├── UserRole.java             # User Role Enum
+│       ├── ShipmentStatus.java       # Order Status Enum
+│       └── TruckStatus.java          # Vehicle Status Enum
 │
-├── 📁 security/                       # 🔒 安全组件
-│   ├── JwtTokenProvider.java         # JWT令牌生成和验证
-│   ├── JwtAuthenticationFilter.java  # JWT认证过滤器
-│   ├── CustomUserDetailsService.java # 用户详情服务
-│   └── SecurityUtils.java            # 安全工具类
+├── 📁 security/                       # 🔒 Security Components
+│   ├── JwtTokenProvider.java         # JWT Token Generation and Verification
+│   ├── JwtAuthenticationFilter.java  # JWT Authentication Filter
+│   ├── CustomUserDetailsService.java # User Details Service
+│   └── SecurityUtils.java            # Security Utility Class
 │
-├── 📁 exception/                      # ❌ 异常处理
-│   ├── GlobalExceptionHandler.java   # 全局异常处理器
-│   ├── BusinessException.java        # 业务异常基类
-│   ├── UserNotFoundException.java    # 用户不存在异常
-│   └── ShipmentNotFoundException.java # 订单不存在异常
+├── 📁 exception/                      # ❌ Exception Handling
+│   ├── GlobalExceptionHandler.java   # Global Exception Handler
+│   ├── BusinessException.java        # Business Exception Base Class
+│   ├── UserNotFoundException.java    # User Not Found Exception
+│   └── ShipmentNotFoundException.java # Order Not Found Exception
 │
-└── 📁 util/                          # 🛠️ 工具类
-    ├── DateTimeUtils.java            # 日期时间工具
-    ├── ValidationUtils.java          # 数据验证工具
-    ├── EncryptionUtils.java          # 加密解密工具
-    └── ResponseUtils.java            # 统一响应格式工具
+└── 📁 util/                          # 🛠️ Utility Classes
+    ├── DateTimeUtils.java            # Date and Time Utilities
+    ├── ValidationUtils.java          # Data Validation Utilities
+    ├── EncryptionUtils.java          # Encryption and Decryption Utilities
+    └── ResponseUtils.java            # Unified Response Format Utilities
 ```
 
 ---
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 🐳 Docker一键部署 (推荐)
+### 🐳 Docker One-click Deployment (Recommended)
 
 ```bash
-# 1. 克隆项目
+# 1. Clone the project
 git clone <repository-url>
 cd mini-ups
 
-# 2. 启动完整系统
+# 2. Start the complete system
 docker compose up --build
 
-# 🌟 就这么简单！所有服务将在几分钟内启动完成
+# 🌟 That's it! All services will start up within minutes
 ```
 
-**🎯 访问地址:**
-| 服务 | 地址 | 描述 |
+**🎯 Access Addresses:**
+| Service | Address | Description |
 |------|------|------|
-| 🖥️ UPS前端 | http://localhost:3000 | 现代化React用户界面 |
-| 🔌 UPS后端API | http://localhost:8081 | Spring Boot REST API |
-| 📚 API文档 | http://localhost:8081/swagger-ui.html | 交互式API文档 |
-| 🛒 Amazon系统 | http://localhost:8080 | 电商平台界面 |
-| 🗄️ UPS数据库 | localhost:5431 | PostgreSQL (postgres/abc123) |
-| ⚡ Redis缓存 | localhost:6380 | 高性能缓存服务 |
+| 🖥️ UPS Frontend | http://localhost:3000 | Modern React User Interface |
+| 🔌 UPS Backend API | http://localhost:8081 | Spring Boot REST API |
+| 📚 API Documentation | http://localhost:8081/swagger-ui.html | Interactive API Documentation |
+| 🛒 Amazon System | http://localhost:8080 | E-commerce Platform Interface |
+| 🗄️ UPS Database | localhost:5431 | PostgreSQL (postgres/abc123) |
+| ⚡ Redis Cache | localhost:6380 | High-performance Cache Service |
 
-### 💻 本地开发模式
+### 💻 Local Development Mode
 
-适合开发调试，支持热重载：
+Suitable for development and debugging, supports hot reloading:
 
 ```bash
-# 🛠️ 前置条件检查
+# 🛠️ Prerequisites Check
 ./start-local.sh --check
 
-# 🚀 一键启动本地开发环境
+# 🚀 One-click Start Local Development Environment
 ./start-local.sh
 
-# 🔄 单独启动服务
-cd backend && ./run-local.sh    # 后端开发服务器
-cd frontend && ./run-local.sh   # 前端开发服务器 (热重载)
+# 🔄 Start Services Separately
+cd backend && ./run-local.sh    # Backend Development Server
+cd frontend && ./run-local.sh   # Frontend Development Server (Hot Reloading)
 ```
 
-**💡 本地开发优势:**
-- ⚡ 极速热重载 (Vite + Spring DevTools)
-- 🐛 完整调试支持 (端口5005)
-- 📝 详细日志输出
-- 🔧 配置实时修改
+**💡 Local Development Advantages:**
+- ⚡ Ultra-fast Hot Reloading (Vite + Spring DevTools)
+- 🐛 Full Debugging Support (Port 5005)
+- 📝 Detailed Log Output
+- 🔧 Real-time Configuration Modifications
 
 ---
 
-## 🔧 技术栈详解
+## 🔧 Technology Stack Details
 
-### 🗄️ 后端技术栈
-| 技术 | 版本 | 用途 |
+### 🗄️ Backend Technology Stack
+| Technology | Version | Purpose |
 |------|------|------|
-| **Spring Boot** | 3.2.0 | 微服务框架 + 依赖注入 |
-| **Spring Security** | 6.x | JWT认证 + RBAC权限控制 |
-| **Spring Data JPA** | 3.2.0 | ORM数据访问 + 查询优化 |
-| **PostgreSQL** | 15 | 企业级关系数据库 |
-| **Redis** | 7 | 高性能缓存 + Session存储 |
-| **Protocol Buffers** | 3.24.4 | 高效二进制序列化 |
-| **Maven** | 3.9+ | 依赖管理 + 构建工具 |
+| **Spring Boot** | 3.4.1 | Microservices Framework + Dependency Injection |
+| **Spring Security** | 6.4.3 | JWT Authentication + RBAC Access Control |
+| **Spring Data JPA** | 3.4.1 | ORM Data Access + Query Optimization |
+| **PostgreSQL** | 15 | Enterprise-grade Relational Database |
+| **Redis** | 7 | High-performance Cache + Session Storage |
+| **Protocol Buffers** | 4.29.2 | Efficient Binary Serialization |
+| **Maven** | 3.9+ | Dependency Management + Build Tool |
+| **Netty** | 4.1.117.Final | TCP Client Implementation |
 
-### 🎨 前端技术栈
-| 技术 | 版本 | 用途 |
+### 🎨 Frontend Technology Stack
+| Technology | Version | Purpose |
 |------|------|------|
-| **React** | 18.2 | 现代化前端框架 |
-| **TypeScript** | 5.0 | 类型安全的JavaScript |
-| **Vite** | 4.5 | 极速构建工具 + HMR |
-| **Radix UI** | 1.0 | 无障碍组件库 |
-| **Tailwind CSS** | 3.3 | 原子化CSS框架 |
-| **React Router** | 6.x | 单页面应用路由 |
+| **React** | 18.2 | Modern Frontend Framework |
+| **TypeScript** | 5.2 | Type-safe JavaScript |
+| **Vite** | 7.0.5 | Ultra-fast Build Tool + HMR |
+| **Radix UI** | 1.0 | Accessible Component Library |
+| **Tailwind CSS** | 3.4.1 | Atomic CSS Framework |
+| **React Router** | 6.21.1 | Single Page Application Routing |
 
-### ☁️ 基础设施技术栈
-| 技术 | 用途 |
+### ☁️ Infrastructure Technology Stack
+| Technology | Purpose |
 |------|------|
-| **Docker** | 容器化部署 + 开发环境 |
-| **AWS ECS Fargate** | 无服务器容器平台 |
-| **AWS RDS** | 托管PostgreSQL数据库 |
-| **AWS ElastiCache** | 托管Redis缓存服务 |
-| **AWS ALB** | 应用负载均衡器 |
-| **CloudFormation** | 基础设施即代码 |
-| **GitHub Actions** | CI/CD自动化流水线 |
+| **Docker** | Containerization Deployment + Development Environment |
+| **AWS ECS Fargate** | Serverless Container Platform |
+| **AWS RDS** | Managed PostgreSQL Database |
+| **AWS ElastiCache** | Managed Redis Cache Service |
+| **AWS ALB** | Application Load Balancer |
+| **CloudFormation** | Infrastructure as Code |
+| **GitHub Actions** | CI/CD Automation Pipeline |
 
 ---
 
-## 📋 核心功能模块
+## 📋 Core Functional Modules
 
-### 🔐 用户认证与权限管理
-- **JWT无状态认证**: 安全的令牌机制
-- **多角色权限控制**: 客户/司机/操作员/管理员
-- **密码安全策略**: BCrypt加密 + 强密码要求
-- **会话管理**: Redis分布式会话存储
+### 🔐 User Authentication and Permission Management
+- **JWT Stateless Authentication**: Secure Token Mechanism
+- **Multi-role Access Control**: Customer/Driver/Operator/Admin
+- **Password Security Policy**: BCrypt Encryption + Strong Password Requirements
+- **Session Management**: Redis Distributed Session Storage
 
-### 📦 智能物流管理
-- **订单生命周期管理**: 创建→分配→取货→配送→完成
-- **智能卡车调度**: 基于距离和容量的优化算法
-- **实时包裹追踪**: 全程状态监控 + GPS位置
-- **地址变更处理**: 运输过程中的灵活地址修改
+### 📦 Intelligent Logistics Management
+- **Order Lifecycle Management**: Create→Assign→Pickup→Delivery→Complete
+- **Intelligent Truck Dispatching**: Distance and Capacity-based Optimization Algorithm
+- **Real-time Package Tracking**: Full-process Status Monitoring + GPS Location
+- **Address Change Handling**: Flexible Address Modification During Transportation
 
-### 🌐 分布式系统集成
-- **World Simulator集成**: TCP Socket + Protocol Buffer通信
-- **Amazon系统集成**: REST API + Webhook回调机制
-- **异步消息处理**: 高并发消息队列处理
-- **事件驱动架构**: Spring Events + 发布订阅模式
+### 🌐 Distributed System Integration
+- **World Simulator Integration**: TCP Socket + Protocol Buffer Communication
+- **Amazon System Integration**: REST API + Webhook Callback Mechanism
+- **Asynchronous Message Processing**: High-concurrency Message Queue Handling
+- **Event-driven Architecture**: Spring Events + Publish-Subscribe Pattern
 
-### 📊 监控与运维
-- **应用性能监控**: 响应时间 + 吞吐量 + 错误率
-- **业务指标监控**: 订单处理量 + 配送效率 + 客户满意度
-- **基础设施监控**: CPU + 内存 + 磁盘 + 网络
-- **告警通知**: 邮件 + Slack集成
-
----
-
-## 🔗 API接口文档
-
-### 🔑 认证接口
-```bash
-POST /api/auth/login          # 用户登录
-POST /api/auth/register       # 用户注册
-POST /api/auth/refresh-token  # 刷新令牌
-POST /api/auth/logout         # 用户登出
-```
-
-### 📦 订单管理接口
-```bash
-GET    /api/shipments         # 查询订单列表
-POST   /api/shipments         # 创建新订单
-GET    /api/shipments/{id}    # 查询订单详情
-PUT    /api/shipments/{id}    # 更新订单信息
-DELETE /api/shipments/{id}    # 取消订单
-```
-
-### 🚛 卡车管理接口
-```bash
-GET  /api/trucks              # 查询卡车列表
-POST /api/trucks              # 添加新卡车
-GET  /api/trucks/{id}/status  # 查询卡车状态
-PUT  /api/trucks/{id}/assign  # 分配卡车任务
-```
-
-### 📍 追踪服务接口
-```bash
-GET /api/tracking/{trackingNumber}         # 包裹追踪
-GET /api/tracking/{trackingNumber}/history # 状态历史
-PUT /api/tracking/{trackingNumber}/status  # 更新状态
-```
-
-### 🔗 Amazon集成接口
-```bash
-POST /api/amazon/order-created    # 订单创建通知
-POST /api/amazon/order-loaded     # 装载完成通知
-PUT  /api/amazon/change-address   # 地址变更请求
-GET  /api/amazon/shipment/{id}    # 订单详情查询
-```
-
-**📚 完整API文档**: http://localhost:8081/swagger-ui.html
+### 📊 Monitoring and Operations
+- **Application Performance Monitoring**: Response Time + Throughput + Error Rate
+- **Business Metrics Monitoring**: Order Processing Volume + Delivery Efficiency + Customer Satisfaction
+- **Infrastructure Monitoring**: CPU + Memory + Disk + Network
+- **Alert Notifications**: Email + Slack Integration
 
 ---
 
-## 🚢 生产部署
+## 🔗 API Interface Documentation
 
-### ☁️ AWS云部署 (推荐)
+### 🔑 Authentication Interface
+```bash
+POST /api/auth/login          # User Login
+POST /api/auth/register       # User Registration
+POST /api/auth/refresh-token  # Refresh Token
+POST /api/auth/logout         # User Logout
+```
+
+### 📦 Order Management Interface
+```bash
+GET    /api/shipments         # Query Order List
+POST   /api/shipments         # Create New Order
+GET    /api/shipments/{id}    # Query Order Details
+PUT    /api/shipments/{id}    # Update Order Information
+DELETE /api/shipments/{id}    # Cancel Order
+```
+
+### 🚛 Truck Management Interface
+```bash
+GET  /api/trucks              # Query Truck List
+POST /api/trucks              # Add New Truck
+GET  /api/trucks/{id}/status  # Query Truck Status
+PUT  /api/trucks/{id}/assign  # Assign Truck Task
+```
+
+### 📍 Tracking Service Interface
+```bash
+GET /api/tracking/{trackingNumber}         # Package Tracking
+GET /api/tracking/{trackingNumber}/history # Status History
+PUT /api/tracking/{trackingNumber}/status  # Update Status
+```
+
+### 🔗 Amazon Integration Interface
+```bash
+POST /api/amazon/order-created    # Order Creation Notification
+POST /api/amazon/order-loaded     # Loading Completion Notification
+PUT  /api/amazon/change-address   # Address Change Request
+GET  /api/amazon/shipment/{id}    # Order Details Query
+```
+
+**📚 Complete API Documentation**: http://localhost:8081/swagger-ui.html
+
+---
+
+## 🚢 Production Deployment
+
+### ☁️ AWS Cloud Deployment (Recommended)
 
 ```bash
-# 🔧 配置AWS凭证
+# 🔧 Configure AWS Credentials
 aws configure
 
-# 🚀 一键部署到生产环境
-cd aws
+# 🚀 One-click Deployment to Production Environment
+cd infrastructure/aws
 ./deploy.sh prod
 
-# 📊 查看部署状态
+# 📊 View Deployment Status
 aws cloudformation describe-stacks --stack-name mini-ups-infrastructure-prod
 ```
 
-**🏗️ AWS基础设施组件:**
-- **VPC网络**: 多AZ私有网络架构
-- **ECS Fargate**: 无服务器容器平台
-- **RDS PostgreSQL**: 托管数据库 (多AZ高可用)
-- **ElastiCache Redis**: 托管缓存服务
-- **Application Load Balancer**: 7层负载均衡
-- **CloudWatch**: 监控告警 + 日志聚合
+**🏗️ AWS Infrastructure Components:**
+- **VPC Network**: Multi-AZ Private Network Architecture
+- **ECS Fargate**: Serverless Container Platform
+- **RDS PostgreSQL**: Managed Database (Multi-AZ High Availability)
+- **ElastiCache Redis**: Managed Cache Service
+- **Application Load Balancer**: Layer 7 Load Balancer
+- **CloudWatch**: Monitoring Alerts + Log Aggregation
 
-### 🔄 CI/CD流水线
+### 🔄 CI/CD Pipeline
 
-**GitHub Actions自动化流程:**
-1. **🧪 代码质量检查**: 单元测试 + 集成测试 + SonarQube
-2. **🔒 安全扫描**: 漏洞检测 + 依赖安全检查
-3. **🐳 镜像构建**: 多阶段Docker构建优化
-4. **☁️ 云端部署**: ECR推送 + ECS服务更新
-5. **✅ 健康验证**: 服务健康检查 + 回滚机制
+**GitHub Actions Automation Process:**
+1. **🧪 Code Quality Check**: Unit Tests + Integration Tests + SonarQube
+2. **🔒 Security Scanning**: Vulnerability Detection + Dependency Security Check
+3. **🐳 Image Building**: Multi-stage Docker Build Optimization
+4. **☁️ Cloud Deployment**: ECR Push + ECS Service Update
+5. **✅ Health Verification**: Service Health Check + Rollback Mechanism
 
-**🌟 部署特性:**
-- ✅ 零停机蓝绿部署
-- ✅ 自动回滚机制
-- ✅ 多环境支持 (dev/staging/prod)
-- ✅ 安全密钥管理 (AWS Secrets Manager)
-
----
-
-## 📊 性能与监控
-
-### ⚡ 性能优化
-
-**🗄️ 数据库层优化:**
-- 智能索引策略 (关键查询字段)
-- HikariCP连接池优化
-- JPA查询性能调优
-- 读写分离架构
-
-**🚀 应用层优化:**
-- Redis多级缓存策略
-- 异步非阻塞处理
-- JVM G1垃圾回收优化
-- HTTP连接池复用
-
-**🌐 网络层优化:**
-- Nginx GZIP压缩
-- CDN静态资源加速
-- HTTP/2协议支持
-- SSL/TLS终端优化
-
-### 📈 监控体系
-
-**📊 关键性能指标:**
-- **响应时间**: P95 < 200ms, P99 < 500ms
-- **吞吐量**: > 1000 QPS
-- **可用性**: 99.9% SLA
-- **错误率**: < 0.1%
-
-**🔍 业务监控指标:**
-- 订单处理量 + 成功率
-- 平均配送时间
-- 卡车利用率
-- 客户满意度评分
-
-**🚨 告警配置:**
-- 应用错误率 > 1%
-- 响应时间 > 2秒
-- 数据库连接数 > 80%
-- 内存使用率 > 85%
+**🌟 Deployment Features:**
+- ✅ Zero-downtime Blue-Green Deployment
+- ✅ Automatic Rollback Mechanism
+- ✅ Multi-environment Support (dev/staging/prod)
+- ✅ Secure Secret Management (AWS Secrets Manager)
 
 ---
 
-## 🛠️ 开发指南
+## 📊 Performance and Monitoring
 
-### 📋 环境要求
+### ⚡ Performance Optimization
 
-**💻 本地开发环境:**
+**🗄️ Database Layer Optimization:**
+- Intelligent Indexing Strategy (Key Query Fields)
+- HikariCP Connection Pool Optimization
+- JPA Query Performance Tuning
+- Read-Write Separation Architecture
+
+**🚀 Application Layer Optimization:**
+- Redis Multi-level Caching Strategy
+- Asynchronous Non-blocking Processing
+- JVM G1 Garbage Collection Optimization
+- HTTP Connection Pool Reuse
+
+**🌐 Network Layer Optimization:**
+- Nginx GZIP Compression
+- CDN Static Resource Acceleration
+- HTTP/2 Protocol Support
+- SSL/TLS Termination Optimization
+
+### 📈 Monitoring System
+
+**📊 Key Performance Indicators:**
+- **Response Time**: P95 < 200ms, P99 < 500ms
+- **Throughput**: > 1000 QPS
+- **Availability**: 99.9% SLA
+- **Error Rate**: < 0.1%
+
+**🔍 Business Monitoring Metrics:**
+- Order Processing Volume + Success Rate
+- Average Delivery Time
+- Truck Utilization Rate
+- Customer Satisfaction Score
+
+**🚨 Alert Configuration:**
+- Application Error Rate > 1%
+- Response Time > 2 seconds
+- Database Connection Count > 80%
+- Memory Usage Rate > 85%
+
+---
+
+## 🛠️ Development Guide
+
+### 📋 Environment Requirements
+
+**💻 Local Development Environment:**
 ```bash
-Java 17+                    # OpenJDK推荐
-Node.js 18+                # 前端开发
-Maven 3.9+                 # 构建工具
-PostgreSQL 15+             # 数据库
-Redis 7+                   # 缓存
-Docker & Docker Compose    # 容器化
+Java 17+                    # OpenJDK Recommended
+Node.js 18+                # Frontend Development
+Maven 3.9+                 # Build Tool
+PostgreSQL 15+             # Database
+Redis 7+                   # Cache
+Docker & Docker Compose    # Containerization
 ```
 
-**☁️ 生产环境:**
+**☁️ Production Environment:**
 ```bash
-AWS CLI v2                 # AWS工具
-kubectl (可选)              # Kubernetes工具
-Terraform (可选)           # 基础设施即代码
+AWS CLI v2                 # AWS Tool
+kubectl (Optional)              # Kubernetes Tool
+Terraform (Optional)           # Infrastructure as Code
 ```
 
-### 🔧 配置管理
+### 🔧 Configuration Management
 
-**🏠 本地开发配置:**
+**🏠 Local Development Configuration:**
 ```yaml
 # backend/src/main/resources/application-local.yml
 spring:
@@ -452,7 +453,7 @@ spring:
     port: 6380
 ```
 
-**🐳 Docker配置:**
+**🐳 Docker Configuration:**
 ```yaml
 # docker-compose.yml
 services:
@@ -460,10 +461,10 @@ services:
     image: mini-ups-backend
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      DATABASE_URL: jdbc:postgresql://upsdb:5432/ups_db
+      DATABASE_URL: jdbc:postgresql://ups-database:5432/ups_db
 ```
 
-**☁️ AWS生产配置:**
+**☁️ AWS Production Configuration:**
 ```yaml
 # backend/src/main/resources/application-aws.yml
 spring:
@@ -473,277 +474,277 @@ spring:
     host: ${ELASTICACHE_ENDPOINT}
 ```
 
-### 🧪 测试策略
+### 🧪 Testing Strategy
 
-**🔬 测试金字塔:**
+**🔬 Testing Pyramid:**
 ```bash
-单元测试 (70%)              # JUnit 5 + Mockito
-  └── 服务层逻辑测试
-  └── 工具类功能测试
-  └── 算法正确性验证
+Unit Tests (70%)              # JUnit 5 + Mockito
+  └── Service Layer Logic Tests
+  └── Utility Class Function Tests
+  └── Algorithm Correctness Verification
 
-集成测试 (20%)              # TestContainers + H2
-  └── 数据库集成测试
-  └── Redis缓存测试
-  └── 外部API集成测试
+Integration Tests (20%)              # TestContainers + H2
+  └── Database Integration Tests
+  └── Redis Cache Tests
+  └── External API Integration Tests
 
-端到端测试 (10%)            # Spring Boot Test + WebMvcTest
-  └── 完整业务流程测试
-  └── API契约测试
-  └── 用户界面测试
+End-to-End Tests (10%)            # Spring Boot Test + WebMvcTest
+  └── Complete Business Process Tests
+  └── API Contract Tests
+  └── User Interface Tests
 ```
 
-**🚀 运行测试:**
+**🚀 Running Tests:**
 ```bash
-# 后端测试
+# Backend Tests
 cd backend
-mvn clean test                    # 单元测试
-mvn verify                        # 集成测试
-mvn test -Dtest=*IntegrationTest  # 特定测试
+./mvnw clean test                    # Unit Tests
+./mvnw verify                        # Integration Tests
+./mvnw test -Dtest=*IntegrationTest  # Specific Tests
 
-# 前端测试
+# Frontend Tests
 cd frontend
-npm run test                      # 单元测试
-npm run test:e2e                  # 端到端测试
-npm run test:coverage             # 覆盖率报告
+npm run test                      # Unit Tests
+npm run test:e2e                  # End-to-End Tests
+npm run test:coverage             # Coverage Report
 ```
 
 ---
 
-## 🚨 故障排除
+## 🚨 Troubleshooting
 
-### 🔍 常见问题解决
+### 🔍 Common Problem Solutions
 
-**1. 🐳 Docker容器启动失败**
+**1. 🐳 Docker Container Startup Failure**
 ```bash
-# 检查容器状态
+# Check Container Status
 docker compose ps
 
-# 查看详细日志
+# View Detailed Logs
 docker compose logs backend
 docker compose logs frontend
 
-# 重建容器
+# Rebuild Containers
 docker compose down
 docker compose up --build
 ```
 
-**2. 🗄️ 数据库连接问题**
+**2. 🗄️ Database Connection Issues**
 ```bash
-# 检查数据库状态
-docker compose exec upsdb pg_isready -U postgres
+# Check Database Status
+docker compose exec ups-database pg_isready -U postgres
 
-# 手动连接测试
+# Manual Connection Test
 psql -h localhost -p 5431 -U postgres -d ups_db
 
-# 重置数据库
-docker compose restart upsdb
+# Reset Database
+docker compose restart ups-database
 ```
 
-**3. 🌐 网络连接问题**
+**3. 🌐 Network Connection Issues**
 ```bash
-# 检查Docker网络
+# Check Docker Network
 docker network ls
 docker network inspect projectnet
 
-# 重建网络
+# Rebuild Network
 docker network rm projectnet
 docker network create projectnet
 ```
 
-**4. ⚡ Redis缓存问题**
+**4. ⚡ Redis Cache Issues**
 ```bash
-# 检查Redis连接
+# Check Redis Connection
 redis-cli -h localhost -p 6380 ping
 
-# 清空缓存
+# Clear Cache
 redis-cli -h localhost -p 6380 flushall
 
-# 重启Redis
+# Restart Redis
 docker compose restart redis
 ```
 
-### 🔄 完全重置环境
+### 🔄 Complete Environment Reset
 
 ```bash
-# 停止所有服务
+# Stop All Services
 ./stop-ups.sh
 
-# 清理Docker资源
+# Clean Docker Resources
 docker system prune -f
 docker volume prune -f
 docker image prune -f
 
-# 重新构建启动
+# Rebuild and Start
 ./start-ups.sh
 ```
 
-### 📝 调试技巧
+### 📝 Debugging Tips
 
-**🔧 后端调试:**
+**🔧 Backend Debugging:**
 ```bash
-# 启用远程调试
+# Enable Remote Debugging
 export JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 ./mvnw spring-boot:run
 
-# 查看JVM参数
+# View JVM Parameters
 jps -v
 
-# 性能分析
+# Performance Analysis
 jstack <pid>
 jmap -heap <pid>
 ```
 
-**🎨 前端调试:**
+**🎨 Frontend Debugging:**
 ```bash
-# 启用详细日志
+# Enable Detailed Logs
 npm run dev -- --debug
 
-# 构建分析
+# Build Analysis
 npm run build -- --analyze
 
-# 源码映射
+# Source Mapping
 npm run dev -- --sourcemap
 ```
 
 ---
 
-## 🔐 安全最佳实践
+## 🔐 Security Best Practices
 
-### 🛡️ 认证与授权
-- **JWT令牌安全**: HS256签名 + 自动过期 + 刷新机制
-- **密码安全**: BCrypt加密 + 复杂度要求 + 防暴力破解
-- **权限控制**: RBAC模型 + 方法级权限 + 资源级访问控制
-- **会话管理**: Redis分布式会话 + 自动清理
+### 🛡️ Authentication and Authorization
+- **JWT Token Security**: HS256 Signature + Auto-expiration + Refresh Mechanism
+- **Password Security**: BCrypt Encryption + Complexity Requirements + Anti-brute-force
+- **Access Control**: RBAC Model + Method-level Permissions + Resource-level Access Control
+- **Session Management**: Redis Distributed Session + Auto Cleanup
 
-### 🔒 数据安全
-- **传输加密**: HTTPS/TLS 1.3 + SSL证书自动更新
-- **存储加密**: 数据库字段加密 + AWS KMS密钥管理
-- **SQL注入防护**: JPA参数化查询 + 输入验证
-- **XSS防护**: CSP头 + 输出编码 + 内容过滤
+### 🔒 Data Security
+- **Transmission Encryption**: HTTPS/TLS 1.3 + SSL Certificate Auto-renewal
+- **Storage Encryption**: Database Field Encryption + AWS KMS Key Management
+- **SQL Injection Protection**: JPA Parameterized Queries + Input Validation
+- **XSS Protection**: CSP Headers + Output Encoding + Content Filtering
 
-### 🌐 网络安全
-- **网络隔离**: VPC私有子网 + 安全组白名单
-- **API安全**: 请求限流 + 签名验证 + CORS配置
-- **DDoS防护**: AWS Shield + CloudFlare防护
-- **漏洞扫描**: 定期安全扫描 + 依赖更新
-
----
-
-## 📈 扩展性与可维护性
-
-### 🚀 水平扩展能力
-- **无状态服务**: 支持多实例部署
-- **数据库优化**: 读写分离 + 分库分表
-- **缓存策略**: 多级缓存 + 缓存预热
-- **负载均衡**: ALB + ECS服务发现
-
-### 🔧 可维护性设计
-- **代码质量**: SOLID原则 + 设计模式 + 代码审查
-- **文档完善**: API文档 + 架构文档 + 运维手册
-- **监控可观测**: 全链路追踪 + 业务指标 + 错误追踪
-- **自动化运维**: CI/CD + 基础设施即代码 + 自动化测试
+### 🌐 Network Security
+- **Network Isolation**: VPC Private Subnets + Security Group Whitelists
+- **API Security**: Request Rate Limiting + Signature Verification + CORS Configuration
+- **DDoS Protection**: AWS Shield + CloudFlare Protection
+- **Vulnerability Scanning**: Regular Security Scanning + Dependency Updates
 
 ---
 
-## 📚 学习资源
+## 📈 Scalability and Maintainability
 
-### 📖 官方文档
+### 🚀 Horizontal Scaling Capabilities
+- **Stateless Services**: Supports Multi-instance Deployment
+- **Database Optimization**: Read-Write Separation + Database Sharding
+- **Caching Strategy**: Multi-level Caching + Cache Preheating
+- **Load Balancing**: ALB + ECS Service Discovery
+
+### 🔧 Maintainability Design
+- **Code Quality**: SOLID Principles + Design Patterns + Code Review
+- **Documentation**: Complete API Documentation + Architecture Documentation + Operations Manual
+- **Monitorable**: Full-link Tracking + Business Metrics + Error Tracking
+- **Automated Operations**: CI/CD + Infrastructure as Code + Automated Testing
+
+---
+
+## 📚 Learning Resources
+
+### 📖 Official Documentation
 - [Spring Boot Reference Guide](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/)
 - [React Official Documentation](https://react.dev/)
 - [AWS Documentation](https://docs.aws.amazon.com/)
 - [Docker Official Documentation](https://docs.docker.com/)
 
-### 🎓 推荐学习路径
-1. **后端开发**: Spring Boot → Spring Security → JPA → Redis
-2. **前端开发**: React基础 → TypeScript → 状态管理 → 构建工具
-3. **数据库**: PostgreSQL → 查询优化 → 索引设计 → 备份恢复
-4. **容器化**: Docker基础 → Compose → Kubernetes → 最佳实践
-5. **云平台**: AWS基础 → ECS → RDS → 监控告警
+### 🎓 Recommended Learning Path
+1. **Backend Development**: Spring Boot → Spring Security → JPA → Redis
+2. **Frontend Development**: React Basics → TypeScript → State Management → Build Tools
+3. **Database**: PostgreSQL → Query Optimization → Index Design → Backup and Recovery
+4. **Containerization**: Docker Basics → Compose → Kubernetes → Best Practices
+5. **Cloud Platform**: AWS Basics → ECS → RDS → Monitoring and Alerts
 
-### 📝 实践项目
-- 🔄 实现新的业务功能 (如：订单批量处理)
-- 🎨 优化用户界面体验 (如：实时图表展示)
-- ⚡ 性能优化挑战 (如：缓存策略优化)
-- 🔒 安全加固实践 (如：OAuth2集成)
+### 📝 Practice Projects
+- 🔄 Implement New Business Features (e.g., Order Batch Processing)
+- 🎨 Optimize User Interface Experience (e.g., Real-time Chart Display)
+- ⚡ Performance Optimization Challenges (e.g., Cache Strategy Optimization)
+- 🔒 Security Hardening Practices (e.g., OAuth2 Integration)
 
 ---
 
-## 🤝 贡献指南
+## 🤝 Contribution Guide
 
-### 🔀 提交代码流程
-1. **Fork项目** → 创建个人副本
-2. **创建分支** → `git checkout -b feature/your-feature-name`
-3. **编写代码** → 遵循代码规范 + 添加测试
-4. **提交变更** → `git commit -m "feat: add new feature"`
-5. **推送分支** → `git push origin feature/your-feature-name`
-6. **创建PR** → 详细描述变更内容
+### 🔀 Code Submission Process
+1. **Fork Project** → Create Personal Copy
+2. **Create Branch** → `git checkout -b feature/your-feature-name`
+3. **Write Code** → Follow Code Standards + Add Tests
+4. **Commit Changes** → `git commit -m "feat: add new feature"`
+5. **Push Branch** → `git push origin feature/your-feature-name`
+6. **Create PR** → Detailed Description of Changes
 
-### 📋 代码规范
+### 📋 Code Standards
 - **Java**: Google Java Style Guide + Checkstyle
-- **TypeScript**: ESLint + Prettier配置
-- **Git提交**: Conventional Commits规范
-- **文档**: 中英文对照 + 示例代码
+- **TypeScript**: ESLint + Prettier Configuration
+- **Git Commits**: Conventional Commits Standard
+- **Documentation**: Bilingual (Chinese/English) + Example Code
 
-### 🧪 测试要求
-- **单元测试覆盖率** > 80%
-- **集成测试** 覆盖主要业务流程
-- **代码质量检查** 通过SonarQube门禁
-- **性能测试** 满足响应时间要求
-
----
-
-## 🎯 项目路线图
-
-### 🚀 已完成功能 (v1.0)
-- ✅ 完整的用户认证授权系统
-- ✅ 智能卡车调度算法
-- ✅ Protocol Buffer + TCP通信
-- ✅ Amazon系统完整集成
-- ✅ React现代化前端界面
-- ✅ Docker容器化部署
-- ✅ AWS云原生架构
-- ✅ CI/CD自动化流水线
-
-### 🔜 计划功能 (v2.0)
-- 🎯 AI智能路径规划算法
-- 📊 高级数据分析与报表
-- 📱 移动端APP (React Native)
-- 🌍 多区域部署支持
-- 🔔 智能通知推送系统
-- 🎮 3D可视化追踪界面
-
-### 💡 长期规划 (v3.0+)
-- 🤖 机器学习预测模型
-- 🌐 国际化多语言支持
-- 🔗 区块链溯源集成
-- 🚁 无人机配送模拟
-- 🎯 边缘计算优化
-- 🌟 GraphQL API升级
+### 🧪 Testing Requirements
+- **Unit Test Coverage** > 80%
+- **Integration Tests** Cover Main Business Processes
+- **Code Quality Check** Pass SonarQube Gate
+- **Performance Tests** Meet Response Time Requirements
 
 ---
 
-## 📞 支持与反馈
+## 🎯 Project Roadmap
 
-### 💬 获取帮助
-- **📋 Issue反馈**: [GitHub Issues](https://github.com/your-repo/issues)
-- **💡 功能建议**: [Feature Requests](https://github.com/your-repo/discussions)
-- **📖 文档问题**: 查看 [GUIDE.md](./GUIDE.md) 详细开发指南
-- **🚀 部署问题**: 查看 [DEPLOYMENT.md](./DEPLOYMENT.md) 部署文档
+### 🚀 Completed Features (v1.0)
+- ✅ Complete User Authentication and Authorization System
+- ✅ Intelligent Truck Dispatching Algorithm
+- ✅ Protocol Buffer + TCP Communication
+- ✅ Complete Amazon System Integration
+- ✅ Modern React Frontend Interface
+- ✅ Docker Containerization Deployment
+- ✅ AWS Cloud-native Architecture
+- ✅ CI/CD Automated Pipeline
 
-### 🌟 项目统计
+### 🔜 Planned Features (v2.0)
+- 🎯 AI Intelligent Route Planning Algorithm
+- 📊 Advanced Data Analysis and Reports
+- 📱 Mobile App (React Native)
+- 🌍 Multi-region Deployment Support
+- 🔔 Intelligent Notification Push System
+- 🎮 3D Visualization Tracking Interface
+
+### 💡 Long-term Planning (v3.0+)
+- 🤖 Machine Learning Prediction Models
+- 🌐 Internationalization Multi-language Support
+- 🔗 Blockchain Traceability Integration
+- 🚁 Drone Delivery Simulation
+- 🎯 Edge Computing Optimization
+- 🌟 GraphQL API Upgrade
+
+---
+
+## 📞 Support and Feedback
+
+### 💬 Getting Help
+- **📋 Issue Feedback**: [GitHub Issues](https://github.com/your-repo/issues)
+- **💡 Feature Suggestions**: [Feature Requests](https://github.com/your-repo/discussions)
+- **📖 Documentation Issues**: See [GUIDE.md](./docs/GUIDE.md) for Detailed Development Guide
+- **🚀 Deployment Issues**: See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for Deployment Documentation
+
+### 🌟 Project Statistics
 ```
-📁 总代码行数: 50,000+
-🧪 测试覆盖率: 85%+
-📦 Docker镜像大小: < 200MB
-⚡ API响应时间: < 200ms
-🔄 部署时间: < 5分钟
-☁️ 云服务成本: < $50/月
+📁 Total Code Lines: 50,000+
+🧪 Test Coverage: 85%+
+📦 Docker Image Size: < 200MB
+⚡ API Response Time: < 200ms
+🔄 Deployment Time: < 5 minutes
+☁️ Cloud Service Cost: < $50/month
 ```
 
 ---
 
-## 📄 许可证
+## 📄 License
 
 ```
 MIT License
@@ -773,14 +774,14 @@ SOFTWARE.
 
 <div align="center">
 
-**🚀 Mini-UPS - 重新定义企业级物流管理系统**
+**🚀 Mini-UPS - Redefining Enterprise Logistics Management Systems**
 
-*构建未来，从今天开始 | Built for the Future, Starting Today*
+*Build the Future, Starting Today | Built for the Future, Starting Today*
 
-[![⭐ 给个Star](https://img.shields.io/github/stars/your-repo/mini-ups?style=social)](https://github.com/your-repo/mini-ups)
-[![🍴 Fork项目](https://img.shields.io/github/forks/your-repo/mini-ups?style=social)](https://github.com/your-repo/mini-ups/fork)
-[![👀 关注项目](https://img.shields.io/github/watchers/your-repo/mini-ups?style=social)](https://github.com/your-repo/mini-ups)
+[![⭐ Give a Star](https://img.shields.io/github/stars/your-repo/mini-ups?style=social)](https://github.com/your-repo/mini-ups)
+[![🍴 Fork Project](https://img.shields.io/github/forks/your-repo/mini-ups?style=social)](https://github.com/your-repo/mini-ups/fork)
+[![👀 Watch Project](https://img.shields.io/github/watchers/your-repo/mini-ups?style=social)](https://github.com/your-repo/mini-ups)
 
-[🏠 项目主页](https://your-domain.com) | [📖 在线文档](https://docs.your-domain.com) | [🎮 在线演示](https://demo.your-domain.com)
+[🏠 Project Homepage](https://your-domain.com) | [📖 Online Documentation](https://docs.your-domain.com) | [🎮 Online Demo](https://demo.your-domain.com)
 
 </div>
