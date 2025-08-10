@@ -43,8 +43,6 @@ app:
 
 server:
   port: 8081
-  servlet:
-    context-path: /api
 
 # Logging configuration for development
 logging:
@@ -67,6 +65,22 @@ world:
     host: localhost
     port: 12345
     enabled: true
+    client:
+      type: netty  # Options: socket (default), netty
+    netty:
+      worker-threads: 2
+      connection-timeout-ms: 10000
+      keep-alive: true
+      tcp-no-delay: true
+      reconnection:
+        enabled: true
+        max-attempts: 10
+        initial-delay-ms: 1000
+        max-delay-ms: 30000
+        backoff-multiplier: 2.0
+      message:
+        response-timeout-ms: 30000
+        max-pending-responses: 1000
     
 # Amazon Integration Configuration  
 amazon:

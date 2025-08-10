@@ -28,6 +28,7 @@ package com.miniups.controller;
 import com.miniups.model.entity.Truck;
 import com.miniups.proto.WorldUpsProto;
 import com.miniups.service.WorldSimulatorService;
+import com.miniups.network.netty.service.NettyWorldSimulatorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +50,120 @@ public class WorldSimulatorController {
     
     private static final Logger logger = LoggerFactory.getLogger(WorldSimulatorController.class);
     
-    @Autowired
+    @Autowired(required = false)
     private WorldSimulatorService worldSimulatorService;
+    
+    @Autowired(required = false)
+    private NettyWorldSimulatorService nettyWorldSimulatorService;
+    
+    /**
+     * Helper method to check if any world simulator is connected.
+     */
+    private boolean isWorldSimulatorConnected() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.isConnected();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected();
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to get world ID from the available service.
+     */
+    private Long getWorldId() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.getWorldId();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.getWorldId();
+        }
+        return null;
+    }
+    
+    /**
+     * Helper method to get available trucks from the available service.
+     */
+    private java.util.List<com.miniups.model.entity.Truck> getAvailableTrucks() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.getAvailableTrucks();
+        } else if (nettyWorldSimulatorService != null) {
+            // Netty service doesn't have getAvailableTrucks method, return empty list
+            return new java.util.ArrayList<>();
+        }
+        return new java.util.ArrayList<>();
+    }
+    
+    /**
+     * Helper method to connect to world simulator.
+     */
+    private boolean connectToWorldSimulator(Long worldId) {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.connect(worldId);
+        } else if (nettyWorldSimulatorService != null) {
+            // Netty service automatically connects, just check if connected
+            return nettyWorldSimulatorService.isConnected();
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to disconnect from world simulator.
+     */
+    private void disconnectFromWorldSimulator() {
+        if (worldSimulatorService != null) {
+            worldSimulatorService.disconnect();
+        } else if (nettyWorldSimulatorService != null) {
+            // Netty service handles disconnect automatically in shutdown
+            logger.info("Netty World Simulator Service disconnection handled automatically");
+        }
+    }
+    
+    /**
+     * Helper method to send truck to pickup.
+     */
+    private java.util.concurrent.CompletableFuture<Boolean> sendTruckToPickup(Integer truckId, Integer warehouseId) {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.sendTruckToPickup(truckId, warehouseId);
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.sendTruckToPickup(truckId, warehouseId);
+        }
+        return java.util.concurrent.CompletableFuture.completedFuture(false);
+    }
+    
+    /**
+     * Helper method to send truck to deliver.
+     */
+    private java.util.concurrent.CompletableFuture<Boolean> sendTruckToDeliverHelper(Integer truckId, java.util.Map<Long, int[]> deliveries) {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.sendTruckToDeliver(truckId, deliveries);
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.sendTruckToDeliver(truckId, deliveries);
+        }
+        return java.util.concurrent.CompletableFuture.completedFuture(false);
+    }
+    
+    /**
+     * Helper method to query truck status.
+     */
+    private java.util.concurrent.CompletableFuture<WorldUpsProto.UTruck> queryTruckStatus(Integer truckId) {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.queryTruckStatus(truckId);
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.queryTruckStatus(truckId);
+        }
+        return java.util.concurrent.CompletableFuture.completedFuture(null);
+    }
+    
+    /**
+     * Helper method to set simulation speed.
+     */
+    private void setSimulationSpeed(int speed) {
+        if (worldSimulatorService != null) {
+            worldSimulatorService.setSimulationSpeed(speed);
+        } else if (nettyWorldSimulatorService != null) {
+            nettyWorldSimulatorService.setSimulationSpeed(speed);
+        }
+    }
     
     /**
      * Connect to World Simulator
@@ -65,11 +178,11 @@ public class WorldSimulatorController {
             logger.info("Received request to connect to World Simulator");
             
             // Check if already connected
-            if (worldSimulatorService.isConnected()) {
+            if (isWorldSimulatorConnected()) {
                 Map<String, Object> response = Map.of(
                     "success", false,
                     "message", "Already connected to World Simulator",
-                    "world_id", worldSimulatorService.getWorldId(),
+                    "world_id", getWorldId(),
                     "timestamp", LocalDateTime.now()
                 );
                 return ResponseEntity.ok(response);
@@ -85,14 +198,14 @@ public class WorldSimulatorController {
             }
             
             // Attempt connection
-            boolean connected = worldSimulatorService.connect(worldId);
+            boolean connected = connectToWorldSimulator(worldId);
             
             if (connected) {
                 Map<String, Object> response = Map.of(
                     "success", true,
                     "message", "Successfully connected to World Simulator",
-                    "world_id", worldSimulatorService.getWorldId(),
-                    "trucks_count", worldSimulatorService.getAvailableTrucks().size(),
+                    "world_id", getWorldId(),
+                    "trucks_count", getAvailableTrucks().size(),
                     "timestamp", LocalDateTime.now()
                 );
                 return ResponseEntity.ok(response);
@@ -127,7 +240,7 @@ public class WorldSimulatorController {
         try {
             logger.info("Received request to disconnect from World Simulator");
             
-            if (!worldSimulatorService.isConnected()) {
+            if (!isWorldSimulatorConnected()) {
                 Map<String, Object> response = Map.of(
                     "success", false,
                     "message", "Not connected to World Simulator",
@@ -136,7 +249,7 @@ public class WorldSimulatorController {
                 return ResponseEntity.ok(response);
             }
             
-            worldSimulatorService.disconnect();
+            disconnectFromWorldSimulator();
             
             Map<String, Object> response = Map.of(
                 "success", true,
@@ -165,9 +278,9 @@ public class WorldSimulatorController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('OPERATOR')")
     public ResponseEntity<Map<String, Object>> getConnectionStatus() {
         Map<String, Object> response = new HashMap<>();
-        response.put("connected", worldSimulatorService.isConnected());
-        response.put("world_id", worldSimulatorService.getWorldId());
-        response.put("trucks_count", worldSimulatorService.getAvailableTrucks().size());
+        response.put("connected", isWorldSimulatorConnected());
+        response.put("world_id", getWorldId());
+        response.put("trucks_count", getAvailableTrucks().size());
         response.put("timestamp", LocalDateTime.now());
         
         return ResponseEntity.ok(response);
@@ -182,7 +295,7 @@ public class WorldSimulatorController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('OPERATOR')")
     public ResponseEntity<Map<String, Object>> getAllTrucks() {
         try {
-            List<Truck> trucks = worldSimulatorService.getAvailableTrucks();
+            List<Truck> trucks = getAvailableTrucks();
             
             List<Map<String, Object>> trucksData = trucks.stream()
                 .map(this::mapTruckToResponse)
@@ -192,7 +305,7 @@ public class WorldSimulatorController {
                 "success", true,
                 "trucks", trucksData,
                 "total_count", trucksData.size(),
-                "connected", worldSimulatorService.isConnected(),
+                "connected", isWorldSimulatorConnected(),
                 "timestamp", LocalDateTime.now()
             );
             
@@ -224,7 +337,7 @@ public class WorldSimulatorController {
         try {
             logger.info("Sending truck {} to pickup", truckId);
             
-            if (!worldSimulatorService.isConnected()) {
+            if (!isWorldSimulatorConnected()) {
                 Map<String, Object> response = Map.of(
                     "success", false,
                     "message", "Not connected to World Simulator",
@@ -247,7 +360,7 @@ public class WorldSimulatorController {
             Integer warehouseId = ((Number) warehouseIdObj).intValue();
             
             // 发送取货指令
-            CompletableFuture<Boolean> future = worldSimulatorService.sendTruckToPickup(truckId, warehouseId);
+            CompletableFuture<Boolean> future = sendTruckToPickup(truckId, warehouseId);
             
             // 等待结果
             Boolean success = future.get(10, TimeUnit.SECONDS);
@@ -298,7 +411,7 @@ public class WorldSimulatorController {
         try {
             logger.info("Sending truck {} to deliver", truckId);
             
-            if (!worldSimulatorService.isConnected()) {
+            if (!isWorldSimulatorConnected()) {
                 Map<String, Object> response = Map.of(
                     "success", false,
                     "message", "Not connected to World Simulator",
@@ -330,7 +443,7 @@ public class WorldSimulatorController {
             }
             
             // 发送配送指令
-            CompletableFuture<Boolean> future = worldSimulatorService.sendTruckToDeliver(truckId, deliveryMap);
+            CompletableFuture<Boolean> future = sendTruckToDeliverHelper(truckId, deliveryMap);
             
             // 等待结果
             Boolean success = future.get(10, TimeUnit.SECONDS);
@@ -375,7 +488,7 @@ public class WorldSimulatorController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('OPERATOR')")
     public ResponseEntity<Map<String, Object>> getTruckStatus(@PathVariable Integer truckId) {
         try {
-            if (!worldSimulatorService.isConnected()) {
+            if (!isWorldSimulatorConnected()) {
                 Map<String, Object> response = Map.of(
                     "success", false,
                     "message", "Not connected to World Simulator",
@@ -385,7 +498,7 @@ public class WorldSimulatorController {
             }
             
             // 查询卡车状态
-            CompletableFuture<WorldUpsProto.UTruck> future = worldSimulatorService.queryTruckStatus(truckId);
+            CompletableFuture<WorldUpsProto.UTruck> future = queryTruckStatus(truckId);
             
             // 等待结果
             WorldUpsProto.UTruck truckStatus = future.get(10, TimeUnit.SECONDS);
@@ -436,7 +549,7 @@ public class WorldSimulatorController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> setSimulationSpeed(@RequestBody Map<String, Object> speedRequest) {
         try {
-            if (!worldSimulatorService.isConnected()) {
+            if (!isWorldSimulatorConnected()) {
                 Map<String, Object> response = Map.of(
                     "success", false,
                     "message", "Not connected to World Simulator",
@@ -457,7 +570,7 @@ public class WorldSimulatorController {
             
             int speed = ((Number) speedObj).intValue();
             
-            worldSimulatorService.setSimulationSpeed(speed);
+            setSimulationSpeed(speed);
             
             Map<String, Object> response = Map.of(
                 "success", true,

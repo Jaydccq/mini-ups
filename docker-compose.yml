@@ -170,6 +170,7 @@ services:
       WORLD_SIMULATOR_HOST: world-simulator
       WORLD_SIMULATOR_PORT: 12345
       AMAZON_API_URL: http://amazon-web:8080
+      AMAZON_WEBHOOK_AUTH_ENABLED: false  # Disable webhook authentication for development
       NUM_TRUCKS: ${NUM_TRUCKS:-5}
       WORLD_ID: ${WORLD_ID:-}
     ports:

@@ -35,6 +35,7 @@ import com.miniups.debug.WorldSimulatorDebugEventListener;
 import com.miniups.model.dto.debug.WorldSimulatorDebugMessageDto;
 import com.miniups.model.dto.common.ApiResponse;
 import com.miniups.service.WorldSimulatorService;
+import com.miniups.network.netty.service.NettyWorldSimulatorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,8 +61,11 @@ public class AdminDebugController {
     @Autowired
     private WorldSimulatorDebugEventListener debugEventListener;
     
-    @Autowired
+    @Autowired(required = false)
     private WorldSimulatorService worldSimulatorService;
+    
+    @Autowired(required = false)
+    private NettyWorldSimulatorService nettyWorldSimulatorService;
     
     @Value("${app.debug.world-simulator.enabled:false}")
     private boolean debugEnabled;
@@ -71,6 +75,54 @@ public class AdminDebugController {
     
     @Value("${app.debug.world-simulator.retention-seconds:300}")
     private int retentionSeconds;
+    
+    /**
+     * Helper method to get the available world simulator service (socket or netty).
+     */
+    private boolean isWorldSimulatorConnected() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.isConnected();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected();
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to get world ID from the available service.
+     */
+    private Long getWorldId() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.getWorldId();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.getWorldId();
+        }
+        return null;
+    }
+    
+    /**
+     * Helper method to test connection health from the available service.
+     */
+    private boolean testConnectionHealth() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.isConnectionHealthy();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected(); // Netty service doesn't have isConnectionHealthy method
+        }
+        return false;
+    }
+    
+    /**
+     * Helper method to perform connection test from the available service.
+     */
+    private boolean performConnectionTest() {
+        if (worldSimulatorService != null) {
+            return worldSimulatorService.testConnection();
+        } else if (nettyWorldSimulatorService != null) {
+            return nettyWorldSimulatorService.isConnected(); // For Netty, just check if connected
+        }
+        return false;
+    }
     
     /**
      * Get recent World Simulator debug messages
@@ -170,9 +222,9 @@ public class AdminDebugController {
             status.put("retentionSeconds", retentionSeconds);
             
             // World Simulator connection status
-            status.put("simulatorConnected", worldSimulatorService.isConnected());
-            status.put("connectionHealthy", worldSimulatorService.isConnectionHealthy());
-            status.put("worldId", worldSimulatorService.getWorldId());
+            status.put("simulatorConnected", isWorldSimulatorConnected());
+            status.put("connectionHealthy", testConnectionHealth());
+            status.put("worldId", getWorldId());
             
             // Debug statistics
             WorldSimulatorDebugEventListener.DebugStatistics stats = debugEventListener.getStatistics();
@@ -229,11 +281,11 @@ public class AdminDebugController {
         try {
             Map<String, Object> result = new HashMap<>();
             
-            boolean connectionHealthy = worldSimulatorService.testConnection();
+            boolean connectionHealthy = performConnectionTest();
             
             result.put("connectionHealthy", connectionHealthy);
-            result.put("connected", worldSimulatorService.isConnected());
-            result.put("worldId", worldSimulatorService.getWorldId());
+            result.put("connected", isWorldSimulatorConnected());
+            result.put("worldId", getWorldId());
             result.put("testTimestamp", java.time.LocalDateTime.now());
             
             String message = connectionHealthy ? 

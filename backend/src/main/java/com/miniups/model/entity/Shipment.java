@@ -63,6 +63,9 @@ public class Shipment extends BaseEntity {
     @Column(name = "amazon_order_id", length = 100)
     private String amazonOrderId;
     
+    @Column(name = "warehouse_id", length = 50)
+    private String warehouseId;
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private ShipmentStatus status = ShipmentStatus.CREATED;
@@ -161,6 +164,14 @@ public class Shipment extends BaseEntity {
     
     public void setAmazonOrderId(String amazonOrderId) {
         this.amazonOrderId = amazonOrderId;
+    }
+    
+    public String getWarehouseId() {
+        return warehouseId;
+    }
+    
+    public void setWarehouseId(String warehouseId) {
+        this.warehouseId = warehouseId;
     }
     
     public ShipmentStatus getStatus() {

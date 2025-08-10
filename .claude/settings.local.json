@@ -205,7 +205,21 @@
       "Bash(docker inspect:*)",
       "Bash(docker port:*)",
       "Bash(docker ps:*)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthServiceTest -Dspring.profiles.active=test -f backend/pom.xml)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthServiceTest -Dspring.profiles.active=test -f backend/pom.xml)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"*netty*\" -Dspring.profiles.active=test)",
+      "Bash(JWT_SECRET=\"mini-ups-development-jwt-secret-key-32-chars-minimum-length-for-security\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn spring-boot:run -Dspring-boot.run.profiles=local)",
+      "Bash(JWT_SECRET=\"mini-ups-development-jwt-secret-key-32-chars-minimum-length-for-security\" JAVA_HOME=/opt/homebrew/opt/openjdk@17 timeout 15 mvn spring-boot:run -Dspring-boot.run.profiles=local)",
+      "Bash(docker image rm:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn compile -DskipTests=true -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn package -DskipTests=true -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn package -DskipTests=true -q -f backend/pom.xml)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn package -DskipTests=true -q -f /Users/hongxichen/Desktop/mini-ups/backend/pom.xml)",
+      "WebFetch(domain:localhost)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -DskipTests=true -q -f backend/pom.xml)",
+      "Bash(docker rmi:*)",
+      "Bash(docker build:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -DskipTests=true -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -q -f backend/pom.xml)"
     ],
     "deny": []
   }

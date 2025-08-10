@@ -63,6 +63,9 @@ world:
 
 amazon:
   base-url: ${AMAZON_API_URL:http://host.docker.internal:8080}
+  webhook:
+    authentication:
+      enabled: false  # Disable webhook authentication for development
   webhook-endpoints:
     truck-arrived: /api/webhooks/truck-arrived
     truck-dispatched: /api/webhooks/truck-dispatched

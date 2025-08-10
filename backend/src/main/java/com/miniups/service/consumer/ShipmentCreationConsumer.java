@@ -15,10 +15,12 @@ import com.miniups.service.EventPublisherService;
 import com.miniups.service.TrackingService;
 import com.miniups.service.TruckManagementService;
 import com.miniups.service.WorldSimulatorService;
+import com.miniups.network.netty.service.NettyWorldSimulatorService;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -69,12 +71,15 @@ public class ShipmentCreationConsumer {
     private final TrackingService trackingService;
     private final TruckManagementService truckManagementService;
     private final WorldSimulatorService worldSimulatorService;
+    private final NettyWorldSimulatorService nettyWorldSimulatorService;
     private final EventPublisherService eventPublisher;
     private final AsyncAuditService asyncAuditService;
     
     public ShipmentCreationConsumer(ShipmentRepository shipmentRepository, TruckRepository truckRepository,
                                     UserRepository userRepository, TrackingService trackingService,
-                                    TruckManagementService truckManagementService, WorldSimulatorService worldSimulatorService,
+                                    TruckManagementService truckManagementService, 
+                                    @Autowired(required = false) WorldSimulatorService worldSimulatorService,
+                                    @Autowired(required = false) NettyWorldSimulatorService nettyWorldSimulatorService,
                                     EventPublisherService eventPublisher, AsyncAuditService asyncAuditService) {
         this.shipmentRepository = shipmentRepository;
         this.truckRepository = truckRepository;
@@ -82,8 +87,24 @@ public class ShipmentCreationConsumer {
         this.trackingService = trackingService;
         this.truckManagementService = truckManagementService;
         this.worldSimulatorService = worldSimulatorService;
+        this.nettyWorldSimulatorService = nettyWorldSimulatorService;
         this.eventPublisher = eventPublisher;
         this.asyncAuditService = asyncAuditService;
+    }
+    
+    /**
+     * Helper method to send truck to pickup using the available service.
+     */
+    private void sendTruckToPickup(Integer truckId, Integer warehouseId) {
+        if (worldSimulatorService != null) {
+            worldSimulatorService.sendTruckToPickup(truckId, warehouseId);
+        } else if (nettyWorldSimulatorService != null) {
+            try {
+                nettyWorldSimulatorService.sendTruckToPickup(truckId, warehouseId).get();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to send truck to pickup via Netty service", e);
+            }
+        }
     }
 
     /**
@@ -308,7 +329,7 @@ public class ShipmentCreationConsumer {
     private void integrateWithWorldSimulator(Shipment shipment, ShipmentCreationPayload payload, String correlationId) {
         try {
             // Send truck to warehouse for pickup
-            worldSimulatorService.sendTruckToPickup(
+            sendTruckToPickup(
                 shipment.getTruck().getTruckId(), 
                 payload.getWarehouseId()
             );
@@ -316,6 +337,11 @@ public class ShipmentCreationConsumer {
             log.debug("Sent truck {} to warehouse {} for shipment {} (correlationId: {})",
                      shipment.getTruck().getId(), payload.getWarehouseId(), 
                      shipment.getId(), correlationId);
+                     
+            // Update shipment status to TRUCK_DISPATCHED after successfully sending truck
+            shipment.setStatus(ShipmentStatus.TRUCK_DISPATCHED);
+            log.info("Updated shipment {} status to TRUCK_DISPATCHED (correlationId: {})", 
+                    shipment.getId(), correlationId);
                      
         } catch (Exception e) {
             log.warn("Failed to integrate with world simulator for shipment: {} (correlationId: {})", 

@@ -435,26 +435,47 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Navigate to project directory
+          # Create project directory if it doesn't exist
+          mkdir -p /home/ec2-user/mini-ups
           cd /home/ec2-user/mini-ups
           
-          # Create staging environment configuration (no git pull needed)
-          # Using only tested Docker images from this CI run
-          cp .env.ci .env.staging
-          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" >> .env.staging
-          echo "FRONTEND_IMAGE=${{ needs.docker-build.outputs.frontend-image }}" >> .env.staging
-          echo "ENVIRONMENT=staging" >> .env.staging
-          echo "SPRING_PROFILES_ACTIVE=staging" >> .env.staging
+          # Clone or pull the repository for amazon and worldsim services
+          if [ ! -d ".git" ]; then
+            git clone https://github.com/${{ github.repository }}.git .
+          else
+            git fetch origin
+            git reset --hard origin/main
+          fi
           
-          # Deploy with Docker Compose using tested images
-          docker compose -f docker-compose.yml --env-file .env.staging down
-          docker compose -f docker-compose.yml --env-file .env.staging pull
-          docker compose -f docker-compose.yml --env-file .env.staging up -d --remove-orphans
+          # Create optimized staging environment configuration for t2.micro
+          cat > .env.staging << EOF
+          POSTGRES_DB=ups_db
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          SPRING_PROFILES_ACTIVE=staging
+          BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+          ENVIRONMENT=staging
+          PUBLIC_IP=${{ secrets.EC2_HOST }}
+          VITE_API_BASE_URL=http://${{ secrets.EC2_HOST }}:8081/api
+          VITE_WS_BASE_URL=ws://${{ secrets.EC2_HOST }}:8081/ws
+          JAVA_OPTS=-Xmx300m -Xms150m -XX:+UseG1GC
+          WORLD_SIMULATOR_ENABLED=false
+          RABBITMQ_ENABLED=false
+          NOTIFICATIONS_ENABLED=false
+          EOF
+          
+          # Deploy with optimized Docker Compose for t2.micro
+          docker compose -f docker-compose.t2micro.yml --env-file .env.staging down
+          docker compose -f docker-compose.t2micro.yml --env-file .env.staging pull
+          docker compose -f docker-compose.t2micro.yml --env-file .env.staging up -d --remove-orphans
           
           # Health check with retry logic
           echo "⏳ Waiting for application to be healthy..."
           for i in {1..20}; do
-            if curl -f http://localhost:8081/api/health >/dev/null 2>&1; then
+            if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
               echo "✅ Application is healthy!"
               break
             fi
@@ -463,7 +484,7 @@ jobs:
           done
           
           # Final health check to ensure success
-          curl -f http://localhost:8081/api/health || {
+          curl -f http://localhost:8081/actuator/health || {
             echo "❌ Application failed to become healthy in time"
             exit 1
           }
@@ -476,7 +497,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Basic health checks
-          curl -f http://localhost:8081/api/health
+          curl -f http://localhost:8081/actuator/health
           curl -f http://localhost:3000
           
           # Database connectivity check
@@ -500,40 +521,55 @@ jobs:
     - name: Deploy to Production EC2
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Navigate to project directory
+          # Create project directory if it doesn't exist
+          mkdir -p /home/ec2-user/mini-ups
           cd /home/ec2-user/mini-ups
+          
+          # Clone or pull the repository for amazon and worldsim services
+          if [ ! -d ".git" ]; then
+            git clone https://github.com/${{ github.repository }}.git .
+          else
+            git fetch origin
+            git reset --hard origin/main
+          fi
           
           # Backup current deployment
           docker compose down
           docker tag mini-ups-backend:latest mini-ups-backend:backup-$(date +%Y%m%d%H%M%S) || true
           docker tag mini-ups-frontend:latest mini-ups-frontend:backup-$(date +%Y%m%d%H%M%S) || true
           
-          # Create production environment configuration (no git pull needed)
-          # Using only tested Docker images from this CI run
-          cp .env.ci .env.production
-          echo "BACKEND_IMAGE=${{ needs.docker-build.outputs.backend-image }}" >> .env.production
-          echo "FRONTEND_IMAGE=${{ needs.docker-build.outputs.frontend-image }}" >> .env.production
-          echo "ENVIRONMENT=production" >> .env.production
-          echo "SPRING_PROFILES_ACTIVE=production" >> .env.production
+          # Create optimized production environment configuration for t2.micro
+          cat > .env.production << EOF
+          POSTGRES_DB=ups_db
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          SPRING_PROFILES_ACTIVE=production
+          BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+          ENVIRONMENT=production
+          PUBLIC_IP=${{ secrets.EC2_HOST }}
+          VITE_API_BASE_URL=http://${{ secrets.EC2_HOST }}:8081/api
+          VITE_WS_BASE_URL=ws://${{ secrets.EC2_HOST }}:8081/ws
+          JAVA_OPTS=-Xmx300m -Xms150m -XX:+UseG1GC
+          WORLD_SIMULATOR_ENABLED=false
+          RABBITMQ_ENABLED=false
+          NOTIFICATIONS_ENABLED=false
+          EOF
           
-          # Set production-specific secrets as environment variables
-          # Security: Secrets are passed directly to Docker containers without writing to disk
-          export POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}'
-          export REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}'
-          export JWT_SECRET='${{ secrets.JWT_SECRET }}'
-          
-          # Deploy with Docker Compose using tested images and environment variables
-          docker compose -f docker-compose.yml --env-file .env.production pull
-          docker compose -f docker-compose.yml --env-file .env.production up -d --remove-orphans
+          # Deploy with optimized Docker Compose for t2.micro
+          docker compose -f docker-compose.t2micro.yml --env-file .env.production pull
+          docker compose -f docker-compose.t2micro.yml --env-file .env.production up -d --remove-orphans
           
           # Production health check with extended retry logic
           echo "⏳ Waiting for production application to be healthy..."
           for i in {1..30}; do
-            if curl -f http://localhost:8081/api/health >/dev/null 2>&1; then
+            if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
               echo "✅ Production application is healthy!"
               break
             fi
@@ -542,7 +578,7 @@ jobs:
           done
           
           # Final health check to ensure production readiness
-          curl -f http://localhost:8081/api/health || {
+          curl -f http://localhost:8081/actuator/health || {
             echo "❌ Production application failed to become healthy in time"
             exit 1
           }
@@ -550,12 +586,12 @@ jobs:
     - name: Production smoke tests
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Comprehensive health checks
-          curl -f http://localhost:8081/api/health
+          curl -f http://localhost:8081/actuator/health
           curl -f http://localhost:3000
           
           # Database connectivity
@@ -565,7 +601,6 @@ jobs:
           docker exec $(docker ps -q --filter "name=.*redis.*") redis-cli ping
           
           # Application-specific checks
-          curl -f http://localhost:8081/api/health
           curl -f http://localhost:8081/actuator/health
 
   # Notification

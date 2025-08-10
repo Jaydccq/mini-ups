@@ -18,7 +18,11 @@
  */
 package com.miniups.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,29 +75,63 @@ public class UpsResponseDto {
     
     public static UpsResponseDto truckDispatched(String truckId, String shipmentId) {
         UpsResponseDto response = new UpsResponseDto("TruckDispatched");
-        response.addPayload("truck_id", truckId);
-        response.addPayload("shipment_id", shipmentId);
-        response.addPayload("status", "success");
+        
+        // Convert string values to integers for Amazon compatibility
+        try {
+            response.addPayload("truck_id", Integer.parseInt(truckId));
+        } catch (NumberFormatException e) {
+            response.addPayload("truck_id", truckId);
+        }
+        
+        try {
+            response.addPayload("shipment_id", Integer.parseInt(shipmentId));
+        } catch (NumberFormatException e) {
+            response.addPayload("shipment_id", shipmentId);
+        }
+        
         return response;
     }
     
     public static UpsResponseDto truckArrived(String truckId, String warehouseId, String shipmentId) {
         UpsResponseDto response = new UpsResponseDto("TruckArrived");
-        response.addPayload("truck_id", truckId);
-        response.addPayload("warehouse_id", warehouseId);
-        response.addPayload("shipment_id", shipmentId);
-        response.addPayload("status", "success");
+        
+        // Convert string values to integers for Amazon compatibility
+        try {
+            response.addPayload("truck_id", Integer.parseInt(truckId));
+        } catch (NumberFormatException e) {
+            response.addPayload("truck_id", truckId); // fallback to string if not a number
+        }
+        
+        try {
+            response.addPayload("warehouse_id", Integer.parseInt(warehouseId));
+        } catch (NumberFormatException e) {
+            response.addPayload("warehouse_id", warehouseId); // fallback to string if not a number
+        }
+        
+        try {
+            response.addPayload("shipment_id", Integer.parseInt(shipmentId));
+        } catch (NumberFormatException e) {
+            response.addPayload("shipment_id", shipmentId); // fallback to string if not a number
+        }
+        
         return response;
     }
     
     public static UpsResponseDto shipmentDelivered(String shipmentId) {
         UpsResponseDto response = new UpsResponseDto("ShipmentDelivered");
-        response.addPayload("shipment_id", shipmentId);
-        response.addPayload("status", "success");
+        
+        // Convert string value to integer for Amazon compatibility
+        try {
+            response.addPayload("shipment_id", Integer.parseInt(shipmentId));
+        } catch (NumberFormatException e) {
+            response.addPayload("shipment_id", shipmentId);
+        }
+        
         return response;
     }
     
     // Getters and Setters
+    @JsonProperty("message_type")
     public String getMessageType() {
         return messageType;
     }
@@ -102,6 +140,12 @@ public class UpsResponseDto {
         this.messageType = messageType;
     }
     
+    @JsonProperty("timestamp")
+    public String getTimestampString() {
+        return timestamp.atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+    }
+    
+    @JsonIgnore
     public LocalDateTime getTimestamp() {
         return timestamp;
     }
@@ -124,14 +168,26 @@ public class UpsResponseDto {
         return this;
     }
     
+    @Override
+    public String toString() {
+        return "UpsResponseDto{" +
+               "messageType='" + messageType + '\'' +
+               ", timestamp=" + timestamp +
+               ", payload=" + payload +
+               '}';
+    }
+    
+    @JsonIgnore
     public boolean isSuccess() {
         return "success".equals(payload.get("status"));
     }
     
+    @JsonIgnore
     public boolean isError() {
         return "Error".equals(messageType) || "fail".equals(payload.get("status"));
     }
     
+    @JsonIgnore
     public int getCode() {
         Object code = payload.get("code");
         if (code instanceof Number) {
@@ -140,6 +196,7 @@ public class UpsResponseDto {
         return 500;
     }
     
+    @JsonIgnore
     public String getMessage() {
         return (String) payload.get("message");
     }

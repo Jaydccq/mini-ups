@@ -78,7 +78,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     
     List<Shipment> findByWeightBetween(BigDecimal minWeight, BigDecimal maxWeight);
     
-    Optional<Shipment> findByTruck(com.miniups.model.entity.Truck truck);
+    List<Shipment> findByTruck(com.miniups.model.entity.Truck truck);
     
     @Query("SELECT s.status as status, COUNT(s) as count FROM Shipment s GROUP BY s.status")
     List<Map<String, Object>> getStatusCounts();

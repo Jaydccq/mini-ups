@@ -203,6 +203,8 @@ public class SecurityConfig {
 
                 // Health check
                 .requestMatchers("/actuator/health", "/actuator/info", "/actuator/**").permitAll()
+                // Debug endpoints for development (consider restricting in production)
+                .requestMatchers("/api/debug/**", "/debug/**").permitAll()
 
                 // Admin endpoints
                 .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
