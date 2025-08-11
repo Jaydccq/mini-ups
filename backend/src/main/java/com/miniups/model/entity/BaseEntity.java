@@ -1,29 +1,29 @@
 /**
- * 基础实体抽象类
+ * Base Entity Abstract Class
  * 
- * 功能说明：
- * - 为所有数据库实体提供通用字段和行为
- * - 自动管理实体的创建时间、更新时间、版本控制
- * - 使用JPA审计功能自动填充时间戳
+ * Function Description:
+ * - Provides common fields and behavior for all database entities
+ * - Automatically manages entity creation time, update time, and version control
+ * - Uses JPA auditing features to automatically populate timestamps
  * 
- * 通用字段：
- * - id: 主键，自增长策略
- * - createdAt: 创建时间，插入时自动设置，不可更新
- * - updatedAt: 更新时间，每次修改时自动更新
- * - version: 乐观锁版本号，防止并发修改冲突
+ * Common Fields:
+ * - id: Primary key with auto-increment strategy
+ * - createdAt: Creation time, automatically set on insert, not updatable
+ * - updatedAt: Update time, automatically updated on each modification
+ * - version: Optimistic lock version number to prevent concurrent modification conflicts
  * 
- * 设计优势：
- * - 避免在每个实体中重复定义通用字段
- * - 统一的审计日志记录
- * - 支持乐观锁机制保证数据一致性
- * - 自动化的时间戳管理
+ * Design Advantages:
+ * - Avoids repetitive definition of common fields in each entity
+ * - Unified audit log recording
+ * - Supports optimistic locking mechanism to ensure data consistency
+ * - Automated timestamp management
  * 
- * 使用方式：
- * - 所有业务实体类继承此基类
- * - 需要在主类上添加@EnableJpaAuditing启用审计功能
+ * Usage:
+ * - All business entity classes inherit from this base class
+ * - Need to add @EnableJpaAuditing on the main class to enable auditing functionality
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.entity;
 

@@ -12,8 +12,8 @@
  * - Redis-backed for distributed deployments
  * - Graceful degradation when Redis is unavailable
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.security;
 

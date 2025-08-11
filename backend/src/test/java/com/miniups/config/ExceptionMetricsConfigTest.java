@@ -5,8 +5,8 @@ package com.miniups.config;
  * 
  * 测试异常监控配置的高基数修复功能
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 
 import org.junit.jupiter.api.Test;

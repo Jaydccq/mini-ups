@@ -20,8 +20,8 @@
  * - Connection management requires elevated permissions
  * - Truck operations require operator permissions
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 
@@ -346,7 +346,7 @@ public class WorldSimulatorController {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
             }
             
-            // 提取仓库ID
+            // Extract warehouse ID
             Object warehouseIdObj = pickupRequest.get("warehouse_id");
             if (warehouseIdObj == null) {
                 Map<String, Object> response = Map.of(
@@ -359,10 +359,10 @@ public class WorldSimulatorController {
             
             Integer warehouseId = ((Number) warehouseIdObj).intValue();
             
-            // 发送取货指令
+            // Send pickup command
             CompletableFuture<Boolean> future = sendTruckToPickup(truckId, warehouseId);
             
-            // 等待结果
+            // Wait for result
             Boolean success = future.get(10, TimeUnit.SECONDS);
             
             if (success) {
@@ -445,7 +445,7 @@ public class WorldSimulatorController {
             // 发送配送指令
             CompletableFuture<Boolean> future = sendTruckToDeliverHelper(truckId, deliveryMap);
             
-            // 等待结果
+            // Wait for result
             Boolean success = future.get(10, TimeUnit.SECONDS);
             
             if (success) {
@@ -500,7 +500,7 @@ public class WorldSimulatorController {
             // 查询卡车状态
             CompletableFuture<WorldUpsProto.UTruck> future = queryTruckStatus(truckId);
             
-            // 等待结果
+            // Wait for result
             WorldUpsProto.UTruck truckStatus = future.get(10, TimeUnit.SECONDS);
             
             if (truckStatus != null) {
@@ -602,7 +602,7 @@ public class WorldSimulatorController {
         truckMap.put("current_x", truck.getCurrentX());
         truckMap.put("current_y", truck.getCurrentY());
         truckMap.put("capacity", truck.getCapacity());
-        truckMap.put("driver_id", truck.getDriverId());
+        truckMap.put("driver_id", truck.getDriver() != null ? truck.getDriver().getId() : null);
         truckMap.put("world_id", truck.getWorldId());
         truckMap.put("available", truck.isAvailable());
         truckMap.put("created_at", truck.getCreatedAt());

@@ -219,7 +219,9 @@
       "Bash(docker rmi:*)",
       "Bash(docker build:*)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -DskipTests=true -q)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -q -f backend/pom.xml)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -q -f backend/pom.xml)",
+      "Bash(docker stop:*)",
+      "Bash(npx vite:*)"
     ],
     "deny": []
   }

@@ -1,24 +1,24 @@
 /**
  * Name Parsing Utilities
  * 
- * 功能说明：
- * - 提供智能的姓名解析功能
- * - 支持多种姓名格式和文化背景
- * - 处理各种边缘情况
+ * Function Description:
+ * - Provides intelligent name parsing functionality
+ * - Supports multiple name formats and cultural backgrounds
+ * - Handles various edge cases
  * 
- * 支持的格式：
- * - 西方姓名：firstName lastName
- * - 单名：name
- * - 复合姓名：firstName middleName lastName
- * - 带前缀/后缀的姓名：Mr./Dr./Jr./Sr.
+ * Supported Formats:
+ * - Western names: firstName lastName
+ * - Single name: name
+ * - Compound names: firstName middleName lastName
+ * - Names with prefixes/suffixes: Mr./Dr./Jr./Sr.
  * 
- * 特性：
- * - 输入验证和清理
- * - 智能分割算法
- * - 国际化支持
+ * Features:
+ * - Input validation and cleaning
+ * - Smart splitting algorithm
+ * - Internationalization support
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.util;
 
@@ -29,12 +29,12 @@ import java.util.UUID;
 
 public final class NameParsingUtils {
     
-    // 防止实例化
+    // Prevent instantiation
     private NameParsingUtils() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
     
-    // 常见的前缀和后缀
+    // Common prefixes and suffixes
     private static final Set<String> PREFIXES = new HashSet<>(Arrays.asList(
         "Mr", "Mrs", "Ms", "Miss", "Dr", "Prof", "Sir", "Madam", "Lord", "Lady"
     ));
@@ -44,7 +44,7 @@ public final class NameParsingUtils {
     ));
     
     /**
-     * 解析后的姓名结构
+     * Parsed name structure
      */
     public static class ParsedName {
         private final String firstName;
@@ -95,18 +95,18 @@ public final class NameParsingUtils {
     }
     
     /**
-     * 解析完整姓名
+     * Parse full name
      * 
-     * @param fullName 完整姓名字符串
-     * @return 解析后的姓名对象
-     * @throws IllegalArgumentException 如果姓名为空或无效
+     * @param fullName Full name string
+     * @return Parsed name object
+     * @throws IllegalArgumentException If name is null or invalid
      */
     public static ParsedName parseName(String fullName) {
         if (fullName == null || fullName.trim().isEmpty()) {
             throw new IllegalArgumentException("Name cannot be null or empty");
         }
         
-        // 清理输入：移除多余空格，标准化格式
+        // Clean input: remove extra spaces, standardize format
         String cleanedName = cleanName(fullName);
         String[] parts = cleanedName.split("\\s+");
         
@@ -118,10 +118,10 @@ public final class NameParsingUtils {
     }
     
     /**
-     * 验证姓名是否有效
+     * Validate if name is valid
      * 
-     * @param fullName 完整姓名
-     * @return 姓名是否有效
+     * @param fullName Full name
+     * @return Whether the name is valid
      */
     public static boolean isValidName(String fullName) {
         try {
@@ -133,54 +133,54 @@ public final class NameParsingUtils {
     }
     
     /**
-     * 生成用户名建议
+     * Generate username suggestion
      * 
-     * @param fullName 完整姓名
-     * @return 建议的用户名
+     * @param fullName Full name
+     * @return Suggested username
      */
     public static String generateUsernameFromName(String fullName) {
         try {
             ParsedName parsed = parseName(fullName);
             StringBuilder username = new StringBuilder();
             
-            // 使用名字的前几个字符
+            // Use first few characters of first name
             username.append(parsed.getFirstName().toLowerCase().replaceAll("[^a-zA-Z0-9]", ""));
             
-            // 如果有姓氏，添加姓氏的第一个字符
+            // If has last name, add first character of last name
             if (parsed.hasLastName()) {
                 username.append(parsed.getLastName().toLowerCase().charAt(0));
             }
             
-            // 如果用户名太短，添加随机后缀
+            // If username is too short, add random suffix
             if (username.length() < 3) {
                 username.append(UUID.randomUUID().toString().substring(0, 4));
             }
             
             return username.toString();
         } catch (Exception e) {
-            // 如果解析失败，生成通用用户名
+            // If parsing fails, generate generic username
             return "customer_" + UUID.randomUUID().toString().substring(0, 8);
         }
     }
     
     /**
-     * 清理姓名字符串
+     * Clean name string
      * 
-     * @param name 原始姓名
-     * @return 清理后的姓名
+     * @param name Original name
+     * @return Cleaned name
      */
     private static String cleanName(String name) {
         return name
             .trim()
-            .replaceAll("\\s+", " ")  // 多个空格替换为单个空格
-            .replaceAll("[^\\p{L}\\s\\-'.]", "");  // 只保留字母、空格、连字符、撇号和点号
+            .replaceAll("\\s+", " ")  // Replace multiple spaces with single space
+            .replaceAll("[^\\p{L}\\s\\-'.]", "");  // Only keep letters, spaces, hyphens, apostrophes, and periods
     }
     
     /**
-     * 解析姓名组成部分
+     * Parse name components
      * 
-     * @param parts 姓名部分数组
-     * @return 解析后的姓名对象
+     * @param parts Name parts array
+     * @return Parsed name object
      */
     private static ParsedName parseNameParts(String[] parts) {
         String prefix = "";
@@ -192,34 +192,34 @@ public final class NameParsingUtils {
         int startIndex = 0;
         int endIndex = parts.length;
         
-        // 检查前缀
+        // Check for prefix
         if (parts.length > 1 && isPrefix(parts[0])) {
             prefix = parts[0];
             startIndex = 1;
         }
         
-        // 检查后缀
+        // Check for suffix
         if (parts.length > 1 && isSuffix(parts[parts.length - 1])) {
             suffix = parts[parts.length - 1];
             endIndex = parts.length - 1;
         }
         
-        // 解析名字部分
+        // Parse name parts
         int namePartsCount = endIndex - startIndex;
         
         if (namePartsCount == 1) {
-            // 单名情况
+            // Single name case
             firstName = parts[startIndex];
         } else if (namePartsCount == 2) {
-            // 名 + 姓
+            // First name + Last name
             firstName = parts[startIndex];
             lastName = parts[startIndex + 1];
         } else if (namePartsCount >= 3) {
-            // 名 + 中间名 + 姓（可能有多个中间名）
+            // First name + Middle name(s) + Last name
             firstName = parts[startIndex];
             lastName = parts[endIndex - 1];
             
-            // 将中间的所有部分作为中间名
+            // Combine all middle parts as middle name
             StringBuilder middle = new StringBuilder();
             for (int i = startIndex + 1; i < endIndex - 1; i++) {
                 if (middle.length() > 0) {
@@ -234,10 +234,10 @@ public final class NameParsingUtils {
     }
     
     /**
-     * 检查是否为前缀
+     * Check if word is a prefix
      * 
-     * @param word 单词
-     * @return 是否为前缀
+     * @param word Word
+     * @return Whether it is a prefix
      */
     private static boolean isPrefix(String word) {
         String normalized = word.replace(".", "");
@@ -245,10 +245,10 @@ public final class NameParsingUtils {
     }
     
     /**
-     * 检查是否为后缀
+     * Check if word is a suffix
      * 
-     * @param word 单词
-     * @return 是否为后缀
+     * @param word Word
+     * @return Whether it is a suffix
      */
     private static boolean isSuffix(String word) {
         String normalized = word.replace(".", "");

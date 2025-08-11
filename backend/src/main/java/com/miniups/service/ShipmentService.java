@@ -1,24 +1,24 @@
 /**
  * Shipment Service
  * 
- * 功能说明：
- * - 提供运单创建、查询、更新的核心业务逻辑
- * - 集成Amazon订单和UPS运输服务
- * - 管理运单生命周期和状态变更
+ * Description:
+ * - Provides core business logic for shipment creation, query, and update
+ * - Integrates Amazon orders and UPS transportation services
+ * - Manages shipment lifecycle and status changes
  * 
- * 主要功能：
- * - 创建新运单
- * - 查询运单信息
- * - 更新运单状态
- * - 运单分配和调度
+ * Key Features:
+ * - Create new shipment
+ * - Query shipment information
+ * - Update shipment status
+ * - Shipment assignment and dispatching
  * 
- * 依赖服务：
- * - TrackingService: 追踪号生成和状态管理
- * - TruckManagementService: 车辆分配
- * - UserService: 用户信息验证
+ * Dependencies:
+ * - TrackingService: Tracking number generation and status management
+ * - TruckManagementService: Truck assignment
+ * - UserService: User information verification
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 
@@ -64,22 +64,22 @@ public class ShipmentService {
     private TruckManagementService truckManagementService;
     
     /**
-     * 创建新运单
+     * Create a new shipment
      * 
-     * @param createShipmentDto 运单创建请求
-     * @return 创建的运单实体
+     * @param createShipmentDto shipment creation request
+     * @return created shipment entity
      */
     public Shipment createShipment(CreateShipmentDto createShipmentDto) {
         try {
             logger.info("Creating shipment for customer: {}", createShipmentDto.getCustomerName());
             
-            // 1. 获取或创建用户
+            // 1. Get or create user
             User customer = getOrCreateCustomer(createShipmentDto);
             
-            // 2. 生成追踪号
+            // 2. Generate tracking number
             String trackingNumber = trackingService.generateTrackingNumber();
             
-            // 3. 创建运单实体
+            // 3. Create shipment entity
             Shipment shipment = new Shipment();
             shipment.setUpsTrackingId(trackingNumber);
             shipment.setShipmentId(createShipmentDto.getShipmentId());
@@ -93,7 +93,7 @@ public class ShipmentService {
             shipment.setCreatedAt(LocalDateTime.now());
             shipment.setUpdatedAt(LocalDateTime.now());
             
-            // 4. 分配车辆 - 不捕获异常，让失败自然传播
+            // 4. Assign truck - don't catch exception, let failure propagate
             Truck assignedTruck = truckManagementService.assignOptimalTruck(
                 createShipmentDto.getOriginX(),
                 createShipmentDto.getOriginY(),
@@ -109,17 +109,17 @@ public class ShipmentService {
                 // Keep status as CREATED - truck can be assigned later
             }
             
-            // 5. 保存运单
+            // 5. Save shipment
             Shipment savedShipment = shipmentRepository.save(shipment);
             
-            // 6. 记录状态历史
+            // 6. Record status history
             trackingService.updateShipmentStatus(trackingNumber, savedShipment.getStatus(), "Shipment created");
             
             logger.info("Successfully created shipment: {}", trackingNumber);
             return savedShipment;
             
         } catch (ShipmentCreationException e) {
-            // 重新抛出业务异常，保持异常链
+            // Re-throw business exception to preserve chain
             throw e;
         } catch (Exception e) {
             logger.error("Failed to create shipment for customer {}: {}", 
@@ -129,10 +129,10 @@ public class ShipmentService {
     }
     
     /**
-     * 根据追踪号查询运单
+     * Find shipment by tracking number
      * 
-     * @param trackingNumber UPS追踪号
-     * @return 运单信息
+     * @param trackingNumber UPS tracking number
+     * @return shipment information
      */
     public Optional<Shipment> findByTrackingNumber(String trackingNumber) {
         try {
@@ -144,30 +144,30 @@ public class ShipmentService {
     }
     
     /**
-     * 查询所有运单
+     * Find all shipments
      * 
-     * @return 运单列表
+     * @return shipment list
      */
     public List<Shipment> findAllShipments() {
         return shipmentRepository.findAll();
     }
     
     /**
-     * 根据状态查询运单
+     * Find shipments by status
      * 
-     * @param status 运单状态
-     * @return 符合条件的运单列表
+     * @param status shipment status
+     * @return matching shipment list
      */
     public List<Shipment> findByStatus(ShipmentStatus status) {
         return shipmentRepository.findByStatus(status);
     }
     
     /**
-     * 更新运单状态 - Delegates to TrackingService for proper concurrency handling
+     * Update shipment status - Delegates to TrackingService for proper concurrency handling
      * 
-     * @param trackingNumber 追踪号
-     * @param newStatus 新状态
-     * @param notes 备注
+     * @param trackingNumber tracking number
+     * @param newStatus new status
+     * @param notes notes
      */
     public void updateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String notes) {
         // Delegate to TrackingService which has proper retry mechanism for optimistic locking
@@ -179,13 +179,13 @@ public class ShipmentService {
     
     
     /**
-     * 获取或创建客户用户
+     * Get or create customer user
      * 
-     * @param dto 运单创建请求
-     * @return 客户用户实体
+     * @param dto shipment creation request
+     * @return customer user entity
      */
     private User getOrCreateCustomer(CreateShipmentDto dto) {
-        // 先尝试根据客户ID查找
+        // Try by customer ID first
         if (dto.getCustomerId() != null) {
             Optional<User> existingUser = userRepository.findByUsername(dto.getCustomerId());
             if (existingUser.isPresent()) {
@@ -193,35 +193,35 @@ public class ShipmentService {
             }
         }
         
-        // 根据邮箱查找
+        // Lookup by email
         Optional<User> userByEmail = userRepository.findByEmail(dto.getCustomerEmail());
         if (userByEmail.isPresent()) {
             return userByEmail.get();
         }
         
-        // 创建新用户
+        // Create new user
         try {
             User newUser = new User();
             newUser.setUsername(dto.getCustomerId() != null ? dto.getCustomerId() : 
                               NameParsingUtils.generateUsernameFromName(dto.getCustomerName()));
             newUser.setEmail(dto.getCustomerEmail());
             
-            // 使用智能姓名解析
+            // Use intelligent name parsing
             NameParsingUtils.ParsedName parsedName = NameParsingUtils.parseName(dto.getCustomerName());
             newUser.setFirstName(parsedName.getFirstName());
             newUser.setLastName(parsedName.getLastName());
             
             newUser.setRole(UserRole.USER);
             
-            // 生成安全的临时密码并加密存储
+            // Generate a secure temporary password and encode for storage
             String tempPassword = SecurityUtils.generateSecureTemporaryPassword();
             newUser.setPassword(SecurityUtils.encodePassword(tempPassword));
             
-            // 标记为需要重置密码的用户
+            // Mark as a user who needs to reset password on first login
             newUser.setEnabled(true);
             newUser.setCreatedAt(LocalDateTime.now());
             
-            // 记录临时密码生成（实际应用中应发送邮件通知用户）
+            // Log temporary password generation (in real apps, email the user)
             // Save user first to get the ID
             User savedUser = userRepository.save(newUser);
             logger.info("Created new user with ID: {}", savedUser.getId());

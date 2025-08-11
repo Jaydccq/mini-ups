@@ -12,8 +12,8 @@
  * - ShipmentStatusRequest: Amazon queries shipping status
  * - AddressChange: Amazon requests address change
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto;
 

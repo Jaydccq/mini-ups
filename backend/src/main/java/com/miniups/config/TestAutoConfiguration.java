@@ -5,16 +5,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 /**
- * 测试环境自动配置
+ * Test Environment Auto Configuration
  * 
- * 用于处理测试环境特有的配置需求，
- * 包括自动配置排除和测试特定的Bean配置
+ * Used to handle configuration requirements specific to the test environment,
+ * including auto-configuration exclusions and test-specific Bean configuration
  */
 @Configuration
 @Profile("test")
 @ConditionalOnProperty(name = "app.rabbitmq.test.enabled", havingValue = "true", matchIfMissing = true)
 public class TestAutoConfiguration {
     
-    // 这个类主要用于声明测试环境的自动配置
-    // 实际的RabbitMQ模拟配置在TestRabbitConfig中处理
+    // This class is primarily used to declare auto-configuration for the test environment
+    // Actual RabbitMQ simulation configuration is handled in TestRabbitConfig
 }

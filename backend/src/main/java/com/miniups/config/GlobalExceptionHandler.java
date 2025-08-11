@@ -18,8 +18,6 @@
  * - Records detailed error logs for debugging
  * - Returns user-friendly error messages
  *
- * @author Mini-UPS Team
- * @version 1.0.0
  */
 package com.miniups.config;
 
@@ -27,26 +25,25 @@ import com.miniups.exception.*;
 import com.miniups.model.dto.common.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,14 +66,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 统一构建错误响应的方法
+     * Unified method to build error responses
      * 
-     * @param ex 异常对象
-     * @param errorCode 错误代码
-     * @param defaultMessage 默认错误消息
-     * @param status HTTP状态码
-     * @param data 可选的附加数据
-     * @return 标准化的错误响应
+     * @param ex Exception object
+     * @param errorCode Error code
+     * @param defaultMessage Default error message
+     * @param status HTTP status code
+     * @param data Optional additional data
+     * @return Standardized error response
      */
     private <T> ResponseEntity<ApiResponse<T>> buildErrorResponse(
             Exception ex, String errorCode, String defaultMessage, HttpStatus status, T data) {

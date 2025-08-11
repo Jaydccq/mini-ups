@@ -5,10 +5,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 应用程序自定义配置属性
+ * Application Custom Configuration Properties
  * 
- * 用于定义和验证应用程序的自定义配置属性，
- * 解决IDE对自定义配置的警告问题。
+ * Used to define and validate custom configuration properties for the application,
+ * resolving IDE warnings about custom configurations.
  */
 @Data
 @Component
@@ -16,24 +16,24 @@ import org.springframework.stereotype.Component;
 public class ApplicationProperties {
 
     /**
-     * CORS 配置
+     * CORS configuration
      */
     private Cors cors = new Cors();
 
     /**
-     * RabbitMQ 配置
+     * RabbitMQ configuration
      */
     private RabbitMQ rabbitmq = new RabbitMQ();
 
     /**
-     * 通知配置
+     * Notifications configuration
      */
     private Notifications notifications = new Notifications();
 
     @Data
     public static class Cors {
         /**
-         * 允许的来源列表
+         * List of allowed origins
          */
         private String allowedOrigins = "http://localhost:3000";
     }
@@ -41,14 +41,19 @@ public class ApplicationProperties {
     @Data
     public static class RabbitMQ {
         /**
-         * 测试配置
+         * Whether RabbitMQ functionality is enabled
+         */
+        private boolean enabled = true;
+        
+        /**
+         * Test configuration
          */
         private Test test = new Test();
 
         @Data
         public static class Test {
             /**
-             * 是否启用测试模式（使用模拟）
+             * Whether test mode is enabled (using mocks)
              */
             private boolean enabled = true;
         }
@@ -57,22 +62,22 @@ public class ApplicationProperties {
     @Data
     public static class Notifications {
         /**
-         * 是否启用通知
+         * Whether notifications are enabled
          */
         private boolean enabled = true;
 
         /**
-         * 邮件通知配置
+         * Email notification configuration
          */
         private Email email = new Email();
 
         /**
-         * 短信通知配置
+         * SMS notification configuration
          */
         private Sms sms = new Sms();
 
         /**
-         * 推送通知配置
+         * Push notification configuration
          */
         private Push push = new Push();
 

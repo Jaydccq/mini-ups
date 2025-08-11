@@ -59,8 +59,8 @@
  * - Minimal performance impact on public endpoints
  * - Clear separation of concerns with other security components
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.security;

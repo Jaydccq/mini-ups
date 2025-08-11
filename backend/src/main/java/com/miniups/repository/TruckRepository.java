@@ -1,36 +1,36 @@
 /**
- * 卡车数据访问接口
+ * Truck Data Access Interface
  * 
- * 功能说明：
- * - 管理UPS车队的数据访问操作
- * - 支持卡车调度、状态管理、司机分配等核心功能
- * - 为运输订单分配和追踪提供数据支持
+ * Function Description:
+ * - Manages data access operations for the UPS fleet
+ * - Supports core functions such as truck dispatching, status management, and driver assignment
+ * - Provides data support for transport order assignment and tracking
  * 
- * 核心查询方法：
- * - findByTruckId: 根据世界模拟器的卡车ID查找（系统集成）
- * - findByStatus: 根据状态查找卡车（调度算法核心）
- * - findByDriverId: 查找司机的分配车辆（司机管理）
- * - existsByTruckId: 验证卡车ID是否存在（数据一致性）
+ * Core Query Methods:
+ * - findByTruckId: Find by truck ID from the world simulator (system integration)
+ * - findByStatus: Find trucks by status (core of dispatching algorithm)
+ * - findByDriverId: Find assigned vehicle for a driver (driver management)
+ * - existsByTruckId: Verify if truck ID exists (data consistency)
  * 
- * 业务应用场景：
- * - 卡车调度算法：查找可用卡车（IDLE状态）
- * - 运输任务分配：根据位置和载重分配最优卡车
- * - 司机管理：查询司机的车辆分配情况
- * - 车队监控：实时查看所有卡车状态
- * - 世界模拟器集成：同步卡车位置和状态
+ * Business Application Scenarios:
+ * - Truck dispatching algorithm: Find available trucks (IDLE status)
+ * - Transport task assignment: Assign optimal trucks based on location and load capacity
+ * - Driver management: Query vehicle assignments for drivers
+ * - Fleet monitoring: Real-time view of all truck statuses
+ * - World simulator integration: Synchronize truck positions and statuses
  * 
- * 性能优化：
- * - 基于状态的索引快速查找可用卡车
- * - exists方法高效验证卡车存在性
- * - 支持批量状态更新操作
+ * Performance Optimization:
+ * - Fast lookup of available trucks based on status index
+ * - Efficient verification of truck existence with exists methods
+ * - Support for batch status update operations
  * 
- * 调度算法支持：
- * - 查找最近的可用卡车
- * - 按载重能力筛选适合的车辆
- * - 支持多点配送路径优化
+ * Dispatching Algorithm Support:
+ * - Find the nearest available truck
+ * - Filter suitable vehicles by load capacity
+ * - Support multi-point delivery route optimization
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.repository;
 

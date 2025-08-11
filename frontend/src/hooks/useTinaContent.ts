@@ -1,0 +1,209 @@
+/**
+ * TinaCMS Content Hook
+ * 
+ * Custom hook for fetching and managing TinaCMS content.
+ * Provides type-safe access to CMS content with fallback support.
+ */
+
+import { useState, useEffect } from 'react';
+
+// Types for TinaCMS content
+export interface HeroContent {
+  badge_text: string;
+  headline: string;
+  subheadline: string;
+  cta_primary: string;
+  cta_secondary: string;
+  hero_image?: string;
+}
+
+export interface FeatureContent {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+export interface FeaturesContent {
+  section_title: string;
+  section_description: string;
+  feature_list: FeatureContent[];
+}
+
+export interface TestimonialContent {
+  name: string;
+  role: string;
+  content: string;
+  rating: number;
+  avatar?: string;
+}
+
+export interface TestimonialsContent {
+  section_title: string;
+  section_description: string;
+  testimonial_list: TestimonialContent[];
+}
+
+export interface CTAContent {
+  title: string;
+  description: string;
+  button_text: string;
+  button_link: string;
+  background_color: string;
+}
+
+export interface SEOContent {
+  title: string;
+  description: string;
+  keywords: string;
+  og_image?: string;
+}
+
+export interface HomepageContent {
+  hero: HeroContent;
+  features: FeaturesContent;
+  testimonials: TestimonialsContent;
+  cta_section: CTAContent;
+  seo: SEOContent;
+}
+
+// Fallback content in case TinaCMS content fails to load
+const fallbackContent: HomepageContent = {
+  hero: {
+    badge_text: "Trusted by 10,000+ businesses",
+    headline: "Fast, Reliable Package Delivery",
+    subheadline: "Experience the future of shipping with Mini UPS. From small packages to large freight, we deliver with speed, security, and transparency.",
+    cta_primary: "Get Started",
+    cta_secondary: "Sign In"
+  },
+  features: {
+    section_title: "Why Choose Mini UPS?",
+    section_description: "We're committed to providing the best shipping experience possible",
+    feature_list: [
+      {
+        title: "Fast Delivery",
+        description: "Next-day delivery available to most locations",
+        icon: "Truck"
+      },
+      {
+        title: "Secure Shipping",
+        description: "Your packages are protected with our insurance coverage",
+        icon: "Shield"
+      },
+      {
+        title: "Real-Time Tracking",
+        description: "Track your package every step of the way",
+        icon: "MapPin"
+      },
+      {
+        title: "Flexible Scheduling",
+        description: "Choose delivery times that work for you",
+        icon: "Clock"
+      }
+    ]
+  },
+  testimonials: {
+    section_title: "What Our Customers Say",
+    section_description: "Join thousands of satisfied customers who trust Mini UPS",
+    testimonial_list: [
+      {
+        name: "Sarah Johnson",
+        role: "Small Business Owner",
+        content: "Mini UPS has transformed how I ship products to my customers. Reliable and affordable!",
+        rating: 5
+      },
+      {
+        name: "Michael Chen",
+        role: "E-commerce Manager",
+        content: "The real-time tracking feature is amazing. My customers love being able to see exactly where their packages are.",
+        rating: 5
+      },
+      {
+        name: "Emily Rodriguez",
+        role: "Online Seller",
+        content: "Customer service is excellent and shipping rates are competitive. Highly recommend!",
+        rating: 5
+      }
+    ]
+  },
+  cta_section: {
+    title: "Ready to Get Started?",
+    description: "Join thousands of businesses that trust Mini UPS for their shipping needs. Create your account today and experience the difference.",
+    button_text: "Create Account",
+    button_link: "/register",
+    background_color: "bg-primary"
+  },
+  seo: {
+    title: "Mini UPS - Fast, Reliable Package Delivery Service",
+    description: "Experience fast, secure package delivery with Mini UPS. Real-time tracking, flexible scheduling, and competitive rates for businesses of all sizes.",
+    keywords: "package delivery, shipping service, real-time tracking, fast delivery, business shipping, UPS alternative"
+  }
+};
+
+/**
+ * Hook for fetching TinaCMS homepage content
+ */
+export const useTinaContent = () => {
+  const [content, setContent] = useState<HomepageContent>(fallbackContent);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // In development, load from static JSON file
+        // In production with TinaCMS backend, this would use TinaCMS client
+        const response = await fetch('/content/homepage/homepage.json');
+        
+        if (!response.ok) {
+          throw new Error('Failed to load content');
+        }
+
+        const contentData = await response.json();
+        
+        // Validate and merge with fallback to ensure all fields exist
+        const mergedContent: HomepageContent = {
+          ...fallbackContent,
+          ...contentData,
+          hero: { ...fallbackContent.hero, ...contentData.hero },
+          features: { 
+            ...fallbackContent.features, 
+            ...contentData.features,
+            feature_list: contentData.features?.feature_list || fallbackContent.features.feature_list
+          },
+          testimonials: { 
+            ...fallbackContent.testimonials, 
+            ...contentData.testimonials,
+            testimonial_list: contentData.testimonials?.testimonial_list || fallbackContent.testimonials.testimonial_list
+          },
+          cta_section: { ...fallbackContent.cta_section, ...contentData.cta_section },
+          seo: { ...fallbackContent.seo, ...contentData.seo }
+        };
+
+        setContent(mergedContent);
+      } catch (err) {
+        console.error('Failed to load TinaCMS content:', err);
+        setError('Failed to load content');
+        // Content already set to fallback in initial state
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContent();
+  }, []);
+
+  return {
+    content,
+    isLoading,
+    error,
+    // Convenience getters for specific sections
+    hero: content.hero,
+    features: content.features,
+    testimonials: content.testimonials,
+    cta: content.cta_section,
+    seo: content.seo,
+  };
+};

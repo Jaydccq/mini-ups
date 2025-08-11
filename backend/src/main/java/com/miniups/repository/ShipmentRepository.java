@@ -1,36 +1,36 @@
 /**
- * 运输订单数据访问接口
+ * Shipment Data Access Interface
  * 
- * 功能说明：
- * - Mini-UPS核心业务的数据访问层，管理所有运输订单的数据操作
- * - 提供复杂的查询方法支持订单追踪、状态管理、用户查询等功能
- * - 支持分页查询处理大量订单数据
+ * Function Description:
+ * - Data access layer for Mini-UPS core business, managing all data operations for transport orders
+ * - Provides complex query methods to support order tracking, status management, user queries, etc.
+ * - Supports pagination to handle large volumes of order data
  * 
- * 核心查询方法：
- * - findByShipmentId: 根据Amazon订单ID查找（系统间集成）
- * - findByUpsTrackingId: 根据UPS追踪号查找（客户查询）
- * - findByUserId: 查询用户的所有订单（支持分页）
- * - findByStatus: 根据状态查找订单（运营管理）
+ * Core Query Methods:
+ * - findByShipmentId: Find by Amazon order ID (system integration)
+ * - findByUpsTrackingId: Find by UPS tracking number (customer query)
+ * - findByUserId: Query all orders for a user (with pagination support)
+ * - findByStatus: Find orders by status (operations management)
  * 
- * 自定义JPQL查询：
- * - findByUserIdAndStatus: 查询特定用户的特定状态订单
- * - countByStatus: 统计各状态订单数量（数据报表）
+ * Custom JPQL Queries:
+ * - findByUserIdAndStatus: Query specific status orders for a particular user
+ * - countByStatus: Count orders by status (data reporting)
  * 
- * 性能特性：
- * - 利用数据库索引优化查询性能
- * - 支持分页查询避免内存溢出
- * - @Query注解提供复杂查询支持
- * - 参数化查询防止SQL注入
+ * Performance Features:
+ * - Utilizes database indexes to optimize query performance
+ * - Supports pagination to prevent memory overflow
+ * - @Query annotation provides support for complex queries
+ * - Parameterized queries prevent SQL injection
  * 
- * 业务应用场景：
- * - 订单状态追踪和管理
- * - 用户订单历史查询
- * - 运营数据统计和报表
- * - Amazon系统集成接口
- * - 客户服务支持
+ * Business Application Scenarios:
+ * - Order status tracking and management
+ * - User order history queries
+ * - Operations data statistics and reporting
+ * - Amazon system integration interface
+ * - Customer service support
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.repository;
 

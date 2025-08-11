@@ -18,8 +18,8 @@
  * - Login failure rate limiting
  * - Token expiration management
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 
@@ -71,35 +71,35 @@ public class AuthService {
     }
     
     /**
-     * 用户注册
+     * User registration
      * 
-     * @param registerRequest 注册请求数据
-     * @return 注册成功响应和JWT令牌
-     * @throws RuntimeException 当用户名或邮箱已存在时抛出
+     * @param registerRequest registration request data
+     * @return registration success response with JWT token
+     * @throws RuntimeException when username or email already exists
      */
     public AuthResponseDto register(RegisterRequestDto registerRequest) {
-        logger.info("开始处理用户注册: username={}, email={}", 
+        logger.info("Start processing user registration: username={}, email={}", 
                    registerRequest.getUsername(), registerRequest.getEmail());
         
-        // 检查用户名是否已存在
+        // Check if username already exists
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            logger.warn("注册失败 - 用户名已存在: {}", registerRequest.getUsername());
-            throw new UserAlreadyExistsException("用户名", registerRequest.getUsername());
+            logger.warn("Registration failed - username already exists: {}", registerRequest.getUsername());
+            throw new UserAlreadyExistsException("username", registerRequest.getUsername());
         }
         
-        // 检查邮箱是否已存在
+        // Check if email already exists
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            logger.warn("注册失败 - 邮箱已存在: {}", registerRequest.getEmail());
-            throw new UserAlreadyExistsException("邮箱", registerRequest.getEmail());
+            logger.warn("Registration failed - email already exists: {}", registerRequest.getEmail());
+            throw new UserAlreadyExistsException("email", registerRequest.getEmail());
         }
         
         try {
-            // 创建新用户
+            // Create new user
             User user = createUserFromRegisterRequest(registerRequest);
             
-            // 保存用户到数据库
+            // Save user to database
             User savedUser = userRepository.save(user);
-            logger.info("用户创建成功: id={}, username={}", savedUser.getId(), savedUser.getUsername());
+            logger.info("User created successfully: id={}, username={}", savedUser.getId(), savedUser.getUsername());
             
             // Generate JWT token (compat with tests uses single-arg method)
             String token = jwtTokenProvider.generateToken(savedUser.getUsername());
@@ -111,34 +111,34 @@ public class AuthService {
             // Return authentication response
             AuthResponseDto response = AuthResponseDto.registerSuccess(token, expiresIn, userDto);
             
-            logger.info("用户注册完成: username={}", savedUser.getUsername());
+            logger.info("User registration completed: username={}", savedUser.getUsername());
             return response;
             
         } catch (DataAccessException e) {
-            logger.error("数据库操作异常: username={}", registerRequest.getUsername(), e);
+            logger.error("Database operation error: username={}", registerRequest.getUsername(), e);
             throw DatabaseOperationException.save("User", e);
         } catch (UserAlreadyExistsException e) {
             // Re-throw business exceptions as-is
             throw e;
         } catch (Exception e) {
-            logger.error("用户注册过程中出现异常: username={}", registerRequest.getUsername(), e);
+            logger.error("Unexpected error during user registration: username={}", registerRequest.getUsername(), e);
             // For unexpected exceptions, throw a business exception that will be handled properly
-            throw new RuntimeException("用户注册失败，请稍后重试");
+            throw new RuntimeException("Registration failed, please try again later");
         }
     }
     
     /**
-     * 用户登录
+     * User login
      * 
-     * @param loginRequest 登录请求数据
-     * @return 登录成功响应和JWT令牌
-     * @throws InvalidCredentialsException 当认证失败时抛出
+     * @param loginRequest login request data
+     * @return login success response with JWT token
+     * @throws InvalidCredentialsException when authentication fails
      */
     public AuthResponseDto login(LoginRequestDto loginRequest) {
-        logger.info("开始处理用户登录: usernameOrEmail={}", loginRequest.getUsernameOrEmail());
+        logger.info("Start processing user login: usernameOrEmail={}", loginRequest.getUsernameOrEmail());
         
         try {
-            // 直接使用 AuthenticationManager 进行认证
+            // Authenticate directly with AuthenticationManager
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                     loginRequest.getUsernameOrEmail(),
@@ -146,17 +146,17 @@ public class AuthService {
                 )
             );
             
-            // 认证成功后，从认证信息中获取用户名
+            // Get username from authentication on success
             String username = authentication.getName();
             
-            // 查找用户实体以获取完整信息
+            // Find user entity for full info
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new UserNotFoundException(username));
             
-            // 检查用户是否被禁用（虽然UserDetailsService应该已经检查了）
+            // Check if user is disabled (UserDetailsService should have checked already)
             if (!user.getEnabled()) {
-                logger.warn("登录失败 - 用户已被禁用: {}", username);
-                throw new InvalidCredentialsException("账户已被禁用，请联系管理员");
+                logger.warn("Login failed - user is disabled: {}", username);
+                throw new InvalidCredentialsException("Account is disabled, please contact the administrator");
             }
             
             // Generate JWT token (compat with tests uses single-arg method)
@@ -169,18 +169,18 @@ public class AuthService {
             // Return authentication response
             AuthResponseDto response = AuthResponseDto.loginSuccess(token, expiresIn, userDto);
             
-            logger.info("用户登录成功: username={}", username);
+            logger.info("User login successful: username={}", username);
             return response;
             
         } catch (BadCredentialsException e) {
-            logger.warn("登录失败 - 凭证无效: usernameOrEmail={}", loginRequest.getUsernameOrEmail());
+            logger.warn("Login failed - invalid credentials: usernameOrEmail={}", loginRequest.getUsernameOrEmail());
             throw new InvalidCredentialsException();
         } catch (AuthenticationException e) {
-            logger.warn("登录失败 - 认证异常: usernameOrEmail={}, error={}", 
+            logger.warn("Login failed - authentication exception: usernameOrEmail={}, error={}", 
                        loginRequest.getUsernameOrEmail(), e.getMessage());
             throw new InvalidCredentialsException();
         } catch (DataAccessException e) {
-            logger.error("数据库操作异常: usernameOrEmail={}", loginRequest.getUsernameOrEmail(), e);
+            logger.error("Database operation error: usernameOrEmail={}", loginRequest.getUsernameOrEmail(), e);
             throw DatabaseOperationException.find("User", loginRequest.getUsernameOrEmail());
         } catch (InvalidCredentialsException e) {
             // Re-throw business exceptions as-is
@@ -189,48 +189,48 @@ public class AuthService {
             // Re-throw business exceptions as-is
             throw e;
         } catch (Exception e) {
-            logger.error("登录过程中出现异常: usernameOrEmail={}", 
+            logger.error("Unexpected error during login: usernameOrEmail={}", 
                         loginRequest.getUsernameOrEmail(), e);
             // For unexpected exceptions, throw a business exception that will be handled properly
-            throw new RuntimeException("登录失败，请稍后重试");
+            throw new RuntimeException("Login failed, please try again later");
         }
     }
     
     /**
-     * 修改密码
+     * Change password
      * 
-     * @param username 用户名
-     * @param passwordChangeRequest 密码修改请求
-     * @throws RuntimeException 当当前密码验证失败时抛出
+     * @param username username
+     * @param passwordChangeRequest password change request
+     * @throws RuntimeException when current password verification fails
      */
     public void changePassword(String username, PasswordChangeDto passwordChangeRequest) {
-        logger.info("开始处理密码修改: username={}", username);
+        logger.info("Start processing password change: username={}", username);
         
-        // 查找用户
+        // Find user
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException(username));
         
-        // 验证当前密码
+        // Verify current password
         if (!passwordEncoder.matches(passwordChangeRequest.getCurrentPassword(), user.getPassword())) {
-            logger.warn("密码修改失败 - 当前密码错误: username={}", username);
-            throw new InvalidCredentialsException("当前密码错误");
+            logger.warn("Password change failed - current password incorrect: username={}", username);
+            throw new InvalidCredentialsException("Current password is incorrect");
         }
         
-        // 检查新密码是否与当前密码相同
+        // Check if new password equals current password
         if (passwordEncoder.matches(passwordChangeRequest.getNewPassword(), user.getPassword())) {
-            logger.warn("密码修改失败 - 新密码与当前密码相同: username={}", username);
-            throw new IllegalArgumentException("新密码不能与当前密码相同");
+            logger.warn("Password change failed - new password same as current: username={}", username);
+            throw new IllegalArgumentException("New password must not be the same as current password");
         }
         
         try {
-            // 加密新密码
+            // Encrypt new password
             String encodedNewPassword = passwordEncoder.encode(passwordChangeRequest.getNewPassword());
             
-            // 更新密码
+            // Update password
             user.setPassword(encodedNewPassword);
             userRepository.save(user);
             
-            logger.info("密码修改成功: username={}", username);
+            logger.info("Password changed successfully: username={}", username);
             
         } catch (InvalidCredentialsException e) {
             // Re-throw business exceptions as-is
@@ -242,45 +242,45 @@ public class AuthService {
             // Re-throw business exceptions as-is
             throw e;
         } catch (Exception e) {
-            logger.error("密码修改过程中出现异常: username={}", username, e);
+            logger.error("Unexpected error during password change: username={}", username, e);
             // For unexpected exceptions, throw a business exception that will be handled properly
-            throw new RuntimeException("密码修改失败，请稍后重试");
+            throw new RuntimeException("Password change failed, please try again later");
         }
     }
     
     /**
-     * 验证令牌
+     * Validate token
      * 
-     * @param token JWT令牌
-     * @return 令牌是否有效
+     * @param token JWT token
+     * @return whether the token is valid
      */
     public boolean validateToken(String token) {
         try {
             return jwtTokenProvider.validateToken(token);
         } catch (Exception e) {
-            logger.warn("令牌验证失败: {}", e.getMessage());
+            logger.warn("Token validation failed: {}", e.getMessage());
             return false;
         }
     }
     
     /**
-     * 从令牌获取用户名
+     * Get username from token
      * 
-     * @param token JWT令牌
-     * @return 用户名
+     * @param token JWT token
+     * @return username
      */
     public String getUsernameFromToken(String token) {
         return jwtTokenProvider.getUsernameFromToken(token);
     }
     
     /**
-     * 根据用户名或邮箱查找用户
+     * Find user by username or email
      * 
-     * @param usernameOrEmail 用户名或邮箱
-     * @return 用户实体，如果不存在则返回null
+     * @param usernameOrEmail username or email
+     * @return user entity, or null if not found
      */
     private User findUserByUsernameOrEmail(String usernameOrEmail) {
-        // 判断输入是邮箱还是用户名
+        // Determine if input is email or username
         if (usernameOrEmail.contains("@")) {
             return userRepository.findByEmail(usernameOrEmail).orElse(null);
         } else {
@@ -289,10 +289,10 @@ public class AuthService {
     }
     
     /**
-     * 从注册请求创建用户实体
+     * Create user entity from registration request
      * 
-     * @param registerRequest 注册请求
-     * @return 用户实体
+     * @param registerRequest registration request
+     * @return user entity
      */
     private User createUserFromRegisterRequest(RegisterRequestDto registerRequest) {
         User user = new User();
@@ -303,27 +303,27 @@ public class AuthService {
         user.setLastName(registerRequest.getLastName());
         user.setPhone(registerRequest.getPhone());
         user.setAddress(registerRequest.getAddress());
-        user.setRole(UserRole.USER); // 默认注册为普通用户
+        user.setRole(UserRole.USER); // Default to regular user
         user.setEnabled(true);
         
         return user;
     }
     
     /**
-     * 检查用户名是否可用
+     * Check if username is available
      * 
-     * @param username 用户名
-     * @return 是否可用
+     * @param username username
+     * @return whether available
      */
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
     }
     
     /**
-     * 检查邮箱是否可用
+     * Check if email is available
      * 
-     * @param email 邮箱
-     * @return 是否可用
+     * @param email email
+     * @return whether available
      */
     public boolean isEmailAvailable(String email) {
         return !userRepository.existsByEmail(email);

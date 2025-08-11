@@ -20,8 +20,8 @@
  * - Management operations: Admin permissions
  * - Statistics viewing: Operator and above permissions
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 
@@ -262,6 +262,67 @@ public class TruckManagementController {
         
         Map<String, Object> responseData = Map.of("updated_count", truckUpdates.size());
         return ResponseEntity.ok(ApiResponse.success("Batch update completed successfully", responseData));
+    }
+    
+    /**
+     * Assign driver to truck
+     * 
+     * @param truckId Truck ID
+     * @param driverId Driver ID
+     * @return Assignment result
+     */
+    @PostMapping("/{truckId}/assign-driver/{driverId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> assignDriverToTruck(
+            @PathVariable Long truckId,
+            @PathVariable Long driverId) {
+        logger.info("Assigning driver {} to truck {}", driverId, truckId);
+        
+        try {
+            Truck updatedTruck = truckManagementService.assignDriverToTruck(truckId, driverId);
+            
+            Map<String, Object> responseData = Map.of(
+                "truck_id", updatedTruck.getTruckId(),
+                "driver_id", driverId,
+                "driver_name", updatedTruck.getDriverName(),
+                "status", "assigned"
+            );
+            
+            return ResponseEntity.ok(ApiResponse.success("Driver assigned to truck successfully", responseData));
+        } catch (Exception e) {
+            logger.error("Error assigning driver {} to truck {}", driverId, truckId, e);
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Failed to assign driver to truck: " + e.getMessage())
+            );
+        }
+    }
+    
+    /**
+     * Unassign driver from truck
+     * 
+     * @param truckId Truck ID
+     * @return Unassignment result
+     */
+    @PostMapping("/{truckId}/unassign-driver")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> unassignDriverFromTruck(@PathVariable Long truckId) {
+        logger.info("Unassigning driver from truck {}", truckId);
+        
+        try {
+            Truck updatedTruck = truckManagementService.unassignDriverFromTruck(truckId);
+            
+            Map<String, Object> responseData = Map.of(
+                "truck_id", updatedTruck.getTruckId(),
+                "status", "unassigned"
+            );
+            
+            return ResponseEntity.ok(ApiResponse.success("Driver unassigned from truck successfully", responseData));
+        } catch (Exception e) {
+            logger.error("Error unassigning driver from truck {}", truckId, e);
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Failed to unassign driver from truck: " + e.getMessage())
+            );
+        }
     }
     
     // Private helper methods

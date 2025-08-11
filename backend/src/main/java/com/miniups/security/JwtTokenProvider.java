@@ -68,8 +68,8 @@
  * - Logging helps detect potential token abuse or attacks
  * - Signature validation prevents token manipulation
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.security;

@@ -17,8 +17,8 @@
  * - Load balancing: Consider current truck load
  * - Priority sorting: Urgent orders get priority assignment
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 
@@ -50,6 +50,12 @@ public class TruckManagementService {
     
     @Autowired
     private ShipmentRepository shipmentRepository;
+    
+    @Autowired
+    private DriverService driverService;
+    
+    @Autowired
+    private com.miniups.repository.DriverRepository driverRepository;
     
     @Autowired(required = false)
     private WorldSimulatorService worldSimulatorService;
@@ -408,5 +414,65 @@ public class TruckManagementService {
                 yield null;
             }
         };
+    }
+    
+    /**
+     * Assign driver to truck
+     * 
+     * @param truckId Truck ID
+     * @param driverId Driver ID
+     * @return Updated truck with assigned driver
+     */
+    public Truck assignDriverToTruck(Long truckId, Long driverId) {
+        logger.info("Assigning driver {} to truck {}", driverId, truckId);
+        
+        // Get truck
+        Truck truck = truckRepository.findById(truckId)
+                .orElseThrow(() -> new com.miniups.exception.ResourceNotFoundException("Truck", truckId));
+        
+        // Get driver
+        com.miniups.model.entity.Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new com.miniups.exception.ResourceNotFoundException("Driver", driverId));
+        
+        // Validate truck can accept driver
+        if (truck.hasDriver()) {
+            throw new com.miniups.exception.BusinessValidationException("TRUCK_ASSIGNMENT", "Truck already has a driver assigned");
+        }
+        
+        // Validate driver is available
+        if (!driver.isAvailableForAssignment()) {
+            throw new com.miniups.exception.BusinessValidationException("DRIVER_ASSIGNMENT", "Driver is not available for assignment");
+        }
+        
+        // Perform assignment (this will update both entities)
+        truck.assignDriver(driver);
+        
+        // Save both entities
+        driverRepository.save(driver);
+        Truck savedTruck = truckRepository.save(truck);
+        
+        logger.info("Successfully assigned driver {} to truck {}", driverId, truckId);
+        return savedTruck;
+    }
+    
+    /**
+     * Unassign driver from truck
+     * 
+     * @param truckId Truck ID
+     * @return Updated truck without driver
+     */
+    public Truck unassignDriverFromTruck(Long truckId) {
+        logger.info("Unassigning driver from truck {}", truckId);
+        
+        Truck truck = truckRepository.findById(truckId)
+                .orElseThrow(() -> new com.miniups.exception.ResourceNotFoundException("Truck", truckId));
+        
+        if (!truck.hasDriver()) {
+            throw new com.miniups.exception.BusinessValidationException("TRUCK_ASSIGNMENT", "Truck has no driver to unassign");
+        }
+        
+        truck.unassignDriver();
+        
+        return truckRepository.save(truck);
     }
 }

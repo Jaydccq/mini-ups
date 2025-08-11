@@ -5,9 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * HTTP客户端配置属性
+ * HTTP Client Configuration Properties
  * 
- * 定义HTTP客户端相关的配置参数
+ * Defines configuration parameters related to the HTTP client
  */
 @Data
 @Component
@@ -15,29 +15,29 @@ import org.springframework.stereotype.Component;
 public class HttpClientProperties {
 
     /**
-     * 客户端配置
+     * Client configuration
      */
     private Client client = new Client();
 
     @Data
     public static class Client {
         /**
-         * 最大总连接数
+         * Maximum total connections
          */
         private int maxTotalConnections = 100;
 
         /**
-         * 每个路由的默认最大连接数
+         * Default maximum connections per route
          */
         private int maxDefaultPerRoute = 20;
 
         /**
-         * 连接超时时间（毫秒）
+         * Connection timeout (milliseconds)
          */
         private int connectTimeoutMs = 10000;
 
         /**
-         * Socket超时时间（毫秒）
+         * Socket timeout (milliseconds)
          */
         private int socketTimeoutMs = 30000;
     }

@@ -14,8 +14,8 @@
  * - Handle incoming messages
  * - Automatic cleanup on disconnect
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';

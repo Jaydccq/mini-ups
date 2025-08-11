@@ -16,8 +16,8 @@
  * - Frontend login form data binding
  * - Starting point of JWT authentication flow
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.auth;
 

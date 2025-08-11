@@ -40,8 +40,8 @@
  * - Bounded buffer prevents memory leaks
  * - JSON conversion cached per message type
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.debug;
 

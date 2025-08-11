@@ -1,16 +1,16 @@
 /**
  * Business Validation Exception
  * 
- * 业务验证异常，用于处理业务规则验证失败的情况
+ * Business validation exception used to handle cases where business rule validation fails
  * 
  * Common scenarios:
- * - 订单状态不允许当前操作
- * - 卡车容量不足
- * - 配送地址超出服务范围
- * - 包裹重量超出限制
+ * - Order status does not allow current operation
+ * - Insufficient truck capacity
+ * - Delivery address is out of service range
+ * - Package weight exceeds limit
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 
@@ -23,13 +23,13 @@ public class BusinessValidationException extends BaseBusinessException {
     private final Map<String, Object> validationDetails;
     
     public BusinessValidationException(String validationType, String message) {
-        super(validationType, message, ExceptionSeverity.LOW); // 使用 validationType 作为错误码
+        super(validationType, message, ExceptionSeverity.LOW); // Use validationType as error code
         this.validationType = validationType;
         this.validationDetails = null;
     }
     
     public BusinessValidationException(String validationType, String message, Map<String, Object> validationDetails) {
-        super(validationType, message, ExceptionSeverity.LOW); // 使用 validationType 作为错误码
+        super(validationType, message, ExceptionSeverity.LOW); // Use validationType as error code
         this.validationType = validationType;
         this.validationDetails = validationDetails;
     }
@@ -42,7 +42,7 @@ public class BusinessValidationException extends BaseBusinessException {
         return validationDetails;
     }
     
-    // 便利方法用于常见业务验证异常
+    // Convenience methods for common business validation exceptions
     public static BusinessValidationException invalidShipmentStatus(String currentStatus, String requiredStatus) {
         return new BusinessValidationException("SHIPMENT_STATUS", 
             String.format("Invalid shipment status. Current: %s, Required: %s", currentStatus, requiredStatus));

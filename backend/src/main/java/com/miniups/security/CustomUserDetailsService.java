@@ -1,34 +1,34 @@
 /**
- * 自定义用户详情服务
+ * Custom User Details Service
  * 
- * 功能说明：
- * - 实现Spring Security的UserDetailsService接口
- * - 负责从数据库加载用户信息用于身份验证
- * - 将自定义User实体转换为Spring Security的UserDetails对象
+ * Description:
+ * - Implements Spring Security's UserDetailsService interface
+ * - Loads user information from the database for authentication
+ * - Converts custom User entity to Spring Security's UserDetails object
  * 
- * 核心职责：
- * - loadUserByUsername: 根据用户名从数据库加载用户信息
- * - 权限映射: 将用户角色转换为Spring Security权限
- * - 账户状态检查: 验证账户是否启用、过期、锁定等
+ * Core Responsibilities:
+ * - loadUserByUsername: Load user information from the database by username or email
+ * - Authority mapping: Convert user roles to Spring Security authorities
+ * - Account status checks: Validate whether the account is enabled, expired, or locked
  * 
- * CustomUserPrincipal内部类：
- * - 实现UserDetails接口，包装自定义User实体
- * - 提供Spring Security需要的用户认证信息
- * - 支持角色权限映射（USER/ADMIN/DRIVER/OPERATOR）
- * - 管理账户状态（启用/禁用、过期、锁定等）
+ * Inner Class CustomUserPrincipal:
+ * - Implements UserDetails, wrapping the custom User entity
+ * - Provides user authentication information required by Spring Security
+ * - Supports role-to-authority mapping (USER/ADMIN/DRIVER/OPERATOR)
+ * - Manages account status (enabled/disabled, expired, locked, etc.)
  * 
- * 安全特性：
- * - 账户启用状态检查（基于user.enabled字段）
- * - 角色权限自动映射（添加ROLE_前缀）
- * - 密码安全封装（不暴露明文密码）
+ * Security Features:
+ * - Account enabled status check (based on user.enabled field)
+ * - Automatic role-to-authority mapping (adds ROLE_ prefix)
+ * - Secure password handling (no plaintext exposure)
  * 
- * 集成要点：
- * - 与Spring Security认证流程无缝集成
- * - 支持JWT令牌生成时的用户信息提取
- * - 为方法级安全注解提供权限支持
+ * Integration Points:
+ * - Seamlessly integrates with Spring Security authentication flow
+ * - Supports user info extraction when generating JWT tokens
+ * - Provides authority support for method-level security annotations
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.security;
 

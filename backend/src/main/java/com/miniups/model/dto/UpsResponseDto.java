@@ -13,8 +13,8 @@
  * - TruckArrived: Truck arrival notification
  * - ShipmentDelivered: Package delivery notification
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto;
 

@@ -16,8 +16,8 @@
  * - Record status change history
  * - Support status lookup and auditing
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 

@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,13 +32,23 @@ import org.springframework.stereotype.Service;
  * @since 2024
  */
 @Service
-@ConditionalOnClass(RabbitTemplate.class)
 public class EventPublisherService {
     private static final Logger log = LoggerFactory.getLogger(EventPublisherService.class);
     private final RabbitTemplate rabbitTemplate;
+    private final boolean rabbitMQEnabled;
     
-    public EventPublisherService(RabbitTemplate rabbitTemplate) {
+    public EventPublisherService(@Autowired(required = false) RabbitTemplate rabbitTemplate,
+                                @Value("${RABBITMQ_ENABLED:true}") boolean rabbitMQEnabled) {
         this.rabbitTemplate = rabbitTemplate;
+        this.rabbitMQEnabled = rabbitMQEnabled;
+        
+        if (!rabbitMQEnabled) {
+            log.info("EventPublisherService initialized with RabbitMQ disabled - events will be logged only");
+        } else if (rabbitTemplate == null) {
+            log.warn("EventPublisherService initialized without RabbitTemplate - events will be logged only");
+        } else {
+            log.info("EventPublisherService initialized with RabbitMQ enabled");
+        }
     }
 
     @Value("${spring.application.name:mini-ups-backend}")
@@ -51,6 +61,12 @@ public class EventPublisherService {
      * @param correlationId Optional correlation ID for request tracing
      */
     public void publishShipmentCreationEvent(ShipmentCreationPayload payload, String correlationId) {
+        if (!rabbitMQEnabled || rabbitTemplate == null) {
+            log.debug("RabbitMQ disabled - would publish shipment creation event for shipment: {} (correlationId: {})", 
+                     payload.getAmazonShipmentId(), correlationId);
+            return;
+        }
+        
         try {
             BusinessEvent<ShipmentCreationPayload> event = BusinessEvent.create(
                     RabbitMQConfig.SHIPMENT_CREATE_ROUTING_KEY,
@@ -81,6 +97,12 @@ public class EventPublisherService {
      * @param correlationId Optional correlation ID for request tracing
      */
     public void publishAuditLogEvent(AuditLogPayload payload, String correlationId) {
+        if (!rabbitMQEnabled || rabbitTemplate == null) {
+            log.debug("RabbitMQ disabled - would publish audit log event for operation: {} (correlationId: {})", 
+                     payload.getOperationType(), correlationId);
+            return;
+        }
+        
         try {
             BusinessEvent<AuditLogPayload> event = BusinessEvent.create(
                     RabbitMQConfig.AUDIT_LOG_ROUTING_KEY,
@@ -112,6 +134,12 @@ public class EventPublisherService {
      * @param correlationId Optional correlation ID for request tracing
      */
     public void publishNotificationEvent(NotificationPayload payload, String correlationId) {
+        if (!rabbitMQEnabled || rabbitTemplate == null) {
+            log.debug("RabbitMQ disabled - would publish notification event for user: {} (correlationId: {})", 
+                     payload.getRecipientUserId(), correlationId);
+            return;
+        }
+        
         try {
             // Determine routing key based on notification type and priority
             String routingKey = generateNotificationRoutingKey(payload);
@@ -149,6 +177,12 @@ public class EventPublisherService {
      */
     public void publishShipmentStatusUpdateEvent(Long shipmentId, String oldStatus, 
                                                 String newStatus, String correlationId) {
+        if (!rabbitMQEnabled || rabbitTemplate == null) {
+            log.debug("RabbitMQ disabled - would publish status update for shipment: {} ({} -> {}) (correlationId: {})", 
+                     shipmentId, oldStatus, newStatus, correlationId);
+            return;
+        }
+        
         try {
             // Create a simple status update payload
             var statusUpdatePayload = new java.util.HashMap<String, Object>();

@@ -16,8 +16,8 @@
  * Optional Fields:
  * - ups_account: UPS account association
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto;
 

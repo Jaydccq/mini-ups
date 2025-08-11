@@ -23,8 +23,8 @@
  * - Real-time truck location and status updates
  * - Support multi-package delivery optimization
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 
@@ -491,13 +491,13 @@ public class WorldSimulatorService {
     }
     
     private void startMessageProcessing() {
-        // 启动消息发送线程
+        // Start message sender thread
         senderTask = executorService.submit(this::messageSenderLoop);
         
-        // 启动消息接收线程
+        // Start message receiver thread
         receiverTask = executorService.submit(this::messageReceiverLoop);
         
-        // 启动超时清理线程
+        // Start timeout cleanup thread
         executorService.submit(this::timeoutCleanupLoop);
     }
     
@@ -606,39 +606,39 @@ public class WorldSimulatorService {
         try {
             WorldUpsProto.UResponses responses = WorldUpsProto.UResponses.parseFrom(messageData);
             
-            // 发送ACK
+            // Collect ACKs to send
             List<Long> acksToSend = new ArrayList<>();
             
-            // 处理完成通知
+            // Handle completion notifications
             for (WorldUpsProto.UFinished completion : responses.getCompletionsList()) {
                 acksToSend.add(completion.getSeqnum());
                 handleTruckCompletion(completion);
             }
             
-            // 处理配送完成通知
+            // Handle delivery completion notifications
             for (WorldUpsProto.UDeliveryMade delivery : responses.getDeliveredList()) {
                 acksToSend.add(delivery.getSeqnum());
                 handleDeliveryMade(delivery);
             }
             
-            // 处理卡车状态响应
+            // Handle truck status responses
             for (WorldUpsProto.UTruck truckStatus : responses.getTruckstatusList()) {
                 acksToSend.add(truckStatus.getSeqnum());
                 handleTruckStatus(truckStatus);
             }
             
-            // 处理错误响应
+            // Handle error responses
             for (WorldUpsProto.UErr error : responses.getErrorList()) {
                 acksToSend.add(error.getSeqnum());
                 handleError(error);
             }
             
-            // 处理ACK
+            // Handle ACKs
             for (Long ack : responses.getAcksList()) {
                 handleAcknowledgement(ack);
             }
             
-            // 发送ACK响应
+            // Send ACK responses
             if (!acksToSend.isEmpty()) {
                 sendAcknowledgements(acksToSend);
             }
@@ -653,14 +653,14 @@ public class WorldSimulatorService {
         logger.info("Truck {} completed task at ({}, {}) with status: {}", 
                    completion.getTruckid(), completion.getX(), completion.getY(), completion.getStatus());
         
-        // 更新卡车状态
+        // Update truck status
         Optional<Truck> truckOpt = truckRepository.findByTruckId(completion.getTruckid());
         if (truckOpt.isPresent()) {
             Truck truck = truckOpt.get();
             truck.setCurrentX(completion.getX());
             truck.setCurrentY(completion.getY());
             
-            // 根据状态更新卡车状态
+            // Update truck status based on completion status
             if ("idle".equalsIgnoreCase(completion.getStatus())) {
                 truck.setStatus(TruckStatus.IDLE);
             } else if ("arrive warehouse".equalsIgnoreCase(completion.getStatus())) {
@@ -677,14 +677,14 @@ public class WorldSimulatorService {
                     }
                 }
                 
-                // 通知Amazon卡车已到达
+                // Notify Amazon that the truck has arrived
                 notifyAmazonTruckArrived(truck, completion);
             }
             
             truckRepository.save(truck);
         }
         
-        // 完成对应的Future
+        // Complete matching future
         CompletableFuture<Object> future = pendingResponses.remove(completion.getSeqnum());
         if (future != null) {
             future.complete(completion);
@@ -695,8 +695,8 @@ public class WorldSimulatorService {
     protected void handleDeliveryMade(WorldUpsProto.UDeliveryMade delivery) {
         logger.info("Package {} delivered by truck {}", delivery.getPackageid(), delivery.getTruckid());
         
-        // 查找对应的运输订单
-        // 注意：packageid在这里实际上是shipment_id
+        // Find corresponding shipment order
+        // Note: packageid here is actually shipment_id
         Optional<Shipment> shipmentOpt = shipmentRepository.findByShipmentId(String.valueOf(delivery.getPackageid()));
         if (shipmentOpt.isPresent()) {
             Shipment shipment = shipmentOpt.get();
@@ -704,13 +704,13 @@ public class WorldSimulatorService {
             shipment.setActualDelivery(LocalDateTime.now());
             shipmentRepository.save(shipment);
             
-            // 通知Amazon包裹已送达
+            // Notify Amazon that the package has been delivered
             getAmazonIntegrationService().notifyShipmentDelivered(shipment.getShipmentId());
             
             logger.info("Updated shipment {} status to delivered", shipment.getShipmentId());
         }
         
-        // 完成对应的Future
+        // Complete matching future
         CompletableFuture<Object> future = pendingResponses.remove(delivery.getSeqnum());
         if (future != null) {
             future.complete(delivery);
@@ -723,14 +723,14 @@ public class WorldSimulatorService {
                     truckStatus.getTruckid(), truckStatus.getStatus(), 
                     truckStatus.getX(), truckStatus.getY());
         
-        // 更新数据库中的卡车状态
+        // Update truck status in database
         Optional<Truck> truckOpt = truckRepository.findByTruckId(truckStatus.getTruckid());
         if (truckOpt.isPresent()) {
             Truck truck = truckOpt.get();
             truck.setCurrentX(truckStatus.getX());
             truck.setCurrentY(truckStatus.getY());
             
-            // 转换状态
+            // Map status
             switch (truckStatus.getStatus()) {
                 case "idle":
                     truck.setStatus(TruckStatus.IDLE);
@@ -752,7 +752,7 @@ public class WorldSimulatorService {
             truckRepository.save(truck);
         }
         
-        // 完成对应的Future
+        // Complete matching future
         CompletableFuture<Object> future = pendingResponses.remove(truckStatus.getSeqnum());
         if (future != null) {
             future.complete(truckStatus);
@@ -762,7 +762,7 @@ public class WorldSimulatorService {
     private void handleError(WorldUpsProto.UErr error) {
         logger.error("World Simulator error for seqnum {}: {}", error.getOriginseqnum(), error.getErr());
         
-        // 完成对应的Future
+        // Complete matching future
         CompletableFuture<Object> future = pendingResponses.remove(error.getOriginseqnum());
         if (future != null) {
             future.complete("Error: " + error.getErr());
@@ -775,7 +775,7 @@ public class WorldSimulatorService {
     }
     
     private void notifyAmazonTruckArrived(Truck truck, WorldUpsProto.UFinished completion) {
-        // 查找这个卡车正在处理的运输订单
+        // Find shipments this truck is handling
         List<Shipment> shipments = shipmentRepository.findByTruck(truck);
         if (!shipments.isEmpty()) {
             for (Shipment shipment : shipments) {
@@ -821,10 +821,10 @@ public class WorldSimulatorService {
         
         byte[] messageBytes = message.toByteArray();
         
-        // 使用Varint32编码消息长度
+        // Encode message length using Varint32
         byte[] lengthBytes = encodeVarint32(messageBytes.length);
         
-        // 发送长度前缀和消息
+        // Send length prefix and message
         socket.getOutputStream().write(lengthBytes);
         socket.getOutputStream().write(messageBytes);
         socket.getOutputStream().flush();
@@ -837,10 +837,10 @@ public class WorldSimulatorService {
             throw new IOException("Socket is not connected");
         }
         
-        // 读取Varint32编码的消息长度
+        // Read Varint32-encoded message length
         int messageLength = readVarint32();
         
-        // 读取指定长度的消息数据
+        // Read message bytes of the specified length
         byte[] messageData = new byte[messageLength];
         int totalRead = 0;
         

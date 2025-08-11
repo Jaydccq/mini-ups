@@ -11,8 +11,8 @@
  * - Support forced user logout
  * - Automatic cleanup of expired tokens
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 

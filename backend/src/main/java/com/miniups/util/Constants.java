@@ -1,189 +1,189 @@
 /**
  * Application Constants
  * 
- * 功能说明：
- * - 定义系统范围内的常量
- * - 避免魔术数字和硬编码值
- * - 提高代码可维护性和可读性
+ * Function Description:
+ * - Defines system-wide constants
+ * - Avoids magic numbers and hard-coded values
+ * - Improves code maintainability and readability
  * 
- * 常量分类：
- * - 业务规则常量
- * - 系统限制常量
- * - 默认值常量
- * - 配置相关常量
+ * Constant Categories:
+ * - Business rule constants
+ * - System limit constants
+ * - Default value constants
+ * - Configuration-related constants
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.util;
 
 public final class Constants {
     
-    // 防止实例化
+    // Prevent instantiation
     private Constants() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
     
-    // ==================== 坐标系统常量 ====================
+    // ==================== Coordinate System Constants ====================
     
     /**
-     * 世界坐标系的最大X坐标值
+     * Maximum X coordinate value in the world coordinate system
      */
     public static final int MAX_COORDINATE_X = 1000;
     
     /**
-     * 世界坐标系的最大Y坐标值  
+     * Maximum Y coordinate value in the world coordinate system
      */
     public static final int MAX_COORDINATE_Y = 1000;
     
     /**
-     * 世界坐标系的最小坐标值
+     * Minimum coordinate value in the world coordinate system
      */
     public static final int MIN_COORDINATE = 0;
     
-    // ==================== 运单相关常量 ====================
+    // ==================== Shipment Related Constants ====================
     
     /**
-     * 默认包裹数量
+     * Default package count
      */
     public static final int DEFAULT_PACKAGE_COUNT = 1;
     
     /**
-     * 运单ID最大长度
+     * Maximum shipment ID length
      */
     public static final int MAX_SHIPMENT_ID_LENGTH = 50;
     
     /**
-     * 客户姓名最大长度
+     * Maximum customer name length
      */
     public static final int MAX_CUSTOMER_NAME_LENGTH = 100;
     
     /**
-     * 特殊说明最大长度
+     * Maximum special instructions length
      */
     public static final int MAX_SPECIAL_INSTRUCTIONS_LENGTH = 500;
     
-    // ==================== 包裹重量常量 ====================
+    // ==================== Package Weight Constants ====================
     
     /**
-     * 包裹最小重量 (kg)
+     * Minimum package weight (kg)
      */
     public static final double MIN_PACKAGE_WEIGHT = 0.1;
     
     /**
-     * 包裹最大重量 (kg)
+     * Maximum package weight (kg)
      */
     public static final double MAX_PACKAGE_WEIGHT = 50.0;
     
-    // ==================== 用户相关常量 ====================
+    // ==================== User Related Constants ====================
     
     /**
-     * 用户名最大长度
+     * Maximum username length
      */
     public static final int MAX_USERNAME_LENGTH = 50;
     
     /**
-     * 用户名最小长度
+     * Minimum username length
      */
     public static final int MIN_USERNAME_LENGTH = 3;
     
     /**
-     * 密码最小长度
+     * Minimum password length
      */
     public static final int MIN_PASSWORD_LENGTH = 8;
     
     /**
-     * 密码最大长度
+     * Maximum password length
      */
     public static final int MAX_PASSWORD_LENGTH = 128;
     
-    // ==================== 业务规则常量 ====================
+    // ==================== Business Rule Constants ====================
     
     /**
-     * 追踪号长度
+     * Tracking number length
      */
     public static final int TRACKING_NUMBER_LENGTH = 12;
     
     /**
-     * 追踪号前缀
+     * Tracking number prefix
      */
     public static final String TRACKING_NUMBER_PREFIX = "UPS";
     
     /**
-     * 默认运输优先级
+     * Default shipping priority
      */
     public static final String DEFAULT_PRIORITY = "STANDARD";
     
-    // ==================== 缓存相关常量 ====================
+    // ==================== Cache Related Constants ====================
     
     /**
-     * JWT令牌缓存过期时间 (秒)
+     * JWT token cache expiration time (seconds)
      */
     public static final long JWT_TOKEN_CACHE_EXPIRY = 3600; // 1 hour
     
     /**
-     * 用户会话缓存过期时间 (秒)
+     * User session cache expiration time (seconds)
      */
     public static final long USER_SESSION_CACHE_EXPIRY = 1800; // 30 minutes
     
-    // ==================== 系统限制常量 ====================
+    // ==================== System Limit Constants ====================
     
     /**
-     * 分页查询默认页面大小
+     * Default page size for pagination queries
      */
     public static final int DEFAULT_PAGE_SIZE = 20;
     
     /**
-     * 分页查询最大页面大小
+     * Maximum page size for pagination queries
      */
     public static final int MAX_PAGE_SIZE = 100;
     
     /**
-     * 并发处理最大重试次数
+     * Maximum retry attempts for concurrent processing
      */
     public static final int MAX_RETRY_ATTEMPTS = 3;
     
     /**
-     * 数据库连接超时时间 (毫秒)
+     * Database connection timeout (milliseconds)
      */
     public static final int DATABASE_CONNECTION_TIMEOUT = 30000; // 30 seconds
     
-    // ==================== 正则表达式常量 ====================
+    // ==================== Regular Expression Constants ====================
     
     /**
-     * 邮箱验证正则表达式
+     * Email validation regular expression
      */
     public static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
     
     /**
-     * 电话号码验证正则表达式
+     * Phone number validation regular expression
      */
     public static final String PHONE_REGEX = "^[\\+]?[1-9][\\d\\s\\-\\(\\)]{7,15}$";
     
     /**
-     * 运输优先级验证正则表达式
+     * Shipping priority validation regular expression
      */
     public static final String PRIORITY_REGEX = "STANDARD|EXPRESS|OVERNIGHT";
     
-    // ==================== 错误消息常量 ====================
+    // ==================== Error Message Constants ====================
     
     /**
-     * 通用业务异常消息
+     * Generic business error message
      */
     public static final String GENERIC_BUSINESS_ERROR = "A business error occurred while processing your request";
     
     /**
-     * 用户未找到错误消息
+     * User not found error message
      */
     public static final String USER_NOT_FOUND_ERROR = "User not found";
     
     /**
-     * 运单未找到错误消息
+     * Shipment not found error message
      */
     public static final String SHIPMENT_NOT_FOUND_ERROR = "Shipment not found";
     
     /**
-     * 无效凭据错误消息
+     * Invalid credentials error message
      */
     public static final String INVALID_CREDENTIALS_ERROR = "Invalid username or password";
 }

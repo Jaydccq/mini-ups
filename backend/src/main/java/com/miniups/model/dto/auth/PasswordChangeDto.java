@@ -17,8 +17,8 @@
  * 3. Confirm new password matches confirmation password
  * 4. Update password and invalidate existing tokens
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.auth;
 

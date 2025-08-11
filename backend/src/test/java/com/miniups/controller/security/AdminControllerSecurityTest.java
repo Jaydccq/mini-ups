@@ -13,8 +13,8 @@
  * - 系统管理功能保护
  * - 角色权限边界测试
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller.security;
 

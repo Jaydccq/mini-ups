@@ -23,8 +23,8 @@
  * - Admins can manage all users
  * - Sensitive operations require ADMIN role
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

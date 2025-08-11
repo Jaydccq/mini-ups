@@ -10,8 +10,8 @@
  * @PasswordsMatch(password = "newPassword", confirmPassword = "confirmPassword")
  * public class PasswordChangeDto { ... }
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.validation;
 

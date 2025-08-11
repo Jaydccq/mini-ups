@@ -22,8 +22,8 @@
  * 5. 无效或过期令牌被拒绝
  * 6. 角色权限严格控制，防止权限提升
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.security;
 

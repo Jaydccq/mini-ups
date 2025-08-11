@@ -1,30 +1,30 @@
 /**
- * 卡车实体类
+ * Truck Entity
  * 
- * 功能说明：
- * - 管理UPS运输车辆的基本信息和实时状态
- * - 记录卡车位置、载重能力、当前任务等
- * - 与运输订单建立一对多关系（一辆卡车可同时处理多个订单）
+ * Description:
+ * - Manages basic information and real-time status of UPS trucks
+ * - Records truck location, load capacity, current tasks, etc.
+ * - Establishes one-to-many relationships with shipments (a truck can handle multiple orders)
  * 
- * 主要字段：
- * - truckId: 卡车在世界模拟器中的唯一标识
- * - status: 卡车状态(IDLE/BUSY/MAINTENANCE/OUT_OF_SERVICE)
- * - currentX/currentY: 当前位置坐标
- * - capacity: 载重能力
- * - currentLoad: 当前载重
+ * Key Fields:
+ * - truckId: Unique identifier of the truck in the world simulator
+ * - status: Truck status (IDLE/BUSY/MAINTENANCE/OUT_OF_SERVICE)
+ * - currentX/currentY: Current location coordinates
+ * - capacity: Load capacity
+ * - currentLoad: Current load
  * 
- * 数据库设计：
- * - 表名: trucks
- * - 索引: truck_id、status（用于快速查找可用卡车）
- * - 外键关联: shipments（当前承载的运输任务）
+ * Database Design:
+ * - Table: trucks
+ * - Indexes: truck_id, status (for fast lookup of available trucks)
+ * - Foreign key relations: shipments (currently assigned transport tasks)
  * 
- * 业务逻辑：
- * - 卡车调度算法根据距离和载重分配任务
- * - 实时位置更新用于追踪和路径优化
- * - 支持多包裹配送路径规划
+ * Business Logic:
+ * - Truck scheduling algorithm assigns tasks based on distance and load
+ * - Real-time location updates for tracking and route optimization
+ * - Supports multi-package delivery route planning
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.entity;
 
@@ -63,8 +63,10 @@ public class Truck extends BaseEntity {
     @Column(name = "capacity", nullable = false)
     private Integer capacity = 100;
     
-    @Column(name = "driver_id")
-    private Long driverId;
+    // Bidirectional one-to-one relationship with Driver
+    @OneToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id", referencedColumnName = "id")
+    private Driver driver;
     
     @Column(name = "world_id")
     private Long worldId;
@@ -131,12 +133,12 @@ public class Truck extends BaseEntity {
         this.capacity = capacity;
     }
     
-    public Long getDriverId() {
-        return driverId;
+    public Driver getDriver() {
+        return driver;
     }
     
-    public void setDriverId(Long driverId) {
-        this.driverId = driverId;
+    public void setDriver(Driver driver) {
+        this.driver = driver;
     }
     
     public Long getWorldId() {
@@ -188,5 +190,27 @@ public class Truck extends BaseEntity {
     public void updateLocation(Integer x, Integer y) {
         this.currentX = x;
         this.currentY = y;
+    }
+    
+    public boolean hasDriver() {
+        return driver != null;
+    }
+    
+    public void assignDriver(Driver driver) {
+        if (driver != null && driver.isAvailableForAssignment()) {
+            this.driver = driver;
+            driver.assignToTruck(this);
+        }
+    }
+    
+    public void unassignDriver() {
+        if (this.driver != null) {
+            this.driver.unassignFromTruck();
+            this.driver = null;
+        }
+    }
+    
+    public String getDriverName() {
+        return driver != null ? driver.getName() : null;
     }
 }

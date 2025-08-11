@@ -19,8 +19,8 @@
  * 4. Return standardized response
  * 5. Log processing results
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

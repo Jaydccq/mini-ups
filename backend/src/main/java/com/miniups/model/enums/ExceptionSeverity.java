@@ -1,45 +1,45 @@
 /**
  * Exception Severity Enum
  * 
- * 异常严重等级枚举，用于分类异常的严重程度
+ * Enumeration for categorizing the severity of exceptions
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.enums;
 
 public enum ExceptionSeverity {
     
     /**
-     * 低级 - 用户输入错误、验证失败等
+     * Low - User input errors, validation failures, etc.
      */
-    LOW("低级", "用户错误或轻微问题"),
+    LOW("Low", "User error or minor issue"),
     
     /**
-     * 中级 - 业务逻辑问题、权限问题等
+     * Medium - Business logic issues, authorization problems, etc.
      */
-    MEDIUM("中级", "业务逻辑问题"),
+    MEDIUM("Medium", "Business logic issue"),
     
     /**
-     * 高级 - 系统错误、外部服务故障、数据库问题等
+     * High - System errors, external service failures, database issues, etc.
      */
-    HIGH("高级", "系统或基础设施问题"),
+    HIGH("High", "System or infrastructure issue"),
     
     /**
-     * 严重 - 影响整个系统运行的关键错误
+     * Critical - Critical errors affecting the entire system
      */
-    CRITICAL("严重", "系统关键故障");
+    CRITICAL("Critical", "Critical system failure");
     
-    private final String chineseName;
+    private final String displayName;
     private final String description;
     
-    ExceptionSeverity(String chineseName, String description) {
-        this.chineseName = chineseName;
+    ExceptionSeverity(String displayName, String description) {
+        this.displayName = displayName;
         this.description = description;
     }
     
-    public String getChineseName() {
-        return chineseName;
+    public String getDisplayName() {
+        return displayName;
     }
     
     public String getDescription() {

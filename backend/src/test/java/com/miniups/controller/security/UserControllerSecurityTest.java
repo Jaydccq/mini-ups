@@ -13,8 +13,8 @@
  * - 数据隔离验证
  * - 角色权限边界测试
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller.security;
 

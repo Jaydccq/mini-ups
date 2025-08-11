@@ -88,8 +88,8 @@
  * - Monitor Redis memory usage and implement eviction policies
  * - Use pipeline operations for bulk data operations
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.config;

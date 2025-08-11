@@ -1,16 +1,16 @@
 /**
  * Resource Not Found Exception
  * 
- * 资源未找到异常，用于处理各类资源查找失败的情况
+ * Resource not found exception, used to handle cases where various resources cannot be found
  * 
  * Common scenarios:
- * - 订单未找到
- * - 卡车未找到
- * - 包裹未找到
- * - 仓库未找到
+ * - Shipment not found
+ * - Truck not found
+ * - Package not found
+ * - Warehouse not found
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 
@@ -26,7 +26,7 @@ public class ResourceNotFoundException extends BaseBusinessException {
         this(resourceType, String.valueOf(id));
     }
     
-    // 便利方法用于常见资源类型
+    // Convenience methods for common resource types
     public static ResourceNotFoundException shipment(Long shipmentId) {
         return new ResourceNotFoundException("Shipment", shipmentId);
     }

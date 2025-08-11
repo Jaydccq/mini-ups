@@ -13,8 +13,8 @@
  * - 卡车分配和释放权限
  * - 系统级操作权限验证
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller.security;
 

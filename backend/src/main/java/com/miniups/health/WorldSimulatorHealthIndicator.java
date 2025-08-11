@@ -12,7 +12,7 @@
  * - Built-in support for detailed health information
  * - Integration with Spring Boot Admin and other monitoring solutions
  * 
- * @author Mini-UPS Team
+ *
  * @version 2.0.0
  */
 package com.miniups.health;

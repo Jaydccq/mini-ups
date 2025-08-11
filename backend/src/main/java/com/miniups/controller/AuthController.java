@@ -20,8 +20,8 @@
  * - JWT token security management
  * - CORS cross-origin support
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

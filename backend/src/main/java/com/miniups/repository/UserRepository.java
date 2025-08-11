@@ -1,36 +1,36 @@
 /**
- * 用户数据访问接口
+ * User Data Access Interface
  * 
- * 功能说明：
- * - 继承JpaRepository提供标准CRUD操作（增删改查）
- * - 定义用户相关的自定义查询方法
- * - 支持按用户名、邮箱查找和验证重复性
+ * Function Description:
+ * - Inherits JpaRepository to provide standard CRUD operations (Create, Read, Update, Delete)
+ * - Defines user-related custom query methods
+ * - Supports lookup and duplicate verification by username and email
  * 
- * 自定义查询方法：
- * - findByUsername: 根据用户名查找用户（登录验证）
- * - findByEmail: 根据邮箱查找用户（登录验证、重置密码）
- * - existsByUsername: 检查用户名是否已存在（注册验证）
- * - existsByEmail: 检查邮箱是否已存在（注册验证）
+ * Custom Query Methods:
+ * - findByUsername: Find user by username (login verification)
+ * - findByEmail: Find user by email (login verification, password reset)
+ * - existsByUsername: Check if username already exists (registration verification)
+ * - existsByEmail: Check if email already exists (registration verification)
  * 
- * 继承的标准方法：
- * - save(): 保存或更新用户
- * - findById(): 根据ID查找用户
- * - findAll(): 查询所有用户
- * - deleteById(): 根据ID删除用户
- * - count(): 统计用户数量
+ * Inherited Standard Methods:
+ * - save(): Save or update user
+ * - findById(): Find user by ID
+ * - findAll(): Query all users
+ * - deleteById(): Delete user by ID
+ * - count(): Count number of users
  * 
- * 性能优化：
- * - 基于方法名的查询会自动利用数据库索引
- * - 返回Optional避免null指针异常
- * - exists方法比find方法性能更好（用于验证存在性）
+ * Performance Optimization:
+ * - Query based on method names will automatically utilize database indexes
+ * - Returns Optional to avoid null pointer exceptions
+ * - exists methods have better performance than find methods (for existence verification)
  * 
- * 使用场景：
- * - 用户注册和登录验证
- * - 用户信息管理
- * - 权限验证和用户查询
+ * Usage Scenarios:
+ * - User registration and login verification
+ * - User information management
+ * - Permission verification and user queries
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.repository;
 

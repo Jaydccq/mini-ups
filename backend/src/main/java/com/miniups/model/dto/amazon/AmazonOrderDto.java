@@ -1,26 +1,26 @@
 /**
  * Amazon Order Data Transfer Object
  * 
- * 功能说明：
- * - 处理Amazon系统与UPS系统之间的订单数据传输
- * - 标准化Amazon订单信息的格式和验证
- * - 支持Amazon API集成和webhook通信
+ * Feature description:
+ * - Handles order data transfer between Amazon and UPS systems
+ * - Standardizes Amazon order information format and validation
+ * - Supports Amazon API integration and webhook communication
  * 
- * 数据字段：
- * - orderId: Amazon订单ID
- * - customerId: 客户ID
- * - items: 订单商品列表
- * - shippingAddress: 配送地址信息
- * - dimensions: 包裹尺寸和重量
+ * Data fields:
+ * - orderId: Amazon order ID
+ * - customerId: Customer ID
+ * - items: Order item list
+ * - shippingAddress: Shipping address information
+ * - dimensions: Package dimensions and weight
  * 
- * 验证规则：
- * - 必填字段验证
- * - 地址格式验证
- * - 重量和尺寸范围检查
- * - 商品数量合理性验证
+ * Validation rules:
+ * - Required field validation
+ * - Address format validation
+ * - Weight and dimension range checks
+ * - Item quantity reasonableness validation
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.amazon;
 

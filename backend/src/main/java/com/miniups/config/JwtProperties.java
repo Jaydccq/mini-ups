@@ -5,9 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * JWT 配置属性
+ * JWT Configuration Properties
  * 
- * 定义JWT令牌相关的配置参数
+ * Defines configuration parameters related to JWT tokens
  */
 @Data
 @Component
@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component;
 public class JwtProperties {
 
     /**
-     * JWT密钥
+     * JWT secret key
      */
     private String secret;
 
     /**
-     * 令牌过期时间（毫秒）
+     * Token expiration time (milliseconds)
      */
-    private long expiration = 86400000L; // 24小时
+    private long expiration = 86400000L; // 24 hours
 }
