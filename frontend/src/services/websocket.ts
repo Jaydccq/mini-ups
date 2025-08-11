@@ -44,11 +44,24 @@ export class WebSocketService {
   private onConnectionStateChange?: (connected: boolean) => void;
 
   constructor(config: WebSocketConfig) {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {};
+    
+    // Only add Authorization header if we have a valid token
+    if (token && token.trim()) {
+      const trimmedToken = token.trim();
+      // Validate JWT format (should have exactly 2 dots)
+      const dotCount = (trimmedToken.match(/\./g) || []).length;
+      if (dotCount === 2) {
+        headers.Authorization = `Bearer ${trimmedToken}`;
+      } else {
+        console.warn('Invalid JWT token format in localStorage, skipping Authorization header');
+      }
+    }
+
     this.client = new Client({
       brokerURL: config.url,
-      connectHeaders: {
-        Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-      },
+      connectHeaders: headers,
       heartbeatIncoming: config.heartbeatIncoming || 10000,
       heartbeatOutgoing: config.heartbeatOutgoing || 10000,
       reconnectDelay: config.reconnectDelay || 5000,

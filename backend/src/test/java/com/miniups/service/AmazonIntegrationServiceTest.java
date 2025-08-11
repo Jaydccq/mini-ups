@@ -2,6 +2,7 @@ package com.miniups.service;
 
 import com.miniups.model.dto.AmazonMessageDto;
 import com.miniups.model.dto.UpsResponseDto;
+import com.miniups.model.entity.CommunicationLog;
 import com.miniups.model.entity.Shipment;
 import com.miniups.model.entity.Truck;
 import com.miniups.model.entity.User;
@@ -34,6 +35,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 /**
  * Integration tests for AmazonIntegrationService.
@@ -59,6 +61,14 @@ class AmazonIntegrationServiceTest {
     @Mock
     private WorldSimulatorService worldSimulatorService;
 
+    @Mock
+    private AsyncAuditService asyncAuditService;
+
+    @Mock
+    private CommunicationLogService communicationLogService;
+
+    @Mock
+    private EventPublisherService eventPublisher;
 
     @InjectMocks
     private AmazonIntegrationService amazonIntegrationService;
@@ -82,6 +92,20 @@ class AmazonIntegrationServiceTest {
         ReflectionTestUtils.setField(amazonIntegrationService, "amazonBaseUrl", dynamicAmazonBaseUrl);
         ReflectionTestUtils.setField(amazonIntegrationService, "restTemplate", restTemplate);
 
+        // Setup default WireMock stubs for all webhook endpoints
+        stubFor(post(anyUrl())
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"success\": true}")));
+
+        // Setup mock behaviors for communication services (lenient to avoid UnnecessaryStubbing error)
+        lenient().when(communicationLogService.logOutgoingMessage(any(), any(), any()))
+                .thenReturn(new CommunicationLog()); // Return a dummy log
+        lenient().doNothing().when(communicationLogService).updateLogWithResponse(any(), any(), anyInt(), anyLong());
+        lenient().doNothing().when(asyncAuditService).auditFailure(any(), any(), any(), anyLong(), any());
+        lenient().doNothing().when(asyncAuditService).auditSuccess(any(), any(), any(), anyLong());
+
         // Create test entities
         testUser = createTestUser();
         testShipment = createTestShipment();
@@ -102,7 +126,7 @@ class AmazonIntegrationServiceTest {
         when(trackingService.generateTrackingNumber()).thenReturn("UPS123456789");
         when(shipmentRepository.findByShipmentId("AMZ123456")).thenReturn(Optional.empty());
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
-        when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class))).thenReturn(testTruck);
+        when(truckManagementService.assignAnyAvailableTruck()).thenReturn(testTruck);
         when(worldSimulatorService.isConnected()).thenReturn(false); // Simplify by assuming not connected
 
         // When
@@ -114,7 +138,7 @@ class AmazonIntegrationServiceTest {
         verify(userRepository).findByEmail("test@example.com");
         verify(trackingService).generateTrackingNumber();
         verify(shipmentRepository).save(any(Shipment.class));
-        verify(truckManagementService).assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class));
+        verify(truckManagementService).assignAnyAvailableTruck();
     }
 
     @Test
@@ -127,7 +151,7 @@ class AmazonIntegrationServiceTest {
         when(trackingService.generateTrackingNumber()).thenReturn("UPS123456789");
         when(shipmentRepository.findByShipmentId("AMZ123456")).thenReturn(Optional.empty());
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
-        when(truckManagementService.assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class))).thenReturn(testTruck);
+        when(truckManagementService.assignAnyAvailableTruck()).thenReturn(testTruck);
         when(worldSimulatorService.isConnected()).thenReturn(false); // Simplify by assuming not connected
 
         // When
@@ -140,7 +164,7 @@ class AmazonIntegrationServiceTest {
         verify(userRepository).save(any(User.class));
         verify(trackingService).generateTrackingNumber();
         verify(shipmentRepository).save(any(Shipment.class));
-        verify(truckManagementService).assignOptimalTruck(any(Integer.class), any(Integer.class), any(Integer.class));
+        verify(truckManagementService).assignAnyAvailableTruck();
     }
 
     @Test

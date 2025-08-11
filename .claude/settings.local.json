@@ -221,7 +221,11 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -DskipTests=true -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile -q -f backend/pom.xml)",
       "Bash(docker stop:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"!PerformanceBenchmarkTest,!ConcurrentTrackingNumberGenerationTest,!ConcurrentTruckAssignmentTest,!ConcurrentUserRegistrationTest,!ConcurrentOrderProcessingTest\" --fail-fast -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=TrackingControllerIntegrationTest -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AdminServiceTest -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AmazonIntegrationServiceTest -Dspring.profiles.active=test -q)"
     ],
     "deny": []
   }

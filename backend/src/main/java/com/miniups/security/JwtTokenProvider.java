@@ -193,6 +193,14 @@ public class JwtTokenProvider {
             return false;
         }
         
+        // Check if the token has the correct JWT format (should contain exactly 2 dots)
+        String trimmedToken = authToken.trim();
+        long dotCount = trimmedToken.chars().filter(ch -> ch == '.').count();
+        if (dotCount != 2) {
+            logger.warn("JWT token has invalid format: expected 2 periods, found {}", dotCount);
+            return false;
+        }
+        
         try {
             Jwts.parser()
                 .verifyWith(getSigningKey())

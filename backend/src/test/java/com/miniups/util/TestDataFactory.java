@@ -83,12 +83,14 @@ public class TestDataFactory {
 
     /**
      * Creates a test truck with specified parameters.
-     * Note: ID is not set here to avoid JPA persistence issues.
+     * Note: Primary key ID is not set here to avoid JPA persistence issues.
      * Use the returned entity from repository.save() to get the generated ID.
      */
     public static Truck createTestTruck(Long id, String licensePlate, TruckStatus status) {
         Truck truck = new Truck();
-        // Do not set ID manually - let JPA handle ID generation
+        // Do not set primary key ID manually - let JPA handle ID generation
+        // But set the truckId field which is the business identifier
+        truck.setTruckId(id != null ? id.intValue() : 1);
         truck.setLicensePlate(licensePlate);
         truck.setStatus(status);
         truck.setCurrentX(10);
@@ -181,7 +183,8 @@ public class TestDataFactory {
 
     /**
      * Creates test truck at specific location for distance calculations.
-     * Note: ID parameter is kept for compatibility but not used internally.
+     * Note: Primary key ID parameter is kept for compatibility but not used internally.
+     * The truckId field is properly set for business logic.
      */
     public static Truck createTruckAtLocation(Long id, String licensePlate, 
                                             double lat, double lon, TruckStatus status) {
