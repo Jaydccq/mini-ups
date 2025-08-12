@@ -1,16 +1,16 @@
 /**
  * Base Business Exception
  * 
- * 业务异常基类，所有业务相关异常都应继承此类
+ * Base class for business exceptions, all business-related exceptions should inherit from this class
  * 
  * Features:
- * - 提供统一的错误代码和消息格式
- * - 支持异常链追踪
- * - 便于异常分类处理
- * - 提供异常严重等级分类
+ * - Provides unified error codes and message format
+ * - Supports exception chain tracing
+ * - Facilitates exception categorization and handling
+ * - Provides exception severity level classification
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 

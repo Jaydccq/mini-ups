@@ -1,16 +1,16 @@
 /**
  * Duplicate Resource Exception
  * 
- * 资源重复异常，用于处理创建重复资源的错误
+ * Resource duplicate exception used to handle errors when creating duplicate resources
  * 
  * Common scenarios:
- * - 用户邮箱重复
- * - 用户名重复
- * - 订单号重复
- * - 追踪号重复
+ * - User email duplication
+ * - Username duplication
+ * - Order number duplication
+ * - Tracking number duplication
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 
@@ -33,7 +33,7 @@ public class DuplicateResourceException extends BaseBusinessException {
         this.identifier = identifier;
     }
     
-    // 便利方法用于常见重复资源异常
+    // Convenience methods for common duplicate resource exceptions
     public static DuplicateResourceException email(String email) {
         return new DuplicateResourceException("User", email, String.format("Email address %s is already registered", email));
     }

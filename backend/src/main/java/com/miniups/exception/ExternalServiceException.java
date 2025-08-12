@@ -1,16 +1,16 @@
 /**
  * External Service Exception
  * 
- * 外部服务调用异常，用于处理与外部API、服务集成相关的错误
+ * External service invocation exception used to handle errors related to external API and service integration
  * 
  * Common scenarios:
- * - Amazon API调用失败
- * - World Simulator连接异常
- * - 第三方支付服务异常
- * - 网络连接超时
+ * - Amazon API call failure
+ * - World Simulator connection exception
+ * - Third-party payment service exception
+ * - Network connection timeout
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 
@@ -44,7 +44,7 @@ public class ExternalServiceException extends BaseBusinessException {
         return serviceName;
     }
     
-    // 便利方法用于常见的外部服务异常
+    // Convenience methods for common external service exceptions
     public static ExternalServiceException amazonService(String message) {
         return new ExternalServiceException("Amazon", message);
     }

@@ -8,6 +8,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -31,7 +32,7 @@ import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainer
  */
 @Configuration
 @ConditionalOnClass(ConnectionFactory.class)
-@Profile("!test")
+@Profile("!test & !rabbitmq-disabled")
 public class RabbitMQConfig {
 
     // Exchange Names

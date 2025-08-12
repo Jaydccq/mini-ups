@@ -68,8 +68,8 @@
  * - Logging helps detect potential token abuse or attacks
  * - Signature validation prevents token manipulation
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.security;
@@ -190,6 +190,14 @@ public class JwtTokenProvider {
     public boolean validateToken(String authToken) {
         if (authToken == null || authToken.trim().isEmpty()) {
             logger.warn("JWT token is null or empty");
+            return false;
+        }
+        
+        // Check if the token has the correct JWT format (should contain exactly 2 dots)
+        String trimmedToken = authToken.trim();
+        long dotCount = trimmedToken.chars().filter(ch -> ch == '.').count();
+        if (dotCount != 2) {
+            logger.warn("JWT token has invalid format: expected 2 periods, found {}", dotCount);
             return false;
         }
         

@@ -14,8 +14,8 @@
  * - phone: Phone number
  * - address: Address
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.common;
 

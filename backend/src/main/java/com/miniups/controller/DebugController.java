@@ -12,8 +12,8 @@
  * - GET /api/debug/shipment/{id}/logs - Get logs for specific shipment
  * - GET /api/debug/errors - Get recent errors
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

@@ -5,9 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 速率限制配置属性
+ * Rate Limiting Configuration Properties
  * 
- * 定义API请求速率限制的配置参数
+ * Defines configuration parameters for API request rate limiting
  */
 @Data
 @Component
@@ -15,24 +15,24 @@ import org.springframework.stereotype.Component;
 public class RateLimitingProperties {
 
     /**
-     * 是否启用速率限制
+     * Whether rate limiting is enabled
      */
     private boolean enabled = true;
 
     /**
-     * 货物创建速率限制
+     * Shipment creation rate limiting
      */
     private ShipmentCreation shipmentCreation = new ShipmentCreation();
 
     /**
-     * 通用API速率限制
+     * General API rate limiting
      */
     private GeneralApi generalApi = new GeneralApi();
 
     @Data
     public static class ShipmentCreation {
         /**
-         * 每分钟请求数限制
+         * Requests per minute limit
          */
         private int requestsPerMinute = 10;
     }
@@ -40,7 +40,7 @@ public class RateLimitingProperties {
     @Data
     public static class GeneralApi {
         /**
-         * 每分钟请求数限制
+         * Requests per minute limit
          */
         private int requestsPerMinute = 60;
     }

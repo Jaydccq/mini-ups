@@ -21,8 +21,8 @@
  * - Sensitive operations are logged for audit purposes
  * - Data aggregation optimized for dashboard performance
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

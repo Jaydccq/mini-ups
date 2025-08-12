@@ -19,13 +19,13 @@ const ShipmentDetailPage = lazy(() => import('@/pages/ShipmentDetailPage').then(
 const CreateShipmentPage = lazy(() => import('@/pages/CreateShipmentPage').then(module => ({ default: module.CreateShipmentPage })))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(module => ({ default: module.ProfilePage })))
 
-// Lazy load admin pages
-const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then(module => ({ default: module.default })))
-const UserManagementPage = lazy(() => import('@/pages/admin/UserManagementPage').then(module => ({ default: module.UserManagementPage })))
-const ShipmentManagementPage = lazy(() => import('@/pages/admin/ShipmentManagementPage').then(module => ({ default: module.ShipmentManagementPage })))
-const FleetManagementPage = lazy(() => import('@/pages/admin/FleetManagementPage').then(module => ({ default: module.default })))
-const AnalyticsPage = lazy(() => import('@/pages/admin/AnalyticsPage').then(module => ({ default: module.AnalyticsPage })))
-const WorldSimulatorDebugPage = lazy(() => import('@/pages/admin/WorldSimulatorDebugPage').then(module => ({ default: module.WorldSimulatorDebugPage })))
+// Lazy load admin pages from feature-based structure
+const AdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage').then(module => ({ default: module.default })))
+const UserManagementPage = lazy(() => import('@/features/admin/pages/UserManagementPage').then(module => ({ default: module.UserManagementPage })))
+const ShipmentManagementPage = lazy(() => import('@/features/admin/pages/ShipmentManagementPage').then(module => ({ default: module.ShipmentManagementPage })))
+const FleetManagementPage = lazy(() => import('@/features/admin/pages/FleetManagementPage').then(module => ({ default: module.default })))
+const AnalyticsPage = lazy(() => import('@/features/admin/pages/AnalyticsPage').then(module => ({ default: module.AnalyticsPage })))
+const WorldSimulatorDebugPage = lazy(() => import('@/features/admin/pages/WorldSimulatorDebugPage').then(module => ({ default: module.WorldSimulatorDebugPage })))
 
 // Loading component
 const PageLoader = () => (

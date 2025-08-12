@@ -22,8 +22,8 @@
  * - Token refresh API response
  * - Frontend authentication state management
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.auth;
 

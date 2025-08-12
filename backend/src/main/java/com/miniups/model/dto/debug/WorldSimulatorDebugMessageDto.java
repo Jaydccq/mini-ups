@@ -20,8 +20,8 @@
  * - Displayed in real-time debugging interface for troubleshooting
  * - Filtered and searched by message type, direction, and content
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.debug;
 

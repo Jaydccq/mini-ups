@@ -1,32 +1,32 @@
 /**
- * 运输包裹实体类
+ * Shipment Package Entity
  * 
- * 功能说明：
- * - 记录运输订单中具体包裹的详细信息
- * - 每个包裹有独立的配送地址和属性
- * - 支持包裹级别的状态追踪和管理
+ * Description:
+ * - Records detailed information about individual packages in a shipment
+ * - Each package has its own delivery address and attributes
+ * - Supports package-level status tracking and management
  * 
- * 主要字段：
- * - packageId: Amazon系统的包裹ID
- * - destinationX/Y: 配送目标坐标
- * - destinationAddress: 详细配送地址
- * - description: 包裹描述
- * - weight: 包裹重量
+ * Key Fields:
+ * - packageId: Package ID from the Amazon system
+ * - destinationX/Y: Delivery target coordinates
+ * - destinationAddress: Detailed delivery address
+ * - description: Package description
+ * - weight: Package weight
  * 
- * 数据库设计：
- * - 表名: packages
- * - 索引: package_id、shipment_id
- * - 外键: shipment_id（所属运输订单）
+ * Database Design:
+ * - Table: packages
+ * - Indexes: package_id, shipment_id
+ * - Foreign key: shipment_id (owning shipment)
  * 
- * 业务关系：
- * - 多个包裹可以属于同一个运输订单
- * - 每个包裹有独立的配送地址（支持多点配送）
- * - 包裹状态跟随订单状态变化
+ * Business Relations:
+ * - Multiple packages can belong to the same shipment
+ * - Each package may have an independent delivery address (supports multi-drop delivery)
+ * - Package status follows the shipment status changes
  * 
- * 注意：重命名为 ShipmentPackage 以避免与 java.lang.Package 冲突
+ * Note: Renamed to ShipmentPackage to avoid conflict with java.lang.Package
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 
 package com.miniups.model.entity;

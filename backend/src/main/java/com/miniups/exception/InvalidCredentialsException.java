@@ -3,8 +3,8 @@
  * 
  * Thrown when user provides invalid login credentials
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 

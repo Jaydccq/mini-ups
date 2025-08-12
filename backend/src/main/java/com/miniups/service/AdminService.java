@@ -21,8 +21,8 @@
  * - DTO pattern for data transfer
  * - Dependency injection for loose coupling
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 
@@ -258,11 +258,57 @@ public class AdminService {
                 .map(truck -> {
                     Map<String, Object> truckData = new HashMap<>();
                     truckData.put("id", truck.getId());
-                    truckData.put("plateNumber", truck.getTruckId()); // Corrected from getPlateNumber()
-                    truckData.put("capacity", truck.getCapacity());
-                    truckData.put("status", truck.getStatus());
-                    truckData.put("currentLocation", "X: " + truck.getCurrentX() + ", Y: " + truck.getCurrentY()); // Corrected from getCurrentLocation()
-                    truckData.put("lastUpdated", truck.getUpdatedAt());
+                    truckData.put("plateNumber", truck.getTruckId().toString());
+                    
+                    // Convert TruckStatus enum to expected frontend format
+                    String status;
+                    switch (truck.getStatus()) {
+                        case IDLE:
+                            status = "AVAILABLE";
+                            break;
+                        case TRAVELING:
+                            status = "IN_TRANSIT";
+                            break;
+                        case DELIVERING:
+                            status = "IN_TRANSIT";
+                            break;
+                        default:
+                            status = "OFFLINE";
+                            break;
+                    }
+                    truckData.put("status", status);
+                    
+                    // Create location object with x, y coordinates
+                    Map<String, Integer> location = new HashMap<>();
+                    location.put("x", truck.getCurrentX());
+                    location.put("y", truck.getCurrentY());
+                    truckData.put("location", location);
+                    
+                    // Add driver information if available
+                    if (truck.getDriver() != null) {
+                        Map<String, Object> driver = new HashMap<>();
+                        driver.put("id", truck.getDriver().getId());
+                        driver.put("name", truck.getDriver().getName());
+                        truckData.put("driver", driver);
+                    }
+                    
+                    // Add current shipment info if truck is in transit
+                    if (truck.getStatus() == TruckStatus.TRAVELING && !truck.getShipments().isEmpty()) {
+                        var currentShipment = truck.getShipments().get(0); // Get the first shipment
+                        Map<String, Object> shipmentInfo = new HashMap<>();
+                        shipmentInfo.put("trackingNumber", currentShipment.getUpsTrackingId());
+                        
+                        // Add destination coordinates (using random destination for now)
+                        Map<String, Integer> destination = new HashMap<>();
+                        destination.put("x", truck.getCurrentX() + 10 + (int)(Math.random() * 30));
+                        destination.put("y", truck.getCurrentY() + 10 + (int)(Math.random() * 30));
+                        shipmentInfo.put("destination", destination);
+                        
+                        truckData.put("currentShipment", shipmentInfo);
+                    }
+                    
+                    truckData.put("lastUpdate", truck.getUpdatedAt() != null ? truck.getUpdatedAt().toString() : LocalDateTime.now().toString());
+                    
                     return truckData;
                 })
                 .collect(Collectors.toList());

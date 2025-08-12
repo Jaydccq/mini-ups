@@ -5,9 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * Amazon 集成服务配置属性
+ * Amazon Integration Service Configuration Properties
  * 
- * 定义与Amazon服务集成的配置参数
+ * Defines configuration parameters for integration with Amazon services
  */
 @Data
 @Component
@@ -15,46 +15,46 @@ import org.springframework.stereotype.Component;
 public class AmazonIntegrationProperties {
 
     /**
-     * 基础URL
+     * Base URL
      */
     private String baseUrl = "http://localhost:8080";
 
     /**
-     * Webhook配置
+     * Webhook configuration
      */
     private Webhook webhook = new Webhook();
 
     /**
-     * API配置
+     * API configuration
      */
     private Api api = new Api();
 
     /**
-     * Webhook端点配置
+     * Webhook endpoints configuration
      */
     private WebhookEndpoints webhookEndpoints = new WebhookEndpoints();
 
     @Data
     public static class Webhook {
         /**
-         * Webhook密钥
+         * Webhook secret
          */
         private String secret = "default-webhook-secret-key";
 
         /**
-         * 签名头
+         * Signature header
          */
         private String signatureHeader = "X-Amazon-Signature";
 
         /**
-         * 认证配置
+         * Authentication configuration
          */
         private Authentication authentication = new Authentication();
 
         @Data
         public static class Authentication {
             /**
-             * 是否启用认证
+             * Whether authentication is enabled
              */
             private boolean enabled = true;
         }
@@ -68,12 +68,12 @@ public class AmazonIntegrationProperties {
         private String url = "http://localhost:8080";
 
         /**
-         * 超时时间（毫秒）
+         * Timeout (milliseconds)
          */
         private int timeout = 5000;
 
         /**
-         * 是否启用API集成
+         * Whether API integration is enabled
          */
         private boolean enabled = true;
     }
@@ -81,22 +81,22 @@ public class AmazonIntegrationProperties {
     @Data
     public static class WebhookEndpoints {
         /**
-         * 卡车到达端点
+         * Truck arrived endpoint
          */
         private String truckArrived = "/api/webhooks/truck-arrived";
 
         /**
-         * 卡车派遣端点
+         * Truck dispatched endpoint
          */
         private String truckDispatched = "/api/webhooks/truck-dispatched";
 
         /**
-         * 货物送达端点
+         * Shipment delivered endpoint
          */
         private String shipmentDelivered = "/api/webhooks/shipment-delivered";
 
         /**
-         * 货物详情请求端点
+         * Shipment detail request endpoint
          */
         private String shipmentDetailRequest = "/api/webhooks/shipment-detail-request";
     }

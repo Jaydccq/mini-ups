@@ -1,10 +1,10 @@
 /**
  * System Exception
  * 
- * 系统级异常，用于处理系统内部错误
+ * System-level exception used to handle internal system errors
  * 
- * @author Mini-UPS Team  
- * @version 1.0.0
+ *  
+ 
  */
 package com.miniups.exception;
 

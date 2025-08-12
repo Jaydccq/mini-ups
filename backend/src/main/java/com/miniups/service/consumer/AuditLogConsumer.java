@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,8 @@ import java.time.Instant;
  * @since 2024
  */
 @Service
+@ConditionalOnClass(RabbitListener.class)
+@Profile("!rabbitmq-disabled")
 public class AuditLogConsumer {
     private static final Logger log = LoggerFactory.getLogger(AuditLogConsumer.class);
 

@@ -25,8 +25,8 @@
  * 4. Event listener receives and processes event
  * 5. Message is broadcast to WebSocket subscribers
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.debug;
 

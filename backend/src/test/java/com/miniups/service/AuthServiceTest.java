@@ -115,7 +115,7 @@ class AuthServiceTest {
         // When & Then
         assertThatThrownBy(() -> authService.register(validRegisterRequest))
             .isInstanceOf(UserAlreadyExistsException.class)
-            .hasMessageContaining("用户名");
+            .hasMessageContaining("username");
 
         verify(userRepository).existsByUsername(validRegisterRequest.getUsername());
         verify(userRepository, never()).existsByEmail(anyString());
@@ -132,7 +132,7 @@ class AuthServiceTest {
         // When & Then
         assertThatThrownBy(() -> authService.register(validRegisterRequest))
             .isInstanceOf(UserAlreadyExistsException.class)
-            .hasMessageContaining("邮箱");
+            .hasMessageContaining("email");
 
         verify(userRepository).existsByUsername(validRegisterRequest.getUsername());
         verify(userRepository).existsByEmail(validRegisterRequest.getEmail());
@@ -200,7 +200,7 @@ class AuthServiceTest {
         // 禁用用户会直接触发InvalidCredentialsException
         assertThatThrownBy(() -> authService.login(validLoginRequest))
             .isInstanceOf(InvalidCredentialsException.class)
-            .hasMessageContaining("账户已被禁用，请联系管理员");
+            .hasMessageContaining("Account is disabled");
 
         verify(userRepository).findByUsername(testUser.getUsername());
         verify(jwtTokenProvider, never()).generateToken(anyString());
@@ -262,7 +262,7 @@ class AuthServiceTest {
         // When & Then
         assertThatThrownBy(() -> authService.changePassword(username, passwordChangeDto))
             .isInstanceOf(InvalidCredentialsException.class)
-            .hasMessageContaining("当前密码错误");
+            .hasMessageContaining("Current password is incorrect");
 
         verify(userRepository).findByUsername(username);
         verify(passwordEncoder).matches(wrongCurrentPassword, encodedCurrentPassword);
@@ -293,7 +293,7 @@ class AuthServiceTest {
         // When & Then
         assertThatThrownBy(() -> authService.changePassword(username, passwordChangeDto))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("新密码不能与当前密码相同");
+            .hasMessageContaining("New password must not be the same as current password");
 
         verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));

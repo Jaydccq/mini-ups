@@ -3,8 +3,8 @@
  * 
  * A customizable select dropdown component built with Radix UI
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"

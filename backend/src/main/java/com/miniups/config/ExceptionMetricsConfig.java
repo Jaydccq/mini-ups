@@ -1,22 +1,22 @@
 /**
  * Exception Metrics Configuration
  * 
- * 异常处理监控配置，提供异常统计和监控功能
+ * Exception handling monitoring configuration, providing exception statistics and monitoring features
  * 
  * Features:
- * - 异常计数和分类统计
- * - 异常处理性能监控
- * - 异常发生趋势分析
- * - 健康检查集成
+ * - Exception counting and classification statistics
+ * - Exception handling performance monitoring
+ * - Exception occurrence trend analysis
+ * - Health check integration
  * 
  * Metrics:
- * - exception.count - 异常总数统计
- * - exception.type - 按异常类型分类
- * - exception.endpoint - 按API端点分类
- * - exception.processing.time - 异常处理耗时
+ * - exception.count - Total exception statistics
+ * - exception.type - Classification by exception type
+ * - exception.endpoint - Classification by API endpoint
+ * - exception.processing.time - Exception processing time
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+
  */
 package com.miniups.config;
 

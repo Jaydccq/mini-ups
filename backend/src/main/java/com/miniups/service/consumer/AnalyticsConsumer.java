@@ -28,8 +28,8 @@
  * - Performance monitoring
  * - Business intelligence generation
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service.consumer;
 
@@ -41,6 +41,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -52,6 +54,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@ConditionalOnClass(RabbitListener.class)
+@Profile("!rabbitmq-disabled")
 public class AnalyticsConsumer {
     
     private static final Logger logger = LoggerFactory.getLogger(AnalyticsConsumer.class);

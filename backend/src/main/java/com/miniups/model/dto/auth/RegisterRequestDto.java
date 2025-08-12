@@ -17,8 +17,8 @@
  * - Supports password confirmation validation (frontend implementation)
  * - All inputs are validated to prevent injection attacks
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.auth;
 

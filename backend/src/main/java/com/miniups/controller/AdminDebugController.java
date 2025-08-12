@@ -26,8 +26,8 @@
  * - POST /api/admin/debug/simulator/clear - Clear message cache
  * - GET /api/admin/debug/simulator/status - Get debug system status
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

@@ -12,8 +12,8 @@
  * - Search by message type and status
  * - Time-based queries for troubleshooting
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.repository;
 

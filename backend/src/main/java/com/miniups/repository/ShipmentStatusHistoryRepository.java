@@ -1,24 +1,24 @@
 /**
  * Shipment Status History Repository
  * 
- * 功能说明：
- * - 管理运输订单状态变更历史记录的数据访问
- * - 提供状态变更时间线查询功能
- * - 支持按时间范围和状态类型筛选
+ * Function Description:
+ * - Manages data access for transport order status change history records
+ * - Provides status change timeline query functionality
+ * - Supports filtering by time range and status type
  * 
- * 查询功能：
- * - 按运输订单查找所有状态历史
- * - 按时间范围查询状态变更
- * - 查找特定状态的变更记录
- * - 统计状态变更频率和模式
+ * Query Functions:
+ * - Find all status history for a transport order
+ * - Query status changes by time range
+ * - Find change records for specific statuses
+ * - Count status change frequency and patterns
  * 
- * 性能优化：
- * - 状态和时间戳字段索引
- * - 分页查询支持
- * - 批量操作优化
+ * Performance Optimization:
+ * - Indexing on status and timestamp fields
+ * - Pagination query support
+ * - Batch operation optimization
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.repository;
 
@@ -40,116 +40,116 @@ import java.util.Optional;
 public interface ShipmentStatusHistoryRepository extends JpaRepository<ShipmentStatusHistory, Long> {
     
     /**
-     * 查找指定运输订单的所有状态历史
+     * Find all status history for the specified transport order
      * 
-     * @param shipment 运输订单
-     * @return 状态历史列表，按时间倒序
+     * @param shipment Transport order
+     * @return List of status history, ordered by time descending
      */
     List<ShipmentStatusHistory> findByShipmentOrderByTimestampDesc(Shipment shipment);
     
     /**
-     * 查找指定运输订单ID的所有状态历史
+     * Find all status history for the specified transport order ID
      * 
-     * @param shipmentId 运输订单ID
-     * @return 状态历史列表，按时间倒序
+     * @param shipmentId Transport order ID
+     * @return List of status history, ordered by time descending
      */
     @Query("SELECT h FROM ShipmentStatusHistory h WHERE h.shipment.id = :shipmentId ORDER BY h.timestamp DESC")
     List<ShipmentStatusHistory> findByShipmentIdOrderByTimestampDesc(@Param("shipmentId") Long shipmentId);
     
     /**
-     * 查找指定运输订单的最新状态记录
+     * Find the latest status record for the specified transport order
      * 
-     * @param shipment 运输订单
-     * @return 最新状态记录
+     * @param shipment Transport order
+     * @return Latest status record
      */
     Optional<ShipmentStatusHistory> findFirstByShipmentOrderByTimestampDesc(Shipment shipment);
     
     /**
-     * 查找指定运输订单在特定时间范围内的状态历史
+     * Find status history for the specified transport order within a specific time range
      * 
-     * @param shipment 运输订单
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 状态历史列表
+     * @param shipment Transport order
+     * @param startTime Start time
+     * @param endTime End time
+     * @return List of status history
      */
     List<ShipmentStatusHistory> findByShipmentAndTimestampBetweenOrderByTimestampDesc(
         Shipment shipment, LocalDateTime startTime, LocalDateTime endTime);
     
     /**
-     * 查找指定运输订单的特定状态记录
+     * Find specific status records for the specified transport order
      * 
-     * @param shipment 运输订单
-     * @param status 运输状态
-     * @return 状态记录列表
+     * @param shipment Transport order
+     * @param status Transport status
+     * @return List of status records
      */
     List<ShipmentStatusHistory> findByShipmentAndStatusOrderByTimestampDesc(
         Shipment shipment, ShipmentStatus status);
     
     /**
-     * 检查运输订单是否经历过特定状态
+     * Check if the transport order has experienced a specific status
      * 
-     * @param shipment 运输订单
-     * @param status 运输状态
-     * @return 是否经历过该状态
+     * @param shipment Transport order
+     * @param status Transport status
+     * @return Whether the status has been experienced
      */
     boolean existsByShipmentAndStatus(Shipment shipment, ShipmentStatus status);
     
     /**
-     * 分页查询所有状态历史
+     * Paginated query for all status history
      * 
-     * @param pageable 分页参数
-     * @return 分页的状态历史记录
+     * @param pageable Pagination parameters
+     * @return Paginated status history records
      */
     Page<ShipmentStatusHistory> findAllByOrderByTimestampDesc(Pageable pageable);
     
     /**
-     * 查找指定时间范围内的所有状态变更
+     * Find all status changes within the specified time range
      * 
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @param pageable 分页参数
-     * @return 分页的状态历史记录
+     * @param startTime Start time
+     * @param endTime End time
+     * @param pageable Pagination parameters
+     * @return Paginated status history records
      */
     Page<ShipmentStatusHistory> findByTimestampBetweenOrderByTimestampDesc(
         LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
     
     /**
-     * 统计指定状态的总数
+     * Count the total number of specified statuses
      * 
-     * @param status 运输状态
-     * @return 状态数量
+     * @param status Transport status
+     * @return Number of statuses
      */
     long countByStatus(ShipmentStatus status);
     
     /**
-     * 统计指定时间范围内的状态变更数量
+     * Count the number of status changes within the specified time range
      * 
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 状态变更数量
+     * @param startTime Start time
+     * @param endTime End time
+     * @return Number of status changes
      */
     long countByTimestampBetween(LocalDateTime startTime, LocalDateTime endTime);
     
     /**
-     * 删除指定运输订单的所有状态历史
+     * Delete all status history for the specified shipment
      * 
-     * @param shipment 运输订单
+     * @param shipment Shipment
      */
     void deleteByShipment(Shipment shipment);
     
     /**
-     * 删除指定时间之前的状态历史记录（用于数据清理）
+     * Delete status history before the specified time (for data cleanup)
      * 
-     * @param cutoffTime 截止时间
+     * @param cutoffTime Cutoff time
      */
     void deleteByTimestampBefore(LocalDateTime cutoffTime);
     
     /**
-     * 查找状态变更异常的订单（短时间内多次状态变更）
+     * Find shipments with anomalous status changes (multiple changes in a short time)
      * 
-     * @param minutes 时间窗口（分钟）
-     * @param threshold 变更次数阈值
-     * @return 异常订单的状态历史
+     * @param cutoffTime Time window cutoff
+     * @param threshold Change count threshold
+     * @return Status history of anomalous shipments
      */
     @Query("SELECT h FROM ShipmentStatusHistory h WHERE h.shipment IN " +
            "(SELECT h2.shipment FROM ShipmentStatusHistory h2 " +
@@ -161,10 +161,10 @@ public interface ShipmentStatusHistoryRepository extends JpaRepository<ShipmentS
         @Param("threshold") long threshold);
     
     /**
-     * 查找长时间未更新状态的订单
+     * Find shipments with stale statuses (no updates for a long time)
      * 
-     * @param hoursAgo 小时数
-     * @return 长时间未更新的订单状态历史
+     * @param cutoffTime Cutoff time
+     * @return Status history of shipments with stale statuses
      */
     @Query("SELECT h FROM ShipmentStatusHistory h WHERE h.id IN " +
            "(SELECT MAX(h2.id) FROM ShipmentStatusHistory h2 " +
@@ -172,11 +172,11 @@ public interface ShipmentStatusHistoryRepository extends JpaRepository<ShipmentS
     List<ShipmentStatusHistory> findShipmentsWithStaleStatus(@Param("cutoffTime") LocalDateTime cutoffTime);
     
     /**
-     * 获取状态变更统计报告
+     * Get status change statistics report
      * 
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @return 状态统计数据
+     * @param startTime Start time
+     * @param endTime End time
+     * @return Status statistics data
      */
     @Query("SELECT h.status as status, COUNT(h) as count, " +
            "MIN(h.timestamp) as firstOccurrence, MAX(h.timestamp) as lastOccurrence " +

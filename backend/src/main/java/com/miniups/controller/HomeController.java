@@ -6,8 +6,8 @@
  * - Handles root path requests with useful API information
  * - Serves as an entry point for API discovery
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

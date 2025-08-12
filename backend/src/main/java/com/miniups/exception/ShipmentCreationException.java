@@ -1,19 +1,19 @@
 /**
  * Shipment Creation Exception
  * 
- * 功能说明：
- * - 专门处理运单创建过程中的业务异常
- * - 提供详细的错误信息和上下文
- * - 便于异常分类和处理
+ * Feature description:
+ * - Specifically handles business exceptions during shipment creation
+ * - Provides detailed error information and context
+ * - Facilitates exception categorization and handling
  * 
- * 使用场景：
- * - 运单数据验证失败
- * - 车辆分配失败
- * - 用户创建失败
- * - 系统资源不足
+ * Usage scenarios:
+ * - Shipment data validation failure
+ * - Truck assignment failure
+ * - User creation failure
+ * - Insufficient system resources
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 
@@ -25,39 +25,39 @@ public class ShipmentCreationException extends BaseBusinessException {
     private static final String ERROR_CODE = "SHIPMENT_CREATION_ERROR";
     
     /**
-     * 创建运单创建异常
+     * Create shipment creation exception
      * 
-     * @param message 异常消息
+     * @param message Exception message
      */
     public ShipmentCreationException(String message) {
         super(ERROR_CODE, message, ExceptionSeverity.MEDIUM);
     }
     
     /**
-     * 创建运单创建异常，包含原因
+     * Create shipment creation exception with cause
      * 
-     * @param message 异常消息
-     * @param cause 原始异常
+     * @param message Exception message
+     * @param cause Original exception
      */
     public ShipmentCreationException(String message, Throwable cause) {
         super(ERROR_CODE, message, ExceptionSeverity.MEDIUM, cause);
     }
     
     /**
-     * 使用默认消息创建异常
+     * Create exception with default message
      * 
-     * @param cause 原始异常
+     * @param cause Original exception
      */
     public ShipmentCreationException(Throwable cause) {
         super(ERROR_CODE, DEFAULT_MESSAGE, ExceptionSeverity.MEDIUM, cause);
     }
     
     /**
-     * 创建带有客户信息的异常
+     * Create exception with customer information
      * 
-     * @param customerName 客户姓名
-     * @param cause 原始异常
-     * @return 运单创建异常
+     * @param customerName Customer name
+     * @param cause Original exception
+     * @return Shipment creation exception
      */
     public static ShipmentCreationException forCustomer(String customerName, Throwable cause) {
         String message = String.format("Failed to create shipment for customer '%s'", customerName);
@@ -65,10 +65,10 @@ public class ShipmentCreationException extends BaseBusinessException {
     }
     
     /**
-     * 创建车辆分配失败的异常
+     * Create exception for truck assignment failure
      * 
-     * @param trackingNumber 追踪号
-     * @return 运单创建异常
+     * @param trackingNumber Tracking number
+     * @return Shipment creation exception
      */
     public static ShipmentCreationException truckAssignmentFailed(String trackingNumber) {
         String message = String.format("Failed to assign truck for shipment '%s'", trackingNumber);
@@ -76,11 +76,11 @@ public class ShipmentCreationException extends BaseBusinessException {
     }
     
     /**
-     * 创建用户创建失败的异常
+     * Create exception for user creation failure
      * 
-     * @param customerEmail 客户邮箱
-     * @param cause 原始异常
-     * @return 运单创建异常
+     * @param customerEmail Customer email
+     * @param cause Original exception
+     * @return Shipment creation exception
      */
     public static ShipmentCreationException userCreationFailed(String customerEmail, Throwable cause) {
         String message = String.format("Failed to create user for customer email '%s'", customerEmail);

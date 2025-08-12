@@ -18,8 +18,8 @@
  * - Send HTTP notifications to Amazon system
  * - Maintain data consistency between both systems
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 

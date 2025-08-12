@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Package, TrendingUp, Clock, CheckCircle, Plus, RefreshCw, AlertCircle, Search, Bell, Settings, MapPin, Calendar, Activity } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
-import { shipmentApi, DashboardStats } from '@/services/shipment'
+import { useDashboardData } from '@/hooks/useDashboardData'
 import { StatsCard } from '@/components/ui/stats-card'
 import { RecentShipments } from '@/components/dashboard/RecentShipments'
+import { ShipmentStatusChart } from '@/components/dashboard/ShipmentStatusChart'
+import { ShipmentTrendChart } from '@/components/dashboard/ShipmentTrendChart'
+import { PerformanceMetrics } from '@/components/dashboard/PerformanceMetrics'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,35 +18,24 @@ import { toast } from 'sonner'
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuthStore()
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const fetchDashboardData = async () => {
-    if (!user) return
-    
-    try {
-      setLoading(true)
-      setError(null)
-      const dashboardStats = await shipmentApi.getDashboardStats(parseInt(user.id))
-      setStats(dashboardStats)
-    } catch (err: unknown) {
-      console.error('Failed to fetch dashboard data:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data'
-      setError(errorMessage)
-      toast.error('Failed to load dashboard data')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchDashboardData()
-  }, [user])
+  // Use optimized TanStack Query hook for dashboard data
+  const {
+    data: stats,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    dataUpdatedAt
+  } = useDashboardData({
+    userId: parseInt(user?.id || '0'),
+    enabled: !!user,
+  })
 
   const handleRefresh = () => {
-    fetchDashboardData()
+    refetch()
   }
 
   if (!user) {
@@ -90,9 +82,9 @@ export const DashboardPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleRefresh}
-                  disabled={loading}
+                  disabled={loading || isRefetching}
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading || isRefetching ? 'animate-spin' : ''}`} />
                   Refresh
                 </Button>
                 <Link to="/shipments/create">
@@ -104,27 +96,34 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Quick Search */}
-            <div className="mt-6 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search shipments, tracking numbers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+            {/* Quick Search with data freshness indicator */}
+            <div className="mt-6 flex items-center justify-between">
+              <div className="max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search shipments, tracking numbers..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              {/* Data freshness indicator */}
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Activity className="h-3 w-3" />
+                Last updated: {new Date(dataUpdatedAt).toLocaleTimeString()}
               </div>
             </div>
           </div>
         </div>
 
       {/* Error State */}
-      {error && (
+      {isError && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error}
+            {error?.message || 'Failed to load dashboard data'}
           </AlertDescription>
         </Alert>
       )}
@@ -181,6 +180,21 @@ export const DashboardPage: React.FC = () => {
           />
         </div>
 
+        {/* Performance Metrics Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Performance Overview
+          </h2>
+          <PerformanceMetrics stats={stats} loading={loading} />
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid gap-6 lg:grid-cols-2 mb-8">
+          <ShipmentStatusChart stats={stats} loading={loading} />
+          <ShipmentTrendChart stats={stats} loading={loading} />
+        </div>
+
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Recent Shipments */}
@@ -189,7 +203,7 @@ export const DashboardPage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5" />
-                  Recent Shipments
+                  Recent Activity
                 </CardTitle>
               </CardHeader>
               <CardContent>

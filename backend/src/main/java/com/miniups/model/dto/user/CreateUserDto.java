@@ -21,8 +21,8 @@
  * - Can set account enabled status
  * - Supports administrator-level user creation
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.user;
 

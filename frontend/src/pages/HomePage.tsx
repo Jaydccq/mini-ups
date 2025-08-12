@@ -4,11 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Package, Search, MapPin, Clock, Shield, CheckCircle, Star, ArrowRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useTinaContent } from '@/hooks/useTinaContent';
+import * as LucideIcons from 'lucide-react';
+import { Package, Search, CheckCircle, ArrowRight, Star } from 'lucide-react';
+
+// Helper function to dynamically get Lucide icons
+const getLucideIcon = (iconName: string) => {
+  const IconComponent = (LucideIcons as any)[iconName];
+  return IconComponent ? <IconComponent className="h-8 w-8 text-primary" /> : <Package className="h-8 w-8 text-primary" />;
+};
 
 export const HomePage: React.FC = () => {
   const [trackingNumber, setTrackingNumber] = useState('');
   const navigate = useNavigate();
+  const { content, isLoading, error, hero, features, testimonials, cta } = useTinaContent();
 
   const handleTrackPackage = () => {
     if (trackingNumber.trim()) {
@@ -16,49 +26,35 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  const features = [
-    {
-      icon: <Truck className="h-8 w-8 text-primary" />,
-      title: "Fast Delivery",
-      description: "Next-day delivery available to most locations"
-    },
-    {
-      icon: <Shield className="h-8 w-8 text-primary" />,
-      title: "Secure Shipping",
-      description: "Your packages are protected with our insurance coverage"
-    },
-    {
-      icon: <MapPin className="h-8 w-8 text-primary" />,
-      title: "Real-Time Tracking",
-      description: "Track your package every step of the way"
-    },
-    {
-      icon: <Clock className="h-8 w-8 text-primary" />,
-      title: "Flexible Scheduling",
-      description: "Choose delivery times that work for you"
-    }
-  ];
+  const handleCTAClick = () => {
+    navigate(cta.button_link);
+  };
 
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Small Business Owner",
-      content: "Mini UPS has transformed how I ship products to my customers. Reliable and affordable!",
-      rating: 5
-    },
-    {
-      name: "Michael Chen",
-      role: "E-commerce Manager",
-      content: "The real-time tracking feature is amazing. My customers love being able to see exactly where their packages are.",
-      rating: 5
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Online Seller",
-      content: "Customer service is excellent and shipping rates are competitive. Highly recommend!",
-      rating: 5
-    }
-  ];
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center space-y-6">
+              <Skeleton className="h-6 w-48 mx-auto" />
+              <Skeleton className="h-16 w-full max-w-2xl mx-auto" />
+              <Skeleton className="h-4 w-full max-w-xl mx-auto" />
+              <div className="flex gap-4 justify-center">
+                <Skeleton className="h-12 w-32" />
+                <Skeleton className="h-12 w-32" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // Error fallback - will use fallback content from hook
+  if (error) {
+    console.warn('Using fallback content due to:', error);
+  }
 
   return (
     <div className="min-h-screen">
@@ -68,16 +64,15 @@ export const HomePage: React.FC = () => {
           <div className="max-w-4xl mx-auto text-center">
             <Badge className="mb-6" variant="secondary">
               <Package className="h-4 w-4 mr-2" />
-              Trusted by 10,000+ businesses
+              {hero.badge_text}
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Fast, Reliable Package Delivery
+              {hero.headline}
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Experience the future of shipping with Mini UPS. From small packages to large freight, 
-              we deliver with speed, security, and transparency.
+              {hero.subheadline}
             </p>
 
             {/* Quick Tracking Tool */}
@@ -108,12 +103,12 @@ export const HomePage: React.FC = () => {
             </Card>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8" onClick={() => navigate('/register')}>
-                Get Started
+              <Button size="lg" className="text-lg px-8" onClick={handleCTAClick}>
+                {hero.cta_primary}
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               <Button size="lg" variant="outline" className="text-lg px-8" onClick={() => navigate('/login')}>
-                Sign In
+                {hero.cta_secondary}
               </Button>
             </div>
           </div>
@@ -125,18 +120,18 @@ export const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Mini UPS?</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{features.section_title}</h2>
               <p className="text-lg text-muted-foreground">
-                We're committed to providing the best shipping experience possible
+                {features.section_description}
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, index) => (
+              {features.feature_list.map((feature, index) => (
                 <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex justify-center mb-4">
-                      {feature.icon}
+                      {getLucideIcon(feature.icon)}
                     </div>
                     <CardTitle className="text-xl">{feature.title}</CardTitle>
                   </CardHeader>
@@ -155,14 +150,14 @@ export const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Customers Say</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{testimonials.section_title}</h2>
               <p className="text-lg text-muted-foreground">
-                Join thousands of satisfied customers who trust Mini UPS
+                {testimonials.section_description}
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {testimonials.map((testimonial, index) => (
+              {testimonials.testimonial_list.map((testimonial, index) => (
                 <Card key={index} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center gap-1 mb-2">
@@ -184,18 +179,17 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary text-primary-foreground">
+      <section className={`py-20 ${cta.background_color} text-primary-foreground`}>
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Get Started?
+              {cta.title}
             </h2>
             <p className="text-lg mb-8 opacity-90">
-              Join thousands of businesses that trust Mini UPS for their shipping needs. 
-              Create your account today and experience the difference.
+              {cta.description}
             </p>
-            <Button size="lg" variant="secondary" className="text-lg px-8" onClick={() => navigate('/register')}>
-              Create Account
+            <Button size="lg" variant="secondary" className="text-lg px-8" onClick={handleCTAClick}>
+              {cta.button_text}
               <CheckCircle className="h-5 w-5 ml-2" />
             </Button>
           </div>

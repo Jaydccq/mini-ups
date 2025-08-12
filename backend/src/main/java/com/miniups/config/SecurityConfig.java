@@ -97,8 +97,8 @@
  * - Security metrics available through Spring Boot Actuator
  * - Integration with external security monitoring systems
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.config;

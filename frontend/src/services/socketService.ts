@@ -118,6 +118,21 @@ class SocketService {
       return;
     }
 
+    // Validate token format before connecting
+    if (!authToken || !authToken.trim()) {
+      console.error('Cannot connect WebSocket: invalid or empty auth token');
+      this.updateStatus('error');
+      return;
+    }
+
+    const trimmedToken = authToken.trim();
+    const dotCount = (trimmedToken.match(/\./g) || []).length;
+    if (dotCount !== 2) {
+      console.error('Cannot connect WebSocket: invalid JWT token format (expected 2 periods, found', dotCount, ')');
+      this.updateStatus('error');
+      return;
+    }
+
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
     console.log('Connecting to WebSocket:', VITE_API_BASE_URL);
 
@@ -126,7 +141,7 @@ class SocketService {
 
     this.socket = io(VITE_API_BASE_URL, {
       auth: {
-        token: authToken,
+        token: trimmedToken,
       },
       transports: ['websocket', 'polling'], // fallback support
       timeout: 10000, // 10 second timeout

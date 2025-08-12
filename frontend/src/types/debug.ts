@@ -13,8 +13,8 @@
  * - ConnectionStatus: WebSocket connection state tracking
  * - MessageFilter: Message filtering and search criteria
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 
 /**

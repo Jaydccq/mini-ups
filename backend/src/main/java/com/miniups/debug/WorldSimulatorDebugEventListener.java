@@ -35,8 +35,8 @@
  * - app.debug.world-simulator.retention-seconds - Message retention time
  * - spring.websocket.stomp.broker.* - WebSocket broker settings
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.debug;
 

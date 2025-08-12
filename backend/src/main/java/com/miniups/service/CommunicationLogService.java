@@ -12,8 +12,8 @@
  * - Error tracking and categorization
  * - Debug interface data provision
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 

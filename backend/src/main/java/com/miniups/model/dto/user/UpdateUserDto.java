@@ -17,8 +17,8 @@
  * - Administrators can update any user's information
  * - Role field can only be modified by administrators
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.user;
 

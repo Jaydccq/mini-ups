@@ -1,16 +1,16 @@
 /**
  * Database Operation Exception
  * 
- * 数据库操作异常，用于处理数据访问层的错误
+ * Database operation exception used to handle errors in the data access layer
  * 
  * Common scenarios:
- * - 数据库连接失败
- * - SQL执行超时
- * - 数据完整性约束违反
- * - 事务回滚异常
+ * - Database connection failure
+ * - SQL execution timeout
+ * - Data integrity constraint violation
+ * - Transaction rollback exception
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 
@@ -53,7 +53,7 @@ public class DatabaseOperationException extends BaseBusinessException {
         return entity;
     }
     
-    // 便利方法用于常见数据库操作异常
+    // Convenience methods for common database operation exceptions
     public static DatabaseOperationException save(String entity, Throwable cause) {
         return new DatabaseOperationException("SAVE", entity, "Failed to save entity", cause);
     }

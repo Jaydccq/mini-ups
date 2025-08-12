@@ -154,6 +154,7 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
   rabbitmq:
+    enabled: ${RABBITMQ_ENABLED:true}
     test:
       enabled: ${RABBITMQ_TEST_ENABLED:false}
   notifications:

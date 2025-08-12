@@ -14,8 +14,8 @@
  * - 令牌刷新机制
  * - 安全头部验证
  *
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.security;
 

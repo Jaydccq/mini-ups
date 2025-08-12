@@ -12,8 +12,8 @@
  * - Response status and error tracking
  * - Performance timing information
  * 
- * @author Mini-UPS Team  
- * @version 1.0.0
+ *  
+ 
  */
 package com.miniups.model.entity;
 

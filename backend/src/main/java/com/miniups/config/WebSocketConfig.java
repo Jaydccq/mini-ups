@@ -104,8 +104,8 @@
  * - WebSocket session tracking and management
  * - Debug logging for message routing and delivery
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.config;

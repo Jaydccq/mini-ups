@@ -1,25 +1,25 @@
 /**
  * Amazon Shipment Data Transfer Object
  * 
- * 功能说明：
- * - 处理Amazon系统与UPS系统之间的运输数据传输
- * - 标准化Amazon运输信息的格式和验证
- * - 支持Amazon API集成和webhook通信
+ * Function Description:
+ * - Handles shipment data transfer between Amazon and UPS systems
+ * - Standardizes Amazon shipment information format and validation
+ * - Supports Amazon API integration and webhook communication
  * 
- * 数据字段：
- * - shipmentId: UPS运输ID
- * - amazonOrderId: Amazon订单ID
- * - trackingNumber: 跟踪号码
- * - status: 运输状态
- * - carrier: 承运商信息
+ * Data Fields:
+ * - shipmentId: UPS shipment ID
+ * - amazonOrderId: Amazon order ID
+ * - trackingNumber: Tracking number
+ * - status: Shipment status
+ * - carrier: Carrier information
  * 
- * 验证规则：
- * - 必填字段验证
- * - 状态值范围检查
- * - 跟踪号码格式验证
+ * Validation Rules:
+ * - Required field validation
+ * - Status value range check
+ * - Tracking number format validation
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+
  */
 package com.miniups.model.dto.amazon;
 

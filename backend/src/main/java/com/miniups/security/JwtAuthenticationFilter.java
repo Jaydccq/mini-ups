@@ -59,8 +59,8 @@
  * - Minimal performance impact on public endpoints
  * - Clear separation of concerns with other security components
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.security;
@@ -126,7 +126,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+            String token = bearerToken.substring(7).trim();
+            // Return null for empty tokens instead of empty strings
+            return StringUtils.hasText(token) ? token : null;
         }
         return null;
     }

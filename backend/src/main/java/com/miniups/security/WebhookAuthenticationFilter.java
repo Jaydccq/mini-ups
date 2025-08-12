@@ -12,8 +12,8 @@
  * - Configurable secret key for different environments
  * - Comprehensive logging for security monitoring
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.security;
 

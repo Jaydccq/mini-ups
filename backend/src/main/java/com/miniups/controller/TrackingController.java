@@ -17,8 +17,8 @@
  * - User private query (requires authentication, can only query own packages)
  * - Status update (requires admin permissions)
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.controller;
 

@@ -83,9 +83,10 @@ class TrackingControllerIntegrationTest {
                 .apply(springSecurity())
                 .build();
 
-        // Create test users
-        testUser = createUser("testuser", "test@example.com", UserRole.USER);
-        adminUser = createUser("admin", "admin@example.com", UserRole.ADMIN);
+        // Create test users with unique usernames to avoid database constraint violations
+        String uniqueSuffix = String.valueOf(System.nanoTime());
+        testUser = createUser("testuser_" + uniqueSuffix, "test_" + uniqueSuffix + "@example.com", UserRole.USER);
+        adminUser = createUser("admin_" + uniqueSuffix, "admin_" + uniqueSuffix + "@example.com", UserRole.ADMIN);
         
         userRepository.save(testUser);
         userRepository.save(adminUser);
@@ -228,8 +229,9 @@ class TrackingControllerIntegrationTest {
     @Test
     @DisplayName("Should prevent users from accessing other users' shipments")
     void testGetUserShipments_AccessControl() throws Exception {
-        // Create another user
-        User anotherUser = createUser("anotheruser", "another@example.com", UserRole.USER);
+        // Create another user with unique username
+        String uniqueSuffix = String.valueOf(System.nanoTime());
+        User anotherUser = createUser("anotheruser_" + uniqueSuffix, "another_" + uniqueSuffix + "@example.com", UserRole.USER);
         userRepository.save(anotherUser);
 
         // Try to access another user's shipments

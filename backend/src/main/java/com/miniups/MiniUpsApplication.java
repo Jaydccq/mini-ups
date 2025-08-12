@@ -1,16 +1,16 @@
 /**
- * Mini-UPS 后端应用程序主启动类
+ * Mini-UPS Backend Application Main Startup Class
  * 
- * 基于Spring Boot的分布式物流系统后端服务，提供：
- * - 用户认证和权限管理
- * - 订单和包裹管理
- * - 车辆调度和路径优化
- * - 实时追踪和状态更新
- * - Amazon平台集成
- * - 世界模拟器集成
+ * Spring Boot-based distributed logistics system backend service, providing:
+ * - User authentication and permission management
+ * - Order and package management
+ * - Vehicle dispatching and route optimization
+ * - Real-time tracking and status updates
+ * - Amazon platform integration
+ * - World simulator integration
  * 
  * @author Mini-UPS Development Team
- * @version 1.0.0
+ 
  * @since 2024
  */
 package com.miniups;

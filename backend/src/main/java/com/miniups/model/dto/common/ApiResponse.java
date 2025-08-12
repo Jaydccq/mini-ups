@@ -6,8 +6,8 @@
  * - Supports generic data types
  * - Contains success flag, message and timestamp
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.model.dto.common;
 

@@ -16,7 +16,12 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 COMPOSE_FILE="docker-compose.production.yml"
-ENV_FILE=".env.production"
+ENV_FILE=".env.production.deploy"
+
+# Fallback to default env file if deploy version doesn't exist
+if [[ ! -f "$PROJECT_DIR/$ENV_FILE" && -f "$PROJECT_DIR/.env.production" ]]; then
+    ENV_FILE=".env.production"
+fi
 
 # Default values
 FOLLOW=false

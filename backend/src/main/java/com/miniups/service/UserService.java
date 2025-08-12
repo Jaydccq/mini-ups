@@ -17,8 +17,8 @@
  * - Administrators can manage all users
  * - Sensitive operations require additional permission verification
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.service;
 

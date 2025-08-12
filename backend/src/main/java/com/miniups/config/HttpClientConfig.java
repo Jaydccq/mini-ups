@@ -17,7 +17,7 @@
  * - Pool management prevents connection exhaustion
  * - Optimized for high-throughput scenarios
  *
- * @author Mini-UPS Team
+ *
  * @version 2.0.0
  */
 package com.miniups.config;

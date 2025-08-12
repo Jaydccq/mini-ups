@@ -3,8 +3,8 @@
  * 
  * 测试全局异常处理器的功能
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  */
 package com.miniups.exception;
 

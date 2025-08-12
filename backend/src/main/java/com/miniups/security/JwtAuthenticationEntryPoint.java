@@ -44,8 +44,8 @@
  * - Uses appropriate HTTP status codes (401 for authentication failures)
  * - Maintains security by not exposing internal system details
  * 
- * @author Mini-UPS Team
- * @version 1.0.0
+ *
+ 
  * @since 2024-01-01
  */
 package com.miniups.security;
