@@ -34,7 +34,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
     /**
      * Check if an audit log with the given event ID already exists
-     * Used for idempotency checking in event processing
+     * Used for idempotency checking in event processingj
      * 
      * @param eventId The unique event identifier
      * @return true if an audit log with this event ID exists

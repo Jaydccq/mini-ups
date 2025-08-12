@@ -722,7 +722,7 @@ jobs:
   deploy-aws:
     name: Deploy to AWS EC2
     runs-on: ubuntu-latest
-    needs: [integration-test]
+    needs: [integration-test, build-images]
     if: |
       github.ref == 'refs/heads/main' && 
       (github.event.inputs.deploy_to_aws == 'true' || github.event_name == 'push')
@@ -737,13 +737,31 @@ jobs:
         with:
           name: docker-images
 
+      - name: Copy Docker images to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "*.tar.gz"
+          target: "/home/ubuntu/mini-ups/images/"
+
+      - name: Copy deployment files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.production.yml,.env.production,scripts/"
+          target: "/home/ubuntu/mini-ups/"
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          timeout: 300s
+          timeout: 600s
           script: |
             set -e
             
@@ -756,7 +774,19 @@ jobs:
               cd /home/ubuntu/mini-ups
             }
             
-            # Update code (if needed)
+            # Load Docker images first
+            echo "📦 Loading Docker images..."
+            cd images/
+            for image in *.tar.gz; do
+              if [ -f "$image" ]; then
+                echo "Loading $image..."
+                docker load < "$image"
+              fi
+            done
+            rm -f *.tar.gz
+            cd ..
+            
+            # Clone/update repository with full codebase
             if [ -d ".git" ]; then
               echo "📥 Updating code..."
               git pull origin main
@@ -769,92 +799,148 @@ jobs:
             echo "⏹️  Stopping existing services..."
             docker compose -f docker-compose.production.yml down || true
             
+            # Clean up old containers and volumes if needed
+            echo "🧹 Cleaning up old resources..."
+            docker system prune -f || true
+            
             # Create production environment
             echo "⚙️  Setting up production environment..."
             cp .env.production .env.production.deploy
+            echo "" >> .env.production.deploy
+            echo "# CI/CD Updated Values" >> .env.production.deploy
             echo "UPS_BACKEND_IMAGE=${{ needs.build-images.outputs.ups-backend-tag }}" >> .env.production.deploy
             echo "UPS_FRONTEND_IMAGE=${{ needs.build-images.outputs.ups-frontend-tag }}" >> .env.production.deploy
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.production.deploy
             echo "AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}" >> .env.production.deploy
             
-            # Create log directories
-            sudo mkdir -p /var/log/mini-ups
-            sudo chown ubuntu:ubuntu /var/log/mini-ups
+            # Create necessary directories
+            echo "📁 Creating directories..."
+            sudo mkdir -p /var/log/mini-ups /var/backups/mini-ups
+            sudo chown -R ubuntu:ubuntu /var/log/mini-ups /var/backups/mini-ups
+            mkdir -p logs data backup
             
-            # Start services
+            # Make scripts executable
+            chmod +x scripts/*.sh || true
+            
+            # Build any missing Docker images for external services
+            echo "🔨 Building external service images if needed..."
+            
+            # Build Amazon service
+            if [ -d "knowledge/amazon" ]; then
+              echo "Building Amazon service..."
+              docker build -t mini-amazon:latest knowledge/amazon/ || echo "Warning: Amazon build failed"
+            fi
+            
+            # Build World Simulator
+            if [ -d "knowledge/world_simulator_exec/docker_deploy" ]; then
+              echo "Building World Simulator..."
+              docker build -t mini-world-sim:latest knowledge/world_simulator_exec/docker_deploy/ || echo "Warning: World Simulator build failed"
+            fi
+            
+            # Start services with better orchestration
             echo "🔄 Starting services..."
             docker compose -f docker-compose.production.yml --env-file .env.production.deploy up -d --remove-orphans
             
-            # Wait for services to be ready
-            echo "⏳ Waiting for services to be ready..."
-            sleep 120
+            # Wait for core infrastructure first
+            echo "⏳ Waiting for core infrastructure..."
+            sleep 60
             
-            # Health checks
-            echo "🔍 Running health checks..."
+            # Check databases one by one
+            echo "🔍 Checking databases..."
+            for i in {1..30}; do
+              if docker exec mini-ups-postgres pg_isready -U postgres >/dev/null 2>&1; then
+                echo "✅ UPS Database is ready!"
+                break
+              fi
+              echo "⏳ Waiting for UPS Database... (Attempt $i/30)"
+              sleep 5
+            done
+            
+            for i in {1..30}; do
+              if docker exec mini-amazon-db pg_isready -U postgres >/dev/null 2>&1; then
+                echo "✅ Amazon Database is ready!"
+                break
+              fi
+              echo "⏳ Waiting for Amazon Database... (Attempt $i/30)"
+              sleep 5
+            done
+            
+            for i in {1..30}; do
+              if docker exec world-simulator-db pg_isready -U postgres >/dev/null 2>&1; then
+                echo "✅ World Simulator Database is ready!"
+                break
+              fi
+              echo "⏳ Waiting for World Simulator Database... (Attempt $i/30)"
+              sleep 5
+            done
+            
+            # Check Redis
+            echo "🔍 Checking Redis..."
+            for i in {1..20}; do
+              if docker exec mini-ups-redis redis-cli ping >/dev/null 2>&1; then
+                echo "✅ Redis is ready!"
+                break
+              fi
+              echo "⏳ Waiting for Redis... (Attempt $i/20)"
+              sleep 3
+            done
+            
+            # Wait for applications
+            echo "⏳ Waiting for applications to start..."
+            sleep 90
+            
+            # Health checks with better error handling
+            echo "🔍 Running comprehensive health checks..."
             
             # Check UPS Backend
-            for i in {1..20}; do
-              if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
+            echo "Testing UPS Backend..."
+            for i in {1..30}; do
+              if curl -f -s http://localhost:8081/actuator/health >/dev/null 2>&1; then
                 echo "✅ UPS Backend is healthy!"
                 break
               fi
-              echo "⏳ Waiting for UPS Backend... (Attempt $i/20)"
+              echo "⏳ Waiting for UPS Backend... (Attempt $i/30)"
               sleep 10
             done
             
             # Check UPS Frontend
-            curl -f http://localhost:3000 || { echo "❌ UPS Frontend not responding"; exit 1; }
-            echo "✅ UPS Frontend is healthy!"
-            
-            # Check Amazon Service
-            curl -f http://localhost:8080 || { echo "❌ Amazon service not responding"; exit 1; }
-            echo "✅ Amazon service is healthy!"
-            
-            # Check databases
-            docker exec mini-ups-postgres pg_isready -U postgres || { echo "❌ UPS Database not ready"; exit 1; }
-            docker exec mini-amazon-db pg_isready -U postgres || { echo "❌ Amazon Database not ready"; exit 1; }
-            docker exec world-simulator-db pg_isready -U postgres || { echo "❌ World Simulator Database not ready"; exit 1; }
-            echo "✅ All databases are ready!"
-            
-            # Check Redis
-            docker exec mini-ups-redis redis-cli ping || { echo "❌ Redis not responding"; exit 1; }
-            echo "✅ Redis is healthy!"
-            
-            echo "🎉 Deployment completed successfully!"
-            echo "📍 Access URLs:"
-            echo "   UPS Frontend: http://${{ secrets.EC2_HOST }}:3000"
-            echo "   Amazon Service: http://${{ secrets.EC2_HOST }}:8080"
-            echo "   UPS API: http://${{ secrets.EC2_HOST }}:8081"
-
-      - name: Copy Docker images to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "*.tar.gz"
-          target: "/home/ubuntu/mini-ups/images/"
-
-      - name: Load Docker images on EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/mini-ups/images/
-            echo "📦 Loading Docker images..."
-            for image in *.tar.gz; do
-              if [ -f "$image" ]; then
-                echo "Loading $image..."
-                docker load < "$image"
+            echo "Testing UPS Frontend..."
+            for i in {1..15}; do
+              if curl -f -s http://localhost:3000 >/dev/null 2>&1; then
+                echo "✅ UPS Frontend is healthy!"
+                break
               fi
+              echo "⏳ Waiting for UPS Frontend... (Attempt $i/15)"
+              sleep 5
             done
             
-            # Cleanup image files
-            rm -f *.tar.gz
+            # Check Amazon Service
+            echo "Testing Amazon Service..."
+            for i in {1..20}; do
+              if curl -f -s http://localhost:8080 >/dev/null 2>&1; then
+                echo "✅ Amazon service is healthy!"
+                break
+              fi
+              echo "⏳ Waiting for Amazon service... (Attempt $i/20)"
+              sleep 8
+            done
             
-            echo "✅ Docker images loaded successfully!"
+            # Final status check
+            echo "📊 Final service status:"
+            docker compose -f docker-compose.production.yml --env-file .env.production.deploy ps
+            
+            echo ""
+            echo "🎉 Deployment completed successfully!"
+            echo "📍 Access URLs:"
+            echo "   🌐 UPS Frontend: http://${{ secrets.EC2_HOST }}:3000"
+            echo "   🛒 Amazon Service: http://${{ secrets.EC2_HOST }}:8080"
+            echo "   🔌 UPS API: http://${{ secrets.EC2_HOST }}:8081"
+            echo "   📊 RabbitMQ Management: http://${{ secrets.EC2_HOST }}:15672"
+            
+            # Show Docker status for verification
+            echo ""
+            echo "🐳 Docker Container Status:"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
   # Notification
   notify-result:

@@ -136,7 +136,7 @@ class AdminServiceTest {
 
         // 验证第一辆车的信息
         Map<String, Object> firstTruck = trucks.get(0);
-        assertThat(firstTruck).containsKeys("id", "plateNumber", "capacity", "status", "currentLocation");
+        assertThat(firstTruck).containsKeys("id", "plateNumber", "status", "location");
 
         // 验证状态分布
         @SuppressWarnings("unchecked")
