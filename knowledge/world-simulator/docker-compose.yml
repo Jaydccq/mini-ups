@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  world-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: world-simulator
+    ports:
+      - "12345:12345"  # UPS connections
+      - "23456:23456"  # Amazon connections  
+      - "8082:8082"    # Management/Health endpoints
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=worldSim
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=abc123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WORLD_SIM_FLAKINESS=${WORLD_SIM_FLAKINESS:-0}
+      - WORLD_SIM_UPS_PORT=12345
+      - WORLD_SIM_AMAZON_PORT=23456
+      - MANAGEMENT_PORT=8082
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - projectnet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: world-simulator-postgres
+    environment:
+      - POSTGRES_DB=worldSim
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=abc123
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - projectnet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d worldSim"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: world-simulator-redis
+    ports:
+      - "6381:6379"  # Different port to avoid conflicts
+    volumes:
+      - redis_data:/data
+    networks:
+      - projectnet
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  projectnet:
+    external: true
