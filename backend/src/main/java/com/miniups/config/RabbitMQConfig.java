@@ -28,7 +28,6 @@ import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainer
  * 
  * @author Mini-UPS Development Team
  * @version 1.0
- * @since 2024
  */
 @Configuration
 @ConditionalOnClass(ConnectionFactory.class)

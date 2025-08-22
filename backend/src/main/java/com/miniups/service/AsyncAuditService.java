@@ -49,7 +49,6 @@ import java.util.Map;
  * 
  * @author Mini-UPS Development Team
  * @version 1.0
- * @since 2024
  */
 @Service
 public class AsyncAuditService {

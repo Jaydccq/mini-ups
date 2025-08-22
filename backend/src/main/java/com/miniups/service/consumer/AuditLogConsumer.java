@@ -35,7 +35,6 @@ import java.time.Instant;
  * 
  * @author Mini-UPS Development Team
  * @version 1.0
- * @since 2024
  */
 @Service
 @ConditionalOnClass(RabbitListener.class)

@@ -420,7 +420,6 @@ public class WorldSimulatorController {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
             }
             
-            // 提取配送信息
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> deliveries = (List<Map<String, Object>>) deliveryRequest.get("deliveries");
             
@@ -433,7 +432,6 @@ public class WorldSimulatorController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // 转换配送数据
             Map<Long, int[]> deliveryMap = new HashMap<>();
             for (Map<String, Object> delivery : deliveries) {
                 Long packageId = ((Number) delivery.get("package_id")).longValue();
@@ -442,7 +440,6 @@ public class WorldSimulatorController {
                 deliveryMap.put(packageId, new int[]{x, y});
             }
             
-            // 发送配送指令
             CompletableFuture<Boolean> future = sendTruckToDeliverHelper(truckId, deliveryMap);
             
             // Wait for result
@@ -497,7 +494,6 @@ public class WorldSimulatorController {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
             }
             
-            // 查询卡车状态
             CompletableFuture<WorldUpsProto.UTruck> future = queryTruckStatus(truckId);
             
             // Wait for result

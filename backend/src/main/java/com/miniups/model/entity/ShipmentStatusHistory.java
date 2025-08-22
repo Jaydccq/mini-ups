@@ -42,7 +42,7 @@
  * 
  * @author Mini-UPS Development Team
  * @version 1.0
- * @since 2024-01-01
+
  */
 package com.miniups.model.entity;
 
