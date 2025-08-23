@@ -36,22 +36,6 @@ public class TestRabbitConfig {
     public static final String TOPIC_EXCHANGE_NAME = "ups.events.topic";
     public static final String DLX_NAME = "ups.events.dlx";
 
-    /**
-     * Mock ExceptionMetricsConfig bean for testing
-     * 
-     * @return Mock ExceptionMetricsConfig that can be used in tests
-     */
-    @Bean
-    @Primary
-    public ExceptionMetricsConfig exceptionMetricsConfig() {
-        return new ExceptionMetricsConfig(null) {
-            @Override
-            public void recordException(Exception exception, String endpoint) {
-                // No-op for tests - just log
-                System.out.println("Test: Exception recorded: " + exception.getClass().getSimpleName() + " at " + endpoint);
-            }
-        };
-    }
 
     /**
      * Test RabbitMQ Topic Exchange
