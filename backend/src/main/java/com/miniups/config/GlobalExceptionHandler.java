@@ -337,9 +337,9 @@ public class GlobalExceptionHandler {
             RuntimeException ex, WebRequest request) {
         // Check if this is a business validation exception in disguise
         if (ex.getMessage() != null && (
-                ex.getMessage().contains("用户注册失败") || 
-                ex.getMessage().contains("登录失败") || 
-                ex.getMessage().contains("密码修改失败"))) {
+                ex.getMessage().contains("Registration failed") || 
+                ex.getMessage().contains("Login failed") || 
+                ex.getMessage().contains("Password change failed"))) {
             return buildErrorResponse(ex, "SYSTEM_ERROR", "Internal server error, please try again later", HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
         return buildErrorResponse(ex, "SYSTEM_ERROR", "Internal server error, please try again later", HttpStatus.INTERNAL_SERVER_ERROR, null);

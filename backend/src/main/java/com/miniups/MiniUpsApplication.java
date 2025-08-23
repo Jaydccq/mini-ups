@@ -11,7 +11,6 @@
  * 
  * @author Mini-UPS Development Team
  
- * @since 2024
  */
 package com.miniups;
 

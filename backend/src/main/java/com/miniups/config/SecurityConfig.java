@@ -99,18 +99,22 @@
  * 
  *
  
- * @since 2024-01-01
+
  */
 package com.miniups.config;
 
 import com.miniups.security.JwtAuthenticationEntryPoint;
 import com.miniups.security.JwtAuthenticationFilter;
+import com.miniups.security.OAuth2AuthenticationSuccessHandler;
+import com.miniups.security.OAuth2AuthenticationFailureHandler;
 import com.miniups.security.RateLimitingFilter;
 import com.miniups.security.WebhookAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -149,6 +153,13 @@ public class SecurityConfig {
     
     @Autowired
     private RateLimitingFilter rateLimitingFilter;
+    
+    @Autowired(required = false)
+    @Lazy
+    private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    
+    @Autowired(required = false)
+    private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     
     @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
     private String allowedOrigins;
@@ -191,6 +202,7 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/", "/index.html", "/favicon.ico").permitAll()
                 .requestMatchers("/api/auth/**", "/auth/**").permitAll() // Fixed: Add /api/auth/** pattern
+                .requestMatchers("/oauth2/**", "/login/oauth2/code/*").permitAll() // OAuth2 endpoints
                 .requestMatchers("/api/public/**", "/public/**").permitAll()
                 .requestMatchers("/api/tracking/**", "/tracking/**").permitAll() // Allow tracking without auth
                 .requestMatchers("/api/webhooks/**", "/webhooks/**").permitAll() // Amazon webhooks
@@ -215,6 +227,14 @@ public class SecurityConfig {
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             );
+        
+        // Conditionally configure OAuth2 if the handlers are available
+        if (oAuth2AuthenticationSuccessHandler != null && oAuth2AuthenticationFailureHandler != null) {
+            http.oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+                .failureHandler(oAuth2AuthenticationFailureHandler)
+            );
+        }
         
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);

@@ -6,11 +6,13 @@
  */
 package com.miniups;
 
+import com.miniups.config.TestRabbitConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, 
+                classes = {MiniUpsApplication.class, TestRabbitConfig.class})
 @ActiveProfiles("test")
 class MiniUpsApplicationTests {
 

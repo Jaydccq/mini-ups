@@ -36,6 +36,7 @@ package com.miniups.repository;
 
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.UserRole;
+import com.miniups.model.enums.AuthProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -65,4 +66,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRole(@Param("role") UserRole role);
     
     boolean existsByEmailAndIdNot(String email, Long id);
+    
+    // OAuth2 related queries
+    Optional<User> findByAuthProviderAndProviderId(AuthProvider authProvider, String providerId);
+    
+    boolean existsByAuthProviderAndProviderId(AuthProvider authProvider, String providerId);
+    
+    List<User> findByAuthProvider(AuthProvider authProvider);
+    
+    @Query("SELECT COUNT(u) FROM User u WHERE u.authProvider = :authProvider")
+    long countByAuthProvider(@Param("authProvider") AuthProvider authProvider);
 }
