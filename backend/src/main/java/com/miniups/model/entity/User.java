@@ -1,6 +1,7 @@
 package com.miniups.model.entity;
 
 import com.miniups.model.enums.UserRole;
+import com.miniups.model.enums.AuthProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -27,9 +28,8 @@ public class User extends BaseEntity {
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
     
-    @NotBlank
     @Size(min = 8, max = 255)
-    @Column(name = "password", nullable = false)
+    @Column(name = "password", nullable = true)
     private String password;
     
     @Size(max = 50)
@@ -54,6 +54,13 @@ public class User extends BaseEntity {
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+    
+    @Column(name = "provider_id")
+    private String providerId;
+    
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Shipment> shipments = new ArrayList<>();
     
@@ -64,6 +71,7 @@ public class User extends BaseEntity {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.authProvider = AuthProvider.LOCAL;
     }
     
     public String getUsername() {
@@ -163,5 +171,21 @@ public class User extends BaseEntity {
     
     public boolean isActive() {
         return enabled;
+    }
+    
+    public AuthProvider getAuthProvider() {
+        return authProvider;
+    }
+    
+    public void setAuthProvider(AuthProvider authProvider) {
+        this.authProvider = authProvider;
+    }
+    
+    public String getProviderId() {
+        return providerId;
+    }
+    
+    public void setProviderId(String providerId) {
+        this.providerId = providerId;
     }
 }

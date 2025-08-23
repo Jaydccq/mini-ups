@@ -31,6 +31,7 @@ import com.miniups.model.dto.auth.RegisterRequestDto;
 import com.miniups.model.dto.user.UserDto;
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.UserRole;
+import com.miniups.model.enums.AuthProvider;
 import com.miniups.repository.UserRepository;
 import com.miniups.security.JwtTokenProvider;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -327,5 +329,158 @@ public class AuthService {
      */
     public boolean isEmailAvailable(String email) {
         return !userRepository.existsByEmail(email);
+    }
+    
+    /**
+     * Process OAuth2 post-login logic
+     * 
+     * @param oidcUser OpenID Connect user information from OAuth2 provider
+     * @return User entity for local JWT generation
+     * @throws OAuth2AuthenticationProcessingException when processing fails
+     */
+    @Transactional
+    public User processOAuth2PostLogin(OidcUser oidcUser) {
+        logger.info("Processing OAuth2 post-login for user: {}", oidcUser.getEmail());
+        
+        String email = oidcUser.getEmail();
+        String providerId = oidcUser.getSubject();
+        
+        if (email == null) {
+            logger.error("Email not found from OAuth2 provider");
+            throw new OAuth2AuthenticationProcessingException("Email not found from OAuth2 provider");
+        }
+        
+        if (providerId == null) {
+            logger.error("Provider ID (subject) not found from OAuth2 provider");
+            throw new OAuth2AuthenticationProcessingException("Provider ID not found from OAuth2 provider");
+        }
+        
+        try {
+            // First, try to find user by provider and provider ID
+            Optional<User> userByProvider = userRepository.findByAuthProviderAndProviderId(AuthProvider.GOOGLE, providerId);
+            
+            if (userByProvider.isPresent()) {
+                // User already exists with this Google account
+                User user = userByProvider.get();
+                logger.info("Found existing OAuth2 user: {}", user.getUsername());
+                return user;
+            }
+            
+            // Check if user exists by email
+            Optional<User> userByEmail = userRepository.findByEmail(email);
+            
+            if (userByEmail.isPresent()) {
+                User existingUser = userByEmail.get();
+                if (existingUser.getAuthProvider() == AuthProvider.LOCAL) {
+                    // User exists with LOCAL provider - this requires manual account linking
+                    logger.warn("User exists with LOCAL provider, manual linking required: {}", email);
+                    throw new OAuth2AuthenticationProcessingException(
+                        "An account with this email already exists. Please log in with your password to link your Google account."
+                    );
+                }
+                // If it's already a Google user but provider ID doesn't match, it's an inconsistency
+                logger.warn("User exists with GOOGLE provider but different provider ID: {}", email);
+                throw new OAuth2AuthenticationProcessingException("Account linking inconsistency detected");
+            }
+            
+            // New user registration
+            User newUser = registerNewOAuth2User(oidcUser);
+            logger.info("Successfully created new OAuth2 user: {}", newUser.getUsername());
+            return newUser;
+            
+        } catch (OAuth2AuthenticationProcessingException e) {
+            // Re-throw OAuth2 specific exceptions
+            throw e;
+        } catch (DataAccessException e) {
+            logger.error("Database error during OAuth2 processing: {}", e.getMessage(), e);
+            throw new OAuth2AuthenticationProcessingException("Database error during OAuth2 processing", e);
+        } catch (Exception e) {
+            logger.error("Unexpected error during OAuth2 processing: {}", e.getMessage(), e);
+            throw new OAuth2AuthenticationProcessingException("OAuth2 processing failed", e);
+        }
+    }
+    
+    /**
+     * Register a new OAuth2 user
+     * 
+     * @param oidcUser OpenID Connect user information
+     * @return newly created User entity
+     */
+    private User registerNewOAuth2User(OidcUser oidcUser) {
+        logger.info("Registering new OAuth2 user: {}", oidcUser.getEmail());
+        
+        User newUser = new User();
+        newUser.setEmail(oidcUser.getEmail());
+        newUser.setAuthProvider(AuthProvider.GOOGLE);
+        newUser.setProviderId(oidcUser.getSubject());
+        newUser.setEnabled(true);
+        newUser.setRole(UserRole.USER);
+        
+        // Set names from OIDC claims
+        if (oidcUser.getGivenName() != null) {
+            newUser.setFirstName(oidcUser.getGivenName());
+        }
+        if (oidcUser.getFamilyName() != null) {
+            newUser.setLastName(oidcUser.getFamilyName());
+        }
+        
+        // Generate unique username from email
+        String username = generateUniqueUsernameFromEmail(oidcUser.getEmail());
+        newUser.setUsername(username);
+        
+        // Password is null for OAuth2 users
+        newUser.setPassword(null);
+        
+        return userRepository.save(newUser);
+    }
+    
+    /**
+     * Generate unique username from email address
+     * 
+     * @param email user's email address
+     * @return unique username
+     */
+    private String generateUniqueUsernameFromEmail(String email) {
+        // Extract the part before @ and clean it
+        String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
+        
+        // Ensure it's not too long
+        if (baseUsername.length() > 40) {
+            baseUsername = baseUsername.substring(0, 40);
+        }
+        
+        // Make sure it's not empty
+        if (baseUsername.isEmpty()) {
+            baseUsername = "user";
+        }
+        
+        String username = baseUsername;
+        int counter = 1;
+        
+        // Keep trying until we find a unique username
+        while (userRepository.existsByUsername(username)) {
+            username = baseUsername + counter;
+            counter++;
+            
+            // Safety check to avoid infinite loop
+            if (counter > 9999) {
+                username = baseUsername + System.currentTimeMillis();
+                break;
+            }
+        }
+        
+        logger.debug("Generated unique username: {} for email: {}", username, email);
+        return username;
+    }
+    
+    /**
+     * Check if account linking is required for the given email
+     * 
+     * @param email user's email address
+     * @return true if manual account linking is required
+     */
+    public boolean requiresAccountLinking(String email) {
+        Optional<User> user = userRepository.findByEmail(email);
+        return user.isPresent() && user.get().getAuthProvider() == AuthProvider.LOCAL;
     }
 }

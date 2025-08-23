@@ -89,7 +89,7 @@ services:
       NUM_TRUCKS: ${NUM_TRUCKS:-5}
       WORLD_ID: ${WORLD_ID:-}
     ports:
-      - "8081:8081"
+      - "0.0.0.0:8081:8081"  # Bind to all interfaces for external access
     depends_on:
       ups-database:
         condition: service_healthy
@@ -109,17 +109,19 @@ services:
     networks:
       - mini-ups-network
 
-  # React前端 (UPS)
+  # React前端 (UPS) - External Access Configuration
   ups-frontend:
     image: ${UPS_FRONTEND_IMAGE:-mini-ups-frontend:latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: production
     container_name: mini-ups-frontend
     environment:
-      REACT_APP_API_URL: http://localhost:8081/api
+      REACT_APP_API_URL: http://44.219.181.190:8081/api
+      NODE_ENV: production
     ports:
-      - "3000:80"
+      - "0.0.0.0:3000:80"  # Bind to all interfaces for external access
     depends_on:
       - ups-backend
     healthcheck:
@@ -152,7 +154,7 @@ services:
     build: ./knowledge/amazon/.
     container_name: mini-amazon-web
     ports:
-      - "8080:8080"
+      - "0.0.0.0:8080:8080"  # Bind to all interfaces for external access
     volumes:
       - ./knowledge/amazon:/app
     environment:

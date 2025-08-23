@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.mockito.Mockito;
 
 /**
  * Test configuration for RabbitMQ and other components
@@ -38,19 +39,17 @@ public class TestRabbitConfig {
 
     /**
      * Mock ExceptionMetricsConfig bean for testing
+     * Creates a mock that avoids circular dependencies
      * 
      * @return Mock ExceptionMetricsConfig that can be used in tests
      */
     @Bean
     @Primary
     public ExceptionMetricsConfig exceptionMetricsConfig() {
-        return new ExceptionMetricsConfig(null) {
-            @Override
-            public void recordException(Exception exception, String endpoint) {
-                // No-op for tests - just log
-                System.out.println("Test: Exception recorded: " + exception.getClass().getSimpleName() + " at " + endpoint);
-            }
-        };
+        ExceptionMetricsConfig mock = Mockito.mock(ExceptionMetricsConfig.class);
+        // Configure the mock to do nothing when methods are called
+        Mockito.doNothing().when(mock).recordException(Mockito.any(Exception.class), Mockito.anyString());
+        return mock;
     }
 
     /**

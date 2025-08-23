@@ -6,14 +6,18 @@
  */
 package com.miniups;
 
-import com.miniups.config.TestRabbitConfig;
+import com.miniups.config.TestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.context.annotation.Import;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, 
-                classes = {MiniUpsApplication.class, TestRabbitConfig.class})
+                properties = {
+                    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration,org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration"
+                })
 @ActiveProfiles("test")
+@Import(TestConfig.class)
 class MiniUpsApplicationTests {
 
     @Test

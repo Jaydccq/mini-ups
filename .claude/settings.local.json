@@ -229,7 +229,18 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthServiceTest -Dspring.profiles.active=test -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"*ServiceTest\" -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"AdminServiceTest\" -q)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"AuthServiceTest,AdminServiceTest\" -q)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"AuthServiceTest,AdminServiceTest\" -q)",
+      "Bash(./scripts/ec2-connectivity-check.sh:*)",
+      "Bash(ping:*)",
+      "WebSearch",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=AuthServiceOAuth2Test -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=OAuth2AuthenticationSuccessHandlerTest -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -e -X)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -X)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -q -f backend/pom.xml)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn -f /Users/hongxichen/Desktop/mini-ups/backend/pom.xml test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn -f /Users/hongxichen/Desktop/mini-ups/backend/pom.xml test -Dspring.profiles.active=test -q)"
     ],
     "deny": []
   }

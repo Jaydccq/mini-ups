@@ -6,6 +6,7 @@ import com.miniups.service.EventPublisherService;
 import com.miniups.config.ExceptionMetricsConfig;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,6 +19,7 @@ import org.mockito.Mockito;
  */
 @TestConfiguration
 @Profile("test")
+@Import(TestSecurityConfig.class)
 public class TestConfig {
 
     /**
@@ -62,15 +64,8 @@ public class TestConfig {
     /**
      * Mock Exception Metrics Config for testing.
      * This prevents actual metrics collection during tests.
-     *
-     * @return Mock ExceptionMetricsConfig instance
+     * Removed duplicate - handled by TestRabbitConfig
      */
-    @Bean
-    @Primary
-    @Profile("test")
-    public ExceptionMetricsConfig exceptionMetricsConfig() {
-        return Mockito.mock(ExceptionMetricsConfig.class);
-    }
 
     /**
      * Password encoder bean for testing.
