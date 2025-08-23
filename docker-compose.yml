@@ -1,90 +1,4 @@
 services:
-  # World Simulator Database
-  worldsim-db:
-    image: postgres:12
-    container_name: mini-ups-worldsim-db
-    environment:
-      POSTGRES_PASSWORD: abc123
-      POSTGRES_USER: postgres
-      POSTGRES_DB: worldSim
-    ports:
-      - "25432:5432"
-    volumes:
-      - worldsim_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      projectnet:
-        aliases:
-          - mydb
-
-  # World Simulator Service
-  world-simulator:
-    build:
-      context: ./knowledge/world_simulator_exec/docker_deploy/
-    container_name: mini-ups-world-simulator
-    command: bash -c "./wait-for-it.sh mydb:5432 --strict -- ./server 12345 23456 0"
-    ports:
-      - "12345:12345"  # UPS port
-      - "23456:23456"  # Amazon port
-    depends_on:
-      worldsim-db:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - projectnet
-
-  # Amazon Database
-  amazon-db:
-    image: postgres:12-alpine3.15
-    container_name: mini-ups-amazon-db
-    volumes:
-      - amazon_postgres_data:/var/lib/postgresql/data/
-    environment:
-      POSTGRES_PASSWORD: abc123
-      POSTGRES_USER: postgres
-      POSTGRES_DB: mini_amazon
-    ports:
-      - "15432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - projectnet
-
-  # Amazon Service
-  amazon-web:
-    build:
-      context: ./knowledge/amazon/
-    container_name: mini-ups-amazon-web
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./knowledge/amazon:/app
-    environment:
-      FLASK_APP: app
-      FLASK_ENV: development
-      FLASK_RUN_PORT: 8080
-      DATABASE_URL: postgresql://postgres:abc123@amazon-db:5432/mini_amazon
-      SECRET_KEY: dev
-      WORLD_HOST: world-simulator
-      WORLD_PORT: "23456"
-    depends_on:
-      amazon-db:
-        condition: service_healthy
-      world-simulator:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - projectnet
-
   # UPS PostgreSQL Database
   ups-database:
     image: postgres:15
@@ -108,7 +22,7 @@ services:
     networks:
       - projectnet
 
-  # Redis缓存
+  # Redis
   redis:
     image: redis:7-alpine
     container_name: mini-ups-redis
@@ -124,7 +38,7 @@ services:
     networks:
       - projectnet
 
-  # RabbitMQ消息队列
+  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: mini-ups-rabbitmq
@@ -167,10 +81,7 @@ services:
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_for_development_only}
-      WORLD_SIMULATOR_HOST: world-simulator
-      WORLD_SIMULATOR_PORT: 12345
-      AMAZON_API_URL: http://amazon-web:8080
-      AMAZON_WEBHOOK_AUTH_ENABLED: false  # Disable webhook authentication for development
+      AMAZON_WEBHOOK_AUTH_ENABLED: false
       NUM_TRUCKS: ${NUM_TRUCKS:-5}
       WORLD_ID: ${WORLD_ID:-}
     ports:
@@ -182,8 +93,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      world-simulator:
-        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -222,8 +131,6 @@ services:
 volumes:
   postgres_data:
   rabbitmq_data:
-  worldsim_data:
-  amazon_postgres_data:
 
 networks:
   projectnet:
