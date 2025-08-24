@@ -1,6 +1,6 @@
 package com.miniups.concurrency;
 
-import com.miniups.config.TestConfig;
+import com.miniups.config.TestCoreConfig;
 import com.miniups.model.entity.Truck;
 import com.miniups.model.enums.TruckStatus;
 import com.miniups.repository.TruckRepository;
@@ -42,7 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 )
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
-@Import(TestConfig.class)
+@Import(TestCoreConfig.class)
 @Slf4j
 public abstract class ConcurrencyTestBase {
 

@@ -104,7 +104,7 @@ app:
     allowed-origins: http://localhost:3000
   rabbitmq:
     test:
-      enabled: true # Enable test mode which uses mocks
+      enabled: false # Disable Rabbit test mode by default for unit tests
   notifications:
     enabled: false # Disable notifications in tests
     email:
