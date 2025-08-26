@@ -1,0 +1,104 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Remaining IDs (current segment)",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "leaf_segment_remaining{biz_tag=\"$biz_tag\"}",
+          "legendFormat": "remaining",
+          "refId": "A"
+        }
+      ],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Generated IDs /s",
+      "gridPos": {"h": 6, "w": 9, "x": 6, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(leaf_segment_generated_total{biz_tag=\"$biz_tag\"}[1m])",
+          "legendFormat": "generated/s",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Preload successes & failures /s",
+      "gridPos": {"h": 6, "w": 9, "x": 15, "y": 0},
+      "targets": [
+        {
+          "expr": "rate(leaf_segment_preload_successes_total{biz_tag=\"$biz_tag\"}[1m])",
+          "legendFormat": "success/s",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(leaf_segment_preload_failures_total{biz_tag=\"$biz_tag\"}[1m])",
+          "legendFormat": "failure/s",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Preload duration p95 (s)",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(leaf_segment_preload_seconds_bucket{biz_tag=\"$biz_tag\"}[5m])) by (le))",
+          "legendFormat": "p95",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Fallback used /s",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(leaf_segment_fallback_used_total[5m])",
+          "legendFormat": "fallback/s",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["miniups", "tracking", "leaf-segment"],
+  "templating": {
+    "list": [
+      {
+        "name": "biz_tag",
+        "type": "query",
+        "label": "Biz Tag",
+        "datasource": null,
+        "query": "label_values(leaf_segment_generated_total, biz_tag)",
+        "includeAll": false,
+        "refresh": 2,
+        "current": {"selected": true, "text": "tracking_number", "value": "tracking_number"}
+      }
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "MiniUPS - Tracking ID Generator",
+  "uid": "miniups-tracking-id",
+  "version": 1,
+  "weekStart": ""
+}
+

@@ -133,7 +133,7 @@ logging:
   file:
     name: logs/mini-ups.log
 
-# Management Endpoints
+# Management Endpoints / Actuator / Micrometer
 management:
   endpoints:
     web:
@@ -142,6 +142,11 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: mini-ups-backend
 
 # OpenAPI Documentation
 springdoc:

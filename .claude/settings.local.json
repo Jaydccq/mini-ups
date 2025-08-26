@@ -231,7 +231,16 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"AdminServiceTest\" -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dspring.profiles.active=test -Dtest=\"AuthServiceTest,AdminServiceTest\" -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -X)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -q)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=MiniUpsApplicationTests -Dspring.profiles.active=test -q)",
+      "WebSearch",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean compile test-compile -DskipTests=true -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean install -DskipTests=true)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac SimpleLeafTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac LeafStressTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac -cp \"src/test/java:src/main/java\" src/test/java/com/miniups/ProductionLeafValidationTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac -cp \"backend/src/test/java:backend/src/main/java\" backend/src/test/java/com/miniups/ProductionLeafValidationTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac ProductionLeafValidationTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac /Users/hongxichen/Desktop/mini-ups/ProductionLeafValidationTest.java)"
     ],
     "deny": []
   }

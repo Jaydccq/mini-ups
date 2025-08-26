@@ -1,0 +1,14 @@
+# Submodules configuration for external services
+
+[submodule "knowledge/amazon"]
+	path = knowledge/amazon
+	url = https://github.com/Jaydccq/mini-amazon-ups
+  branch = main
+  shallow = true
+
+[submodule "knowledge/world_simulator_exec"]
+  path = knowledge/world_simulator_exec
+  url = https://github.com/yunjingliu96/world_simulator_exec
+  branch = main
+  shallow = true
+

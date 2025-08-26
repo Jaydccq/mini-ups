@@ -44,12 +44,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.function.Predicate;
+
+import org.hibernate.exception.ConstraintViolationException;
 
 @Service
 @Transactional
@@ -73,37 +77,31 @@ public class AuthService {
     }
     
     /**
-     * User registration
+     * User registration with TOCTOU protection
+     * 
+     * 🚀 CONCURRENCY OPTIMIZED 🚀  
+     * - Fixed TOCTOU race condition using database constraints
+     * - Let database handle uniqueness enforcement atomically
+     * - Catch constraint violations and convert to business exceptions
      * 
      * @param registerRequest registration request data
      * @return registration success response with JWT token
-     * @throws RuntimeException when username or email already exists
+     * @throws UserAlreadyExistsException when username or email already exists
      */
     public AuthResponseDto register(RegisterRequestDto registerRequest) {
         logger.info("Start processing user registration: username={}, email={}", 
                    registerRequest.getUsername(), registerRequest.getEmail());
         
-        // Check if username already exists
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            logger.warn("Registration failed - username already exists: {}", registerRequest.getUsername());
-            throw new UserAlreadyExistsException("username", registerRequest.getUsername());
-        }
-        
-        // Check if email already exists
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            logger.warn("Registration failed - email already exists: {}", registerRequest.getEmail());
-            throw new UserAlreadyExistsException("email", registerRequest.getEmail());
-        }
-        
         try {
-            // Create new user
+            // Create new user directly without pre-checking
+            // Let database constraints handle uniqueness atomically
             User user = createUserFromRegisterRequest(registerRequest);
             
-            // Save user to database
+            // Save user to database - this will fail if constraints are violated
             User savedUser = userRepository.save(user);
             logger.info("User created successfully: id={}, username={}", savedUser.getId(), savedUser.getUsername());
             
-            // Generate JWT token (compat with tests uses single-arg method)
+            // Generate JWT token
             String token = jwtTokenProvider.generateToken(savedUser.getUsername());
             Long expiresIn = jwtTokenProvider.getExpirationTime();
             
@@ -116,16 +114,60 @@ public class AuthService {
             logger.info("User registration completed: username={}", savedUser.getUsername());
             return response;
             
-        } catch (DataAccessException e) {
-            logger.error("Database operation error: username={}", registerRequest.getUsername(), e);
-            throw DatabaseOperationException.save("User", e);
+        } catch (DataIntegrityViolationException e) {
+            // 精确捕获唯一约束冲突，优先通过约束名判断字段
+            String constraint = extractConstraintName(e);
+            if (constraint != null) {
+                if (constraintNameMatches(constraint, s -> s.contains("username"))) {
+                    logger.warn("Registration failed - username already exists: {}", registerRequest.getUsername());
+                    throw new UserAlreadyExistsException("username", registerRequest.getUsername());
+                }
+                if (constraintNameMatches(constraint, s -> s.contains("email"))) {
+                    logger.warn("Registration failed - email already exists: {}", registerRequest.getEmail());
+                    throw new UserAlreadyExistsException("email", registerRequest.getEmail());
+                }
+            }
+            // 回退：查询确定冲突字段
+            if (userRepository.existsByUsername(registerRequest.getUsername())) {
+                throw new UserAlreadyExistsException("username", registerRequest.getUsername());
+            }
+            if (userRepository.existsByEmail(registerRequest.getEmail())) {
+                throw new UserAlreadyExistsException("email", registerRequest.getEmail());
+            }
+            // 未识别到具体字段，作为通用重复
+            throw new UserAlreadyExistsException("user", "User with provided details already exists");
+        
         } catch (UserAlreadyExistsException e) {
             // Re-throw business exceptions as-is
             throw e;
+        } catch (DataAccessException e) {
+            logger.error("Database operation error: username={}", registerRequest.getUsername(), e);
+            throw DatabaseOperationException.save("User", e);
         } catch (Exception e) {
             logger.error("Unexpected error during user registration: username={}", registerRequest.getUsername(), e);
-            // For unexpected exceptions, throw a business exception that will be handled properly
             throw new RuntimeException("Registration failed, please try again later");
+        }
+    }
+
+    /**
+     * 从 DataIntegrityViolationException 中提取底层唯一约束名称
+     */
+    private String extractConstraintName(DataIntegrityViolationException e) {
+        Throwable cause = e.getCause();
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException cve) {
+                return cve.getConstraintName();
+            }
+            cause = cause.getCause();
+        }
+        return null;
+    }
+
+    private boolean constraintNameMatches(String name, Predicate<String> predicate) {
+        try {
+            return name != null && predicate.test(name.toLowerCase());
+        } catch (Exception ignore) {
+            return false;
         }
     }
     

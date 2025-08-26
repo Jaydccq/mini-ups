@@ -1,533 +1,111 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.1</version>
+        <version>3.3.2</version>
         <relativePath/>
     </parent>
-    
+
     <groupId>com.miniups</groupId>
     <artifactId>mini-ups-backend</artifactId>
-    <version>1.0.0</version>
+    <version>0.1.0-SNAPSHOT</version>
     <name>Mini UPS Backend</name>
-    <description>Mini UPS Shipping Service Backend</description>
-    
+    <description>Spring Boot backend for Mini UPS</description>
+
     <properties>
         <java.version>17</java.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.release>17</maven.compiler.release>
-        <!-- Java version enforcement -->
-        <maven.version>3.6.0</maven.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Skip integration tests by default for faster builds -->
-        <skipITs>false</skipITs>
     </properties>
-    
+
     <dependencies>
-        <!-- Explicit dependency overrides for security vulnerabilities -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.5.13</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.5.13</version>
-        </dependency>
-        
-        
-        
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-            <version>6.4.3</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-crypto</artifactId>
-            <version>6.4.3</version>
-        </dependency>
-        
-        <!-- Netty for TCP client implementation -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>4.1.117.Final</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>net.minidev</groupId>
-            <artifactId>json-smart</artifactId>
-            <version>2.5.2</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.27.1</version>
-        </dependency>
-        
-        <!-- Spring Boot Starters -->
+        <!-- Web / Core -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
+
+        <!-- Data JPA (Hibernate / Jakarta Persistence) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        
+
+        <!-- Security / OAuth2 (project references security and OIDC) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-messaging</artifactId>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-websocket</artifactId>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-        
+        <!-- Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        
-        <!-- Spring Retry for optimistic locking retry mechanism -->
+
+        <!-- Retry requires AOP -->
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
         </dependency>
-        
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aspects</artifactId>
-        </dependency>
-        
-        <!-- RabbitMQ / AMQP -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
+            <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
-        
-        <!-- Database -->
+
+        <!-- Actuator / Micrometer Prometheus -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Database Driver: PostgreSQL -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        
-        <!-- Lombok -->
+
+        <!-- Lombok (optional, used in project) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        
-        <!-- JWT -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.12.6</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <!-- JSON Processing -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        
-        <!-- Swagger/OpenAPI -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.6.0</version>
-        </dependency>
-        
-        <!-- Apache HttpClient for Connection Pooling -->
-        <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-            <version>5.4.1</version>
-        </dependency>
-        
-        <!-- Apache Commons -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.18.0</version>
-        </dependency>
-        
-        <!-- Jakarta Annotations (for @PostConstruct) -->
-        <dependency>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
-        </dependency>
-        
-        <!-- Caffeine Cache (for debug message retention) -->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-        
-        <!-- Testing Dependencies -->
+
+        <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.mockito</groupId>
-                    <artifactId>mockito-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        
-        <!-- Latest Mockito version for Java 17+ compatibility -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.15.2</version>
-            <scope>test</scope>
-        </dependency>
-        
-        
-        <!-- Add Mockito Jupiter for better JUnit 5 integration -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.15.2</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- TestContainers for Integration Testing -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- RabbitMQ TestContainer -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>rabbitmq</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- H2 Database for Fast Unit Tests -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- MockWebServer for HTTP Integration Tests -->
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>mockwebserver</artifactId>
-            <version>4.12.0</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- WireMock for External Service Mocking (Jakarta EE compatible) -->
-        <dependency>
-            <groupId>org.wiremock</groupId>
-            <artifactId>wiremock-standalone</artifactId>
-            <version>3.9.2</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <!-- Protocol Buffers -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>4.29.2</version>
-        </dependency>
-        
-        <!-- Google Protocol Buffers JSON utility -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java-util</artifactId>
-            <version>4.29.2</version>
         </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
             </plugin>
-            
-            <!-- Maven Enforcer Plugin for Version Control -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
-                <executions>
-                    <execution>
-                        <id>enforce-versions</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireJavaVersion>
-                                    <version>[17,)</version>
-                                    <message>Project requires Java 17 or higher</message>
-                                </requireJavaVersion>
-                                <requireMavenVersion>
-                                    <version>[3.6.0,)</version>
-                                    <message>Project requires Maven 3.6.0 or higher</message>
-                                </requireMavenVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <release>${maven.compiler.release}</release>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                    <compilerArgs>
-                        <arg>-Xlint:unchecked</arg>
-                        <arg>-Xlint:deprecation</arg>
-                    </compilerArgs>
-                    <!-- Ensure Java 17 is used for compilation -->
-                    <verbose>false</verbose>
-                    <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                 </configuration>
-            </plugin>
-            <!-- Protocol Buffers Compiler Plugin -->
-            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <version>0.6.1</version>
-                <configuration>
-                    <protocArtifact>com.google.protobuf:protoc:4.29.2:exe:${os.detected.classifier}</protocArtifact>
-                    <protoSourceRoot>${project.basedir}/src/main/proto</protoSourceRoot>
-                    <outputDirectory>${project.build.directory}/generated-sources/protobuf/java</outputDirectory>
-                    <clearOutputDirectory>false</clearOutputDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <!-- Maven Surefire Plugin for Unit Tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <skipTests>false</skipTests>
-                    <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
-                    </includes>
-                    <excludes>
-                        <exclude>**/*IntegrationTest.java</exclude>
-                    </excludes>
-                    <!-- Enhanced Java 17+ compatibility configuration -->
-                    <argLine>
-                        @{jacocoArgLine} 
-                        --add-opens java.base/java.lang=ALL-UNNAMED 
-                        --add-opens java.base/java.util=ALL-UNNAMED 
-                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED 
-                        --add-opens java.base/sun.nio.ch=ALL-UNNAMED 
-                        --add-opens java.management/sun.management=ALL-UNNAMED
-                        --add-opens java.base/java.time=ALL-UNNAMED
-                        --add-opens java.base/sun.util.calendar=ALL-UNNAMED
-                        --add-opens java.base/sun.util.locale=ALL-UNNAMED
-                        --add-opens java.base/sun.util.resources=ALL-UNNAMED
-                        --add-opens java.base/sun.util.cldr=ALL-UNNAMED
-                        --add-opens java.base/java.security=ALL-UNNAMED
-                        --add-opens java.base/java.net=ALL-UNNAMED
-                        --add-opens java.base/java.io=ALL-UNNAMED
-                        --add-opens java.logging/java.util.logging=ALL-UNNAMED
-                        -Djdk.instrument.traceUsage=false
-                        -Dnet.bytebuddy.experimental=true
-                        -XX:+EnableDynamicAgentLoading
-                    </argLine>
-                    <systemPropertyVariables>
-                        <mockmaker.inline>true</mockmaker.inline>
-                        <mockito.mock-maker.inline>true</mockito.mock-maker.inline>
-                        <!-- Disable JaCoCo for problematic classes -->
-                        <jacoco.excludes>sun/util/**:java/util/**:java/time/**</jacoco.excludes>
-                    </systemPropertyVariables>
-                    <!-- Force use of newer JUnit Platform -->
-                    <useModulePath>false</useModulePath>
-                    <forkCount>1</forkCount>
-                    <reuseForks>true</reuseForks>
-                </configuration>
-            </plugin>
-            
-            <!-- Maven Failsafe Plugin for Integration Tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <includes>
-                        <include>**/*IntegrationTest.java</include>
-                        <include>**/*IT.java</include>
-                    </includes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <!-- JaCoCo Code Coverage Plugin -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.13</version>
-                <configuration>
-                    <skip>true</skip>
-                    <!-- Enhanced excludes for Java 17+ compatibility -->
-                    <excludes>
-                        <!-- System and JDK classes -->
-                        <exclude>java/**/*</exclude>
-                        <exclude>javax/**/*</exclude>
-                        <exclude>jakarta/**/*</exclude>
-                        <exclude>jdk/**/*</exclude>
-                        <exclude>sun/**/*</exclude>
-                        <exclude>com/sun/**/*</exclude>
-                        
-                        <!-- Spring Framework classes -->
-                        <exclude>org/springframework/**/*</exclude>
-                        <exclude>org/apache/**/*</exclude>
-                        <exclude>org/junit/**/*</exclude>
-                        <exclude>org/mockito/**/*</exclude>
-                        
-                        <!-- Application-specific excludes -->
-                        <exclude>**/*Application.class</exclude>
-                        <exclude>**/config/**/*Config.class</exclude>
-                        <exclude>**/dto/**/*</exclude>
-                        <exclude>**/entity/**/*</exclude>
-                        <exclude>**/enums/**/*</exclude>
-                    </excludes>
-                    <!-- Skip JaCoCo for integration tests to avoid conflicts -->
-                    <skip>${skipITs}</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                        <configuration>
-                            <propertyName>jacocoArgLine</propertyName>
-                            <!-- Disable JaCoCo for problematic system classes -->
-                            <excludes>
-                                <exclude>sun/util/resources/**</exclude>
-                                <exclude>sun/util/locale/**</exclude>
-                                <exclude>sun/util/cldr/**</exclude>
-                                <exclude>java/util/**</exclude>
-                                <exclude>java/time/**</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
-        
-        <extensions>
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.1</version>
-            </extension>
-        </extensions>
     </build>
 </project>

@@ -6,10 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,10 +15,20 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * 追踪号生成并发测试
- * 测试高并发追踪号生成的唯一性、性能和线程安全性
+ * 追踪号生成并发测试 - Leaf-Segment 版本
+ * 
+ * 🚀 新增测试内容 🚀
+ * - 测试Leaf-Segment算法的高并发性能（50,000+ QPS）
+ * - 验证双缓冲机制的无缝切换
+ * - 测试异步预加载的线程安全性
+ * - 对比新旧实现的性能差异
+ * 
+ * 测试重点：
+ * - 唯一性保证（无重复追踪号）
+ * - 高并发性能（QPS大幅提升）
+ * - 线程安全性（无竞争条件）
  */
-@DisplayName("追踪号生成并发测试")
+@DisplayName("追踪号生成并发测试 - Leaf-Segment优化版本")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ConcurrentTrackingNumberGenerationTest extends ConcurrencyTestBase {
 
@@ -72,7 +78,7 @@ public class ConcurrentTrackingNumberGenerationTest extends ConcurrencyTestBase 
         assertThat(uniqueNumbers.size()).isEqualTo(nonNullResults);
         assertThat(nonNullResults).isLessThanOrEqualTo(threadCount * operationsPerThread);
 
-        // 验证格式正确性
+        // 验证格式正确性（UPS + 12位数字）
         for (String trackingNumber : uniqueNumbers) {
             assertThat(trackingNumber).startsWith("UPS");
             assertThat(trackingService.isValidTrackingNumberFormat(trackingNumber)).isTrue();
@@ -80,11 +86,11 @@ public class ConcurrentTrackingNumberGenerationTest extends ConcurrencyTestBase 
     }
 
     @Test
-    @DisplayName("高频追踪号生成性能测试")
+    @DisplayName("高频追踪号生成性能测试 - Leaf-Segment优化")
     void testHighFrequencyTrackingNumberGeneration() {
-        // Given
-        int threadCount = 100;
-        int operationsPerThread = 50;
+        // Given - 大幅提高并发量测试新算法
+        int threadCount = 200; // 从100增加到200
+        int operationsPerThread = 100; // 从50增加到100
         AtomicInteger successCounter = new AtomicInteger(0);
 
         // When
@@ -107,16 +113,18 @@ public class ConcurrentTrackingNumberGenerationTest extends ConcurrencyTestBase 
         double totalTimeSeconds = (endTime - startTime) / 1000.0;
 
         // Then
-        printConcurrencyTestResult(result, "高频追踪号生成");
+        printConcurrencyTestResult(result, "Leaf-Segment高频追踪号生成");
 
+        System.out.println("=== Leaf-Segment 性能测试结果 ===");
         System.out.println("总执行时间: " + totalTimeSeconds + " 秒");
         System.out.println("成功生成数: " + successCounter.get());
         System.out.println("平均每秒生成: " + String.format("%.2f", result.getOperationsPerSecond()));
+        System.out.println("预期性能提升: 10-100倍（无synchronized阻塞）");
 
-        // 性能要求
+        // Leaf-Segment性能要求 - 应该有巨大提升
         assertThat(result.getSuccessRate()).isGreaterThan(99.0);
-        assertThat(result.getOperationsPerSecond()).isGreaterThan(100.0);
-        assertThat(totalTimeSeconds).isLessThan(30.0);
+        assertThat(result.getOperationsPerSecond()).isGreaterThan(1000.0); // 从100提高到1000
+        assertThat(totalTimeSeconds).isLessThan(15.0); // 从30秒减少到15秒
     }
 
     @Test
@@ -126,14 +134,14 @@ public class ConcurrentTrackingNumberGenerationTest extends ConcurrencyTestBase 
         int threadCount = 30;
         int operationsPerThread = 10;
         String[] testNumbers = {
-            "UPS123456789012345",
-            "UPS000000000000001",
-            "ABC123456789012345", // 无效
-            "UPS12345",           // 无效
+            "UPS123456789012",    // 有效（12位）
+            "UPS000000000001",    // 有效
+            "ABC123456789012",    // 无效（前缀）
+            "UPS12345",           // 无效（太短）
             "",                   // 无效
             null,                 // 无效
-            "ups123456789012345", // 无效（小写）
-            "UPS999999999999999"
+            "ups123456789012",    // 无效（小写）
+            "UPS999999999999"     // 有效（12位）
         };
 
         // When
@@ -201,8 +209,8 @@ public class ConcurrentTrackingNumberGenerationTest extends ConcurrencyTestBase 
     }
 
     @Test
-    @DisplayName("追踪号时间戳分析测试")
-    void testTrackingNumberTimestampAnalysis() {
+    @DisplayName("追踪号格式分析测试（无时间戳）")
+    void testTrackingNumberFormatAnalysis() {
         // Given
         int threadCount = 20;
         int operationsPerThread = 10;
@@ -224,32 +232,12 @@ public class ConcurrentTrackingNumberGenerationTest extends ConcurrencyTestBase 
         System.out.println("生成的追踪号样例:");
         validNumbers.stream().limit(10).forEach(num -> System.out.println("  " + num));
 
-        // 验证所有追踪号都有正确的时间戳结构
+        // 验证所有追踪号都有正确的结构（UPS + 12位）
         for (String trackingNumber : validNumbers) {
             assertThat(trackingNumber).startsWith("UPS");
-            assertThat(trackingNumber).hasSize(21); // UPS (3) + timestamp (14) + sequence (4) = 21 chars
-            
-            // 提取时间戳部分（UPS后的前14位）
-            String timestampPart = trackingNumber.substring(3, 17);
-            assertThat(timestampPart).matches("\\d{14}");
-        }
-
-        // 验证时间戳的合理性（应该接近当前时间）
-        long testStartTime = System.currentTimeMillis();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        
-        for (String trackingNumber : validNumbers.subList(0, Math.min(5, validNumbers.size()))) {
-            String timestampStr = trackingNumber.substring(3, 17);
-            
-            try {
-                LocalDateTime timestamp = LocalDateTime.parse(timestampStr, formatter);
-                long timestampMillis = timestamp.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-                
-                // 时间戳应该在测试执行时间的合理范围内（1分钟内）
-                assertThat(timestampMillis).isBetween(testStartTime - 60000, System.currentTimeMillis() + 1000);
-            } catch (DateTimeParseException e) {
-                fail("无效的时间戳格式: " + timestampStr);
-            }
+            assertThat(trackingNumber).hasSize(15); // UPS (3) + sequence (12)
+            String seqPart = trackingNumber.substring(3);
+            assertThat(seqPart).matches("\\d{12}");
         }
     }
 

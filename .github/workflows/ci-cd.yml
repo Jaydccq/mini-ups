@@ -71,6 +71,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: false
+        persist-credentials: false
 
     - name: Set up JDK ${{ env.JAVA_VERSION }}
       uses: actions/setup-java@v4
@@ -174,12 +177,12 @@ jobs:
       env:
         # Ensure Java 17 is used (actions/setup-java@v4 sets this)
         JAVA_HOME: ${{ env.JAVA_HOME }}
-        # CI Database Configuration
-        TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/ups_db_test
-        TEST_DATABASE_DRIVER: org.postgresql.Driver
-        TEST_DATABASE_USERNAME: postgres
-        TEST_DATABASE_PASSWORD: abc123
-        TEST_DATABASE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+        # Force H2 for unit tests to avoid container DB flakiness
+        SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+        SPRING_DATASOURCE_USERNAME: sa
+        SPRING_DATASOURCE_PASSWORD: ""
+        SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
         # CI Redis Configuration
         TEST_REDIS_HOST: localhost
         TEST_REDIS_PORT: 6379

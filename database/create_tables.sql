@@ -238,6 +238,29 @@ CREATE TRIGGER update_shipments_updated_at BEFORE UPDATE ON shipments FOR EACH R
 CREATE TRIGGER update_packages_updated_at BEFORE UPDATE ON packages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_shipment_status_history_updated_at BEFORE UPDATE ON shipment_status_history FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_address_changes_updated_at BEFORE UPDATE ON address_changes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 8. Tracking Sequences table (追踪号序列表) - Leaf-Segment 模式
+CREATE TABLE IF NOT EXISTS tracking_sequences (
+    biz_tag VARCHAR(128) PRIMARY KEY,
+    max_id BIGINT NOT NULL DEFAULT 0,
+    step INT NOT NULL DEFAULT 1000,
+    description VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Initialize default tracking sequence for tracking numbers
+INSERT INTO tracking_sequences (biz_tag, max_id, step, description)
+VALUES ('tracking_number', 0, 2000, 'UPS tracking number segment sequence')
+ON CONFLICT (biz_tag) DO NOTHING;
+
+-- Indexes for tracking_sequences
+CREATE INDEX IF NOT EXISTS idx_tracking_sequences_updated_at ON tracking_sequences(updated_at);
+
+-- Auto-update updated_at on update
+CREATE TRIGGER update_tracking_sequences_updated_at
+BEFORE UPDATE ON tracking_sequences
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_truck_location_history_updated_at BEFORE UPDATE ON truck_location_history FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 COMMIT;
