@@ -240,7 +240,12 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac -cp \"src/test/java:src/main/java\" src/test/java/com/miniups/ProductionLeafValidationTest.java)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac -cp \"backend/src/test/java:backend/src/main/java\" backend/src/test/java/com/miniups/ProductionLeafValidationTest.java)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac ProductionLeafValidationTest.java)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac /Users/hongxichen/Desktop/mini-ups/ProductionLeafValidationTest.java)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 javac /Users/hongxichen/Desktop/mini-ups/ProductionLeafValidationTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac LeafSegmentQPSTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH java LeafSegmentQPSTest)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ConcurrentTrackingNumberGenerationTest -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ConcurrentTrackingNumberGenerationTest -Dspring.profiles.active=test -q -f backend/pom.xml)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac -cp \".:postgresql.jar\" LeafSegmentIntegrationTest.java)"
     ],
     "deny": []
   }
