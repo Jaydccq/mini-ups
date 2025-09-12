@@ -245,7 +245,12 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH java LeafSegmentQPSTest)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ConcurrentTrackingNumberGenerationTest -Dspring.profiles.active=test -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=ConcurrentTrackingNumberGenerationTest -Dspring.profiles.active=test -q -f backend/pom.xml)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac -cp \".:postgresql.jar\" LeafSegmentIntegrationTest.java)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac -cp \".:postgresql.jar\" LeafSegmentIntegrationTest.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn protobuf:compile)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn clean)",
+      "Bash(./scripts/test-mcp.sh:*)",
+      "Read(//Users/hongxichen/Desktop/**)",
+      "Bash(scripts/test-mcp.sh:*)"
     ],
     "deny": []
   }

@@ -36,14 +36,14 @@ public class HomeController {
         
         Map<String, String> endpoints = new HashMap<>();
         endpoints.put("health", "/actuator/health");
-        endpoints.put("api_docs", "/api-docs");
-        endpoints.put("swagger_ui", "/swagger-ui.html");
+        endpoints.put("api_docs", "/v3/api-docs");
+        endpoints.put("swagger_ui", "/swagger-ui/index.html");
         endpoints.put("register", "POST /api/auth/register");
         endpoints.put("login", "POST /api/auth/login");
         endpoints.put("tracking", "GET /api/tracking/{trackingNumber}");
         
         response.put("available_endpoints", endpoints);
-        response.put("documentation", "http://localhost:" + serverPort + "/swagger-ui.html");
+        response.put("documentation", "http://localhost:" + serverPort + "/swagger-ui/index.html");
         
         return ResponseEntity.ok(response);
     }
@@ -64,7 +64,7 @@ public class HomeController {
         Map<String, String> publicEndpoints = new HashMap<>();
         publicEndpoints.put("health", "GET /actuator/health");
         publicEndpoints.put("tracking", "GET /api/tracking/{trackingNumber}");
-        publicEndpoints.put("api_docs", "GET /api-docs");
+        publicEndpoints.put("api_docs", "GET /v3/api-docs");
         
         response.put("authentication_endpoints", authEndpoints);
         response.put("public_endpoints", publicEndpoints);

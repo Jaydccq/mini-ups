@@ -151,9 +151,14 @@ management:
 # OpenAPI Documentation
 springdoc:
   api-docs:
-    path: /api-docs
+    # Use Springdoc default path to minimize surprises
+    path: /v3/api-docs
   swagger-ui:
+    # Access UI via /swagger-ui/index.html; /swagger-ui.html redirects
     path: /swagger-ui.html
+    # Ensure UI loads our API spec (avoid /api-docs default or Petstore)
+    disable-swagger-default-url: true
+    url: /v3/api-docs
     operations-sorter: method
 
 # Rate Limiting Configuration

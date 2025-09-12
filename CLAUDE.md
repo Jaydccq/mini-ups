@@ -25,11 +25,19 @@ Mini-UPS is a complete distributed system simulating a UPS-like package delivery
 └─────────────────┘    └─────────────────┘    └─────────────────┘
        │                       │                       │
        └───────────────────────┼───────────────────────┘
-                              │
-                    ┌─────────────────┐
-                    │   projectnet    │
-                    │   Docker网络     │
-                    └─────────────────┘
+                              │                       │
+                    ┌─────────────────┐               │
+                    │   projectnet    │               │
+                    │   Docker网络     │               │
+                    └─────────────────┘               │
+                                                     │
+                                      ┌─────────────────┐
+                                      │   MCP Server    │
+                                      │                 │
+                                      │ - LLM集成       │
+                                      │ - API工具       │
+                                      │ - 自动化查询     │
+                                      └─────────────────┘
 ```
 
 ### Technology Stack
@@ -53,6 +61,16 @@ Mini-UPS is a complete distributed system simulating a UPS-like package delivery
 - **Function**: Environment simulation for warehouses and trucks
 - **Communication**: TCP sockets (port 12345 for UPS, 23456 for Amazon)
 - **Integration**: Real-time position updates and truck management
+
+#### **MCP Server** (✅ Complete Implementation)
+- **Purpose**: Model Context Protocol server for LLM integration
+- **Technology**: Node.js 20 + TypeScript + MCP SDK
+- **Communication**: stdio interface (standard MCP protocol)
+- **Tools**: 6 specialized tools for shipment tracking, fleet management, and system monitoring
+- **Resources**: OpenAPI schema and database documentation
+- **Authentication**: JWT token support for backend API access
+- **Features**: Rate limiting, circuit breaker, comprehensive error handling
+- **Location**: `mcp-server/`
 
 ## Development Commands
 
@@ -87,6 +105,29 @@ cd frontend && ./run-local.sh
 # - Backend: http://localhost:8081/api
 # - Database: localhost:5432 (ups_db)
 # - Redis: localhost:6380
+```
+
+#### **MCP Server Mode** (AI Integration)
+```bash
+# Start MCP server with full system
+./scripts/start-mcp.sh
+
+# Start only MCP server (requires backend running)
+./scripts/start-mcp.sh --mcp-only
+
+# Start in detached mode
+./scripts/start-mcp.sh --detached
+
+# Test MCP server functionality
+./scripts/test-mcp.sh
+
+# MCP server provides these tools:
+# - getShipmentStatus: Get shipment details by tracking number
+# - listCustomerOrders: List orders for a customer
+# - searchOrders: Search orders with filters
+# - getServiceHealth: Check system health status
+# - getDashboardStats: Get KPI metrics
+# - getFleetOverview: View truck fleet status
 ```
 
 ### 🧪 Testing & CI/CD

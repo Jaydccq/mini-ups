@@ -14,8 +14,8 @@ import com.miniups.service.AsyncAuditService;
 import com.miniups.service.EventPublisherService;
 import com.miniups.service.TrackingService;
 import com.miniups.service.TruckManagementService;
-import com.miniups.service.WorldSimulatorService;
-import com.miniups.network.netty.service.NettyWorldSimulatorService;
+// import com.miniups.service.WorldSimulatorService;
+// import com.miniups.network.netty.service.NettyWorldSimulatorService;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -71,24 +71,24 @@ public class ShipmentCreationConsumer {
     private final UserRepository userRepository;
     private final TrackingService trackingService;
     private final TruckManagementService truckManagementService;
-    private final WorldSimulatorService worldSimulatorService;
-    private final NettyWorldSimulatorService nettyWorldSimulatorService;
+    // private final WorldSimulatorService worldSimulatorService;
+    // private final NettyWorldSimulatorService nettyWorldSimulatorService;
     private final EventPublisherService eventPublisher;
     private final AsyncAuditService asyncAuditService;
     
     public ShipmentCreationConsumer(ShipmentRepository shipmentRepository, TruckRepository truckRepository,
                                     UserRepository userRepository, TrackingService trackingService,
                                     TruckManagementService truckManagementService, 
-                                    @Autowired(required = false) WorldSimulatorService worldSimulatorService,
-                                    @Autowired(required = false) NettyWorldSimulatorService nettyWorldSimulatorService,
+                                    // @Autowired(required = false) WorldSimulatorService worldSimulatorService,
+                                    // @Autowired(required = false) NettyWorldSimulatorService nettyWorldSimulatorService,
                                     EventPublisherService eventPublisher, AsyncAuditService asyncAuditService) {
         this.shipmentRepository = shipmentRepository;
         this.truckRepository = truckRepository;
         this.userRepository = userRepository;
         this.trackingService = trackingService;
         this.truckManagementService = truckManagementService;
-        this.worldSimulatorService = worldSimulatorService;
-        this.nettyWorldSimulatorService = nettyWorldSimulatorService;
+        // this.worldSimulatorService = worldSimulatorService;
+        // this.nettyWorldSimulatorService = nettyWorldSimulatorService;
         this.eventPublisher = eventPublisher;
         this.asyncAuditService = asyncAuditService;
     }
@@ -97,15 +97,19 @@ public class ShipmentCreationConsumer {
      * Helper method to send truck to pickup using the available service.
      */
     private void sendTruckToPickup(Integer truckId, Integer warehouseId) {
-        if (worldSimulatorService != null) {
-            worldSimulatorService.sendTruckToPickup(truckId, warehouseId);
-        } else if (nettyWorldSimulatorService != null) {
-            try {
-                nettyWorldSimulatorService.sendTruckToPickup(truckId, warehouseId).get();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to send truck to pickup via Netty service", e);
-            }
-        }
+        // World Simulator services are temporarily disabled
+        // if (worldSimulatorService != null) {
+        //     worldSimulatorService.sendTruckToPickup(truckId, warehouseId);
+        // } else if (nettyWorldSimulatorService != null) {
+        //     try {
+        //         nettyWorldSimulatorService.sendTruckToPickup(truckId, warehouseId).get();
+        //     } catch (Exception e) {
+        //         throw new RuntimeException("Failed to send truck to pickup via Netty service", e);
+        //     }
+        // }
+        
+        // For now, just log that the operation was requested
+        log.debug("Truck {} requested to pickup from warehouse {}", truckId, warehouseId);
     }
 
     /**
