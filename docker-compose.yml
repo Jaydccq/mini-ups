@@ -124,7 +124,7 @@ services:
     networks:
       - projectnet
 
-  # RabbitMQ消息队列
+  # RabbitMQ消息队列 with STOMP support for WebSocket integration
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: mini-ups-rabbitmq
@@ -135,8 +135,10 @@ services:
     ports:
       - "5672:5672"   # AMQP port
       - "15672:15672" # Management UI port
+      - "61613:61613" # STOMP port for WebSocket relay
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/
+      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 15s
@@ -166,6 +168,8 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_STOMP_PORT: 61613
+      RABBITMQ_ENABLED: true
       JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_for_development_only}
       WORLD_SIMULATOR_HOST: world-simulator
       WORLD_SIMULATOR_PORT: 12345
