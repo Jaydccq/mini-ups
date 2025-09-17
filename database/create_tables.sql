@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
-    phone VARCHAR(20),
+    phone VARCHAR(20) UNIQUE,
     address TEXT,
     role VARCHAR(20) NOT NULL DEFAULT 'USER',
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -256,6 +256,55 @@ ON CONFLICT (biz_tag) DO NOTHING;
 
 -- Indexes for tracking_sequences
 CREATE INDEX IF NOT EXISTS idx_tracking_sequences_updated_at ON tracking_sequences(updated_at);
+
+-- Short link sharded tables (short_links_0 .. short_links_3)
+DO $$
+BEGIN
+    FOR i IN 0..3 LOOP
+        EXECUTE format('
+            CREATE TABLE IF NOT EXISTS short_links_%1$s (
+                id BIGSERIAL PRIMARY KEY,
+                short_code VARCHAR(32) NOT NULL UNIQUE,
+                shard_key VARCHAR(32) NOT NULL,
+                original_url TEXT NOT NULL,
+                user_id BIGINT,
+                expiration_at TIMESTAMP,
+                active BOOLEAN NOT NULL DEFAULT TRUE,
+                access_count BIGINT NOT NULL DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_access_at TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_short_links_%1$s_code ON short_links_%1$s (short_code);
+            CREATE INDEX IF NOT EXISTS idx_short_links_%1$s_user ON short_links_%1$s (user_id);
+        ', i);
+    END LOOP;
+END$$;
+
+-- Route table for admin pagination without cross-shard joins
+CREATE TABLE IF NOT EXISTS short_link_route (
+    id BIGSERIAL PRIMARY KEY,
+    short_code VARCHAR(32) NOT NULL UNIQUE,
+    user_id BIGINT,
+    data_source VARCHAR(32) NOT NULL,
+    table_name VARCHAR(32) NOT NULL,
+    original_url TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_short_link_route_user ON short_link_route (user_id);
+
+-- Access log table populated asynchronously from Redis Streams
+CREATE TABLE IF NOT EXISTS short_link_access_log (
+    id BIGSERIAL PRIMARY KEY,
+    short_code VARCHAR(32) NOT NULL,
+    owner_user_id BIGINT,
+    accessed_at TIMESTAMP NOT NULL,
+    client_ip VARCHAR(64),
+    user_agent TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_short_link_access_log_code ON short_link_access_log (short_code);
 
 -- Auto-update updated_at on update
 CREATE TRIGGER update_tracking_sequences_updated_at

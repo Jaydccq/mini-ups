@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: mini-ups-swagger-test
+  
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  
+  h2:
+    console:
+      enabled: true
+
+server:
+  port: 8081
+
+# JWT Configuration
+jwt:
+  secret: mini-ups-development-jwt-secret-key-32-chars-minimum-length-for-security
+  expiration: 86400000
+
+# Disable problematic components
+world:
+  simulator:
+    enabled: false
+
+amazon:
+  integration:
+    enabled: false
+
+# Logging
+logging:
+  level:
+    com.miniups: INFO
+    org.springframework.security: DEBUG
+    org.springdoc: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# OpenAPI Documentation
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    disable-swagger-default-url: true
+    url: /v3/api-docs
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

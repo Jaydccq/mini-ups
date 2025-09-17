@@ -57,21 +57,17 @@ public class TruckManagementService {
     @Autowired
     private com.miniups.repository.DriverRepository driverRepository;
     
-    @Autowired(required = false)
-    private WorldSimulatorService worldSimulatorService;
+    // @Autowired(required = false)
+    // private WorldSimulatorService worldSimulatorService;
     
-    @Autowired(required = false)
-    private com.miniups.network.netty.service.NettyWorldSimulatorService nettyWorldSimulatorService;
+    // @Autowired(required = false)
+    // private com.miniups.network.netty.service.NettyWorldSimulatorService nettyWorldSimulatorService;
     
     /**
      * Helper method to check if any world simulator is connected.
      */
     private boolean isWorldSimulatorConnected() {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.isConnected();
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.isConnected();
-        }
+        // World Simulator services are temporarily disabled
         return false;
     }
     
@@ -79,11 +75,7 @@ public class TruckManagementService {
      * Helper method to get world ID from the available service.
      */
     private Long getWorldId() {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.getWorldId();
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.getWorldId();
-        }
+        // World Simulator services are temporarily disabled
         return null;
     }
     

@@ -41,7 +41,7 @@ public class User extends BaseEntity {
     private String lastName;
     
     @Size(max = 20)
-    @Column(name = "phone", length = 20)
+    @Column(name = "phone", length = 20, unique = true)
     private String phone;
     
     @Column(name = "address", columnDefinition = "TEXT")

@@ -203,7 +203,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return path.equals("/actuator/health") || 
                path.equals("/") || 
                path.equals("/favicon.ico") ||
+               path.equals("/api-docs") ||
                path.startsWith("/api-docs/") ||
+               path.equals("/v3/api-docs") ||
+               path.startsWith("/v3/api-docs/") ||
                path.startsWith("/swagger-ui/");
     }
 }

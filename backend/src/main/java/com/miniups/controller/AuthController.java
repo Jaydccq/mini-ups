@@ -29,6 +29,8 @@ import com.miniups.model.dto.auth.AuthResponseDto;
 import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.dto.auth.PasswordChangeDto;
 import com.miniups.model.dto.auth.RegisterRequestDto;
+import com.miniups.model.dto.auth.SmsCodeRequestDto;
+import com.miniups.model.dto.auth.SmsLoginRequestDto;
 import com.miniups.model.dto.user.UserDto;
 import com.miniups.model.dto.common.ApiResponse;
 import com.miniups.service.AuthService;
@@ -101,6 +103,26 @@ public class AuthController {
         AuthResponseDto response = authService.login(loginRequest);
         
         logger.info("User login successful: usernameOrEmail={}", loginRequest.getUsernameOrEmail());
+        return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    /**
+     * Send SMS verification code for login
+     */
+    @PostMapping("/sms/send")
+    public ResponseEntity<ApiResponse<Void>> sendSmsLoginCode(@Valid @RequestBody SmsCodeRequestDto requestDto) {
+        logger.info("SMS login code requested: phone={}", requestDto.getPhone());
+        authService.sendLoginCode(requestDto.getPhone());
+        return ResponseEntity.ok(ApiResponse.success("Verification code sent"));
+    }
+
+    /**
+     * Login using SMS verification code
+     */
+    @PostMapping("/sms/login")
+    public ResponseEntity<ApiResponse<AuthResponseDto>> loginWithSms(@Valid @RequestBody SmsLoginRequestDto smsLoginRequest) {
+        logger.info("User SMS login request: phone={}", smsLoginRequest.getPhone());
+        AuthResponseDto response = authService.loginWithSms(smsLoginRequest);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
     

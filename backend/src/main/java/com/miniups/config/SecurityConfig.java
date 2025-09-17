@@ -127,6 +127,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -189,7 +191,26 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
     
+    // High-priority chain: fully allow Swagger/OpenAPI + static docs
     @Bean
+    @org.springframework.core.annotation.Order(1)
+    public SecurityFilterChain apiDocsSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher(
+                "/v3/api-docs", "/v3/api-docs/**",
+                "/api-docs", "/api-docs/**",
+                "/swagger-ui/**", "/swagger-ui.html"
+            )
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+
+        return http.build();
+    }
+
+    // Main chain: app security
+    @Bean
+    @org.springframework.core.annotation.Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
@@ -210,8 +231,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/shipment", "/api/shipment_loaded", "/api/shipment_status", "/api/address_change").permitAll() // Amazon integration endpoints
                 .requestMatchers("/shipment", "/shipment_loaded", "/shipment_status", "/address_change").permitAll() // Amazon integration endpoints
 
-                // API Documentation
-                .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                // API Documentation (handled also by high-priority chain)
+                .requestMatchers(
+                    "/v3/api-docs", "/v3/api-docs/**",
+                    "/api-docs", "/api-docs/**",
+                    "/swagger-ui/**", "/swagger-ui.html"
+                ).permitAll()
 
                 // Health check
                 .requestMatchers("/actuator/health", "/actuator/info", "/actuator/**").permitAll()
@@ -243,6 +268,8 @@ public class SecurityConfig {
         
         return http.build();
     }
+
+    // WebSecurityCustomizer no longer needed due to explicit API docs chain above
     
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

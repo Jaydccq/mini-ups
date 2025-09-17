@@ -17,8 +17,8 @@
  */
 package com.miniups.health;
 
-import com.miniups.service.WorldSimulatorService;
-import com.miniups.network.netty.service.NettyWorldSimulatorService;
+// import com.miniups.service.WorldSimulatorService;
+// import com.miniups.network.netty.service.NettyWorldSimulatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,24 +31,18 @@ public class WorldSimulatorHealthIndicator implements HealthIndicator {
 
     private static final Logger logger = LoggerFactory.getLogger(WorldSimulatorHealthIndicator.class);
     
-    private final WorldSimulatorService worldSimulatorService;
-    private final NettyWorldSimulatorService nettyWorldSimulatorService;
+    // private final WorldSimulatorService worldSimulatorService;
+    // private final NettyWorldSimulatorService nettyWorldSimulatorService;
 
-    public WorldSimulatorHealthIndicator(@Autowired(required = false) WorldSimulatorService worldSimulatorService,
-                                       @Autowired(required = false) NettyWorldSimulatorService nettyWorldSimulatorService) {
-        this.worldSimulatorService = worldSimulatorService;
-        this.nettyWorldSimulatorService = nettyWorldSimulatorService;
+    public WorldSimulatorHealthIndicator() {
+        // World Simulator services are temporarily disabled
     }
     
     /**
      * Helper method to check if any world simulator is connected.
      */
     private boolean isWorldSimulatorConnected() {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.isConnected();
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.isConnected();
-        }
+        // World Simulator services are temporarily disabled
         return false;
     }
     
@@ -56,11 +50,7 @@ public class WorldSimulatorHealthIndicator implements HealthIndicator {
      * Helper method to check if world simulator connection is healthy.
      */
     private boolean isWorldSimulatorHealthy() {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.isConnectionHealthy();
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.isConnected(); // For Netty, connected = healthy
-        }
+        // World Simulator services are temporarily disabled
         return false;
     }
     
@@ -68,11 +58,12 @@ public class WorldSimulatorHealthIndicator implements HealthIndicator {
      * Helper method to get world ID from the available service.
      */
     private Long getWorldId() {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.getWorldId();
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.getWorldId();
-        }
+        // World Simulator services are temporarily disabled
+        // if (worldSimulatorService != null) {
+        //     return worldSimulatorService.getWorldId();
+        // } else if (nettyWorldSimulatorService != null) {
+        //     return nettyWorldSimulatorService.getWorldId();
+        // }
         return null;
     }
     
@@ -80,11 +71,12 @@ public class WorldSimulatorHealthIndicator implements HealthIndicator {
      * Helper method to get implementation type.
      */
     private String getImplementationType() {
-        if (worldSimulatorService != null) {
-            return "socket";
-        } else if (nettyWorldSimulatorService != null) {
-            return "netty";
-        }
+        // World Simulator services are temporarily disabled
+        // if (worldSimulatorService != null) {
+        //     return "socket";
+        // } else if (nettyWorldSimulatorService != null) {
+        //     return "netty";
+        // }
         return "none";
     }
 

@@ -1,42 +1,60 @@
 package com.miniups.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 /**
- * RabbitMQ Configuration
- * 
- * Configures the RabbitMQ topology, message converters, and connection settings
- * for the Mini-UPS messaging infrastructure. This configuration implements
- * an event-driven architecture with reliable message processing.
- * 
- * Topology Design:
- * - Topic Exchange: ups.events.topic (main routing hub)
- * - Dead Letter Exchange: ups.events.dlx (reliability mechanism)
- * - Specialized queues for different business domains
- * 
+ * RabbitMQ Configuration for Enterprise Message Queue System with WebSocket STOMP Integration
+ *
+ * Provides comprehensive messaging infrastructure for:
+ * - Event-driven architecture with transactional outbox pattern
+ * - Real-time WebSocket messaging with STOMP protocol over RabbitMQ
+ * - Reliable message delivery with publisher confirms and acknowledgments
+ * - Dead letter queue handling for failed messages
+ * - Performance optimization with connection pooling and prefetch settings
+ * - High-throughput WebSocket broadcasting for real-time tracking updates
+ *
+ * Architecture Pattern: Event-Driven Microservices with Message-Oriented Middleware
+ * Message Flow: Producer → RabbitMQ Exchange → Queue → Consumer → WebSocket STOMP Broadcast
+ *
  * @author Mini-UPS Development Team
- * @version 1.0
+ * @version 2.0
+ * @since 2024-12-01
  */
+@Slf4j
 @Configuration
+@EnableRabbit
+@EnableWebSocketMessageBroker
 @ConditionalOnClass(ConnectionFactory.class)
 @Profile("!test & !rabbitmq-disabled")
-public class RabbitMQConfig {
+public class RabbitMQConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
 
     // Exchange Names
     public static final String TOPIC_EXCHANGE_NAME = "ups.events.topic";
     public static final String DLX_NAME = "ups.events.dlx";
+    public static final String WEBSOCKET_EXCHANGE = "ups.websocket.topic";
 
     // Queue Names
     public static final String SHIPMENT_PROCESSOR_QUEUE = "q.shipment.processor";
@@ -44,6 +62,8 @@ public class RabbitMQConfig {
     public static final String AUDIT_LOG_QUEUE = "q.audit_log";
     public static final String WORLD_SIMULATOR_QUEUE = "q.world_simulator";
     public static final String DEAD_LETTER_QUEUE = "q.dead_letter";
+    public static final String WEBSOCKET_BROADCAST_QUEUE = "q.websocket.broadcast";
+    public static final String TRACKING_UPDATE_QUEUE = "q.tracking.updates";
 
     // Routing Keys
     public static final String SHIPMENT_CREATE_ROUTING_KEY = "shipment.create.request";
@@ -51,6 +71,8 @@ public class RabbitMQConfig {
     public static final String USER_REGISTERED_ROUTING_KEY = "user.registered";
     public static final String TRUCK_DISPATCH_ROUTING_KEY = "truck.dispatch";
     public static final String AUDIT_LOG_ROUTING_KEY = "audit.log.created";
+    public static final String WEBSOCKET_ROUTING_KEY = "websocket.#";
+    public static final String TRACKING_UPDATE_ROUTING_KEY = "tracking.update.#";
 
     /**
      * Main topic exchange for all business events
@@ -70,6 +92,17 @@ public class RabbitMQConfig {
     @Bean
     public FanoutExchange deadLetterExchange() {
         return ExchangeBuilder.fanoutExchange(DLX_NAME)
+                .durable(true)
+                .build();
+    }
+
+    /**
+     * WebSocket topic exchange for real-time updates
+     * Routes messages to WebSocket STOMP endpoints for live client updates
+     */
+    @Bean
+    public TopicExchange websocketExchange() {
+        return ExchangeBuilder.topicExchange(WEBSOCKET_EXCHANGE)
                 .durable(true)
                 .build();
     }
@@ -131,6 +164,34 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
     }
 
+    /**
+     * Queue for WebSocket broadcast messages with high throughput configuration
+     * Optimized for real-time client updates with priority handling
+     */
+    @Bean
+    public Queue websocketBroadcastQueue() {
+        return QueueBuilder.durable(WEBSOCKET_BROADCAST_QUEUE)
+                .withArgument("x-dead-letter-exchange", DLX_NAME)
+                .withArgument("x-dead-letter-routing-key", "failed.websocket.broadcast")
+                .withArgument("x-max-priority", 10) // Priority queue for real-time updates
+                .withArgument("x-max-length", 10000) // Prevent memory overflow
+                .build();
+    }
+
+    /**
+     * Queue for tracking updates with optimized performance settings
+     * Handles GPS coordinates and shipment status changes
+     */
+    @Bean
+    public Queue trackingUpdateQueue() {
+        return QueueBuilder.durable(TRACKING_UPDATE_QUEUE)
+                .withArgument("x-dead-letter-exchange", DLX_NAME)
+                .withArgument("x-dead-letter-routing-key", "failed.tracking.update")
+                .withArgument("x-message-ttl", 60000) // 1 minute TTL for real-time data
+                .withArgument("x-max-length", 5000) // Keep queue size manageable
+                .build();
+    }
+
     // Bindings: Connect queues to exchanges with routing patterns
 
     @Bean
@@ -181,6 +242,27 @@ public class RabbitMQConfig {
                 .to(deadLetterExchange());
     }
 
+    @Bean
+    public Binding websocketBroadcastBinding() {
+        return BindingBuilder.bind(websocketBroadcastQueue())
+                .to(websocketExchange())
+                .with(WEBSOCKET_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding trackingUpdateBinding() {
+        return BindingBuilder.bind(trackingUpdateQueue())
+                .to(topicExchange())
+                .with(TRACKING_UPDATE_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding trackingToWebSocketBinding() {
+        return BindingBuilder.bind(websocketBroadcastQueue())
+                .to(topicExchange())
+                .with("tracking.update.*");
+    }
+
     /**
      * JSON message converter for object serialization
      * Uses Jackson for consistent JSON handling across the application
@@ -193,48 +275,101 @@ public class RabbitMQConfig {
     }
 
     /**
-     * RabbitTemplate for sending messages
-     * Configured with JSON converter and reliability features
+     * Enhanced RabbitTemplate for sending messages with reliability features
+     * Configured with JSON converter, publisher confirms, and comprehensive error handling
      */
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, 
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
                                        MessageConverter messageConverter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
         template.setExchange(TOPIC_EXCHANGE_NAME);
+        template.setMandatory(true); // Ensure messages are routed to a queue
+
+        // Publisher confirmation callback for reliability
         template.setConfirmCallback((correlationData, ack, cause) -> {
-            if (!ack) {
-                // Log failed message publication
-                System.err.println("Message failed to reach exchange: " + cause);
+            if (ack) {
+                log.debug("Message successfully published with correlation ID: {}", correlationData);
+            } else {
+                log.error("Failed to publish message with correlation ID: {}, cause: {}", correlationData, cause);
             }
         });
-        template.setReturnsCallback(returnedMessage -> {
-            // Log returned messages (no matching queue)
-            System.err.println("Message returned: " + returnedMessage);
+
+        // Returns callback for unrouted messages
+        template.setReturnsCallback(returned -> {
+            log.warn("Message returned: exchange={}, routingKey={}, replyText={}",
+                returned.getExchange(), returned.getRoutingKey(), returned.getReplyText());
         });
+
         return template;
     }
 
     /**
-     * Container factory for message listeners
-     * Configures manual acknowledgment and retry policies
+     * Enhanced container factory for message listeners with performance optimization
+     * Configures manual acknowledgment, retry policies, and concurrent processing
      */
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+    public RabbitListenerContainerFactory<?> rabbitListenerContainerFactory(
             ConnectionFactory connectionFactory,
             SimpleRabbitListenerContainerFactoryConfigurer configurer,
             MessageConverter messageConverter) {
-        
+
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         configurer.configure(factory, connectionFactory);
         factory.setMessageConverter(messageConverter);
-        
-        // Configure error handling
+
+        // Performance optimization settings
+        factory.setConcurrentConsumers(3);
+        factory.setMaxConcurrentConsumers(10);
+        factory.setPrefetchCount(1); // Process one message at a time for better load distribution
+
+        // Enhanced error handling with logging
         factory.setErrorHandler(throwable -> {
-            System.err.println("Error in message processing: " + throwable.getMessage());
-            throwable.printStackTrace();
+            log.error("Error in RabbitMQ message processing: {}", throwable.getMessage(), throwable);
         });
-        
+
         return factory;
+    }
+
+    // ==================== WEBSOCKET STOMP CONFIGURATION ====================
+
+    /**
+     * Configure message broker with RabbitMQ STOMP relay for scalable WebSocket messaging
+     * Enables real-time bidirectional communication with message persistence and routing
+     */
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        // Enable RabbitMQ STOMP relay for high-performance WebSocket messaging
+        registry.enableStompBrokerRelay("/topic", "/queue")
+                .setRelayHost("localhost")
+                .setRelayPort(61613) // STOMP port configured in application.yml
+                .setSystemLogin("guest")
+                .setSystemPasscode("guest")
+                .setClientLogin("guest")
+                .setClientPasscode("guest")
+                .setVirtualHost("/")
+                .setSystemHeartbeatSendInterval(20000) // 20 seconds
+                .setSystemHeartbeatReceiveInterval(20000); // 20 seconds
+
+        // Application destination prefixes for client messages
+        registry.setApplicationDestinationPrefixes("/app");
+
+        // User destination prefix for private messages
+        registry.setUserDestinationPrefix("/user");
+
+        log.info("RabbitMQ STOMP broker relay configured for WebSocket messaging");
+    }
+
+    /**
+     * Register STOMP endpoints with SockJS fallback support
+     * Provides multiple transport options for cross-browser compatibility
+     */
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins(allowedOrigins.split(","))
+                .withSockJS();
+
+        log.info("STOMP WebSocket endpoints registered with SockJS support");
     }
 }

@@ -151,10 +151,40 @@ management:
 # OpenAPI Documentation
 springdoc:
   api-docs:
-    path: /api-docs
+    # Use Springdoc default path to minimize surprises
+    path: /v3/api-docs
   swagger-ui:
+    # Access UI via /swagger-ui/index.html; /swagger-ui.html redirects
     path: /swagger-ui.html
+    # Ensure UI loads our API spec (avoid /api-docs default or Petstore)
+    disable-swagger-default-url: true
+    url: /v3/api-docs
     operations-sorter: method
+
+auth:
+  sms:
+    code-length: ${AUTH_SMS_CODE_LENGTH:6}
+    code-ttl-seconds: ${AUTH_SMS_CODE_TTL_SECONDS:300}
+
+shortlink:
+  code:
+    min-length: ${SHORTLINK_CODE_MIN_LENGTH:6}
+  bloom:
+    redis-key: ${SHORTLINK_BLOOM_REDIS_KEY:shortlink:bloom:codes}
+    bit-size: ${SHORTLINK_BLOOM_BIT_SIZE:1048576}
+    hash-seeds: ${SHORTLINK_BLOOM_SEEDS:17,31,73,127,191}
+  stream:
+    key: ${SHORTLINK_STREAM_KEY:stream:shortlink:monitor}
+    group: ${SHORTLINK_STREAM_GROUP:shortlink-monitor}
+    consumer-name: ${SHORTLINK_STREAM_CONSUMER:backend-node}
+    batch-size: ${SHORTLINK_STREAM_BATCH:100}
+    idle-timeout: ${SHORTLINK_STREAM_IDLE:PT1M}
+    poll-delay-millis: ${SHORTLINK_STREAM_POLL_MS:5000}
+  sentinel:
+    create-threshold-per-second: ${SHORTLINK_SENTINEL_CREATE_QPS:20}
+    redirect-threshold-per-second: ${SHORTLINK_SENTINEL_REDIRECT_QPS:200}
+  sharding:
+    table-weights: ${SHORTLINK_SHARD_WEIGHTS:short_links_0:4,short_links_1:3,short_links_2:2,short_links_3:1}
 
 # Rate Limiting Configuration
 rate-limiting:

@@ -64,7 +64,7 @@ world:
   simulator:
     host: localhost
     port: 12345
-    enabled: true
+    enabled: false
     client:
       type: netty  # Options: socket (default), netty
     netty:
