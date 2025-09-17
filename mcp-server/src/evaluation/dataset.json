@@ -1,0 +1,379 @@
+{
+  "name": "Mini-UPS NLQ Evaluation Dataset",
+  "version": "1.0.0",
+  "description": "Comprehensive evaluation dataset for natural language query processing in Mini-UPS logistics system",
+  "created": "2024-01-16",
+  "total_cases": 45,
+  "categories": [
+    "shipment_tracking",
+    "order_lookup", 
+    "customer_orders",
+    "inventory_check",
+    "system_health",
+    "fleet_overview",
+    "dashboard_stats",
+    "search_orders",
+    "edge_cases"
+  ],
+  "test_cases": [
+    {
+      "id": "tracking_001",
+      "category": "shipment_tracking",
+      "query": "查询追踪号1Z999AA123456789的包裹状态",
+      "expected_intent": "shipment_status",
+      "expected_confidence": 0.95,
+      "expected_filters": {
+        "trackingId": "1Z999AA123456789",
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/tracking/{trackingId}"],
+      "mock_backend_response": {
+        "trackingId": "1Z999AA123456789",
+        "status": "IN_TRANSIT",
+        "currentLocation": "Beijing Distribution Center",
+        "estimatedDelivery": "2024-01-17T17:00:00Z",
+        "shipmentHistory": [
+          {"status": "PICKED_UP", "timestamp": "2024-01-15T10:00:00Z", "location": "Origin Warehouse"},
+          {"status": "IN_TRANSIT", "timestamp": "2024-01-16T08:00:00Z", "location": "Beijing Distribution Center"}
+        ]
+      },
+      "expected_answer_contains": ["1Z999AA123456789", "配送途中", "Beijing Distribution Center", "2024年1月17日"],
+      "tags": ["basic", "tracking", "chinese"]
+    },
+    {
+      "id": "tracking_002", 
+      "category": "shipment_tracking",
+      "query": "Track package 1Z888BB987654321",
+      "expected_intent": "shipment_status",
+      "expected_confidence": 0.92,
+      "expected_filters": {
+        "trackingId": "1Z888BB987654321",
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/tracking/{trackingId}"],
+      "mock_backend_response": {
+        "trackingId": "1Z888BB987654321",
+        "status": "DELIVERED",
+        "deliveredAt": "2024-01-15T14:30:00Z",
+        "recipient": "John Smith"
+      },
+      "expected_answer_contains": ["1Z888BB987654321", "delivered", "January 15", "John Smith"],
+      "tags": ["basic", "tracking", "english", "delivered"]
+    },
+    {
+      "id": "order_001",
+      "category": "order_lookup",
+      "query": "查看订单#12345的详细信息",
+      "expected_intent": "order_lookup", 
+      "expected_confidence": 0.88,
+      "expected_filters": {
+        "orderId": "12345",
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/orders/{orderId}"],
+      "mock_backend_response": {
+        "orderId": "12345",
+        "status": "SHIPPED",
+        "createdAt": "2024-01-14T09:00:00Z",
+        "items": [
+          {"name": "Laptop Computer", "quantity": 1, "price": 999.99},
+          {"name": "Wireless Mouse", "quantity": 2, "price": 29.99}
+        ],
+        "trackingNumber": "1Z777CC456789012",
+        "shippingAddress": "123 Main St, Shanghai"
+      },
+      "expected_answer_contains": ["订单#12345", "已发货", "Laptop Computer", "1Z777CC456789012"],
+      "tags": ["basic", "order", "chinese"]
+    },
+    {
+      "id": "customer_001",
+      "category": "customer_orders",
+      "query": "Show me all orders for customer ID 456 in the last 30 days",
+      "expected_intent": "customer_orders",
+      "expected_confidence": 0.85,
+      "expected_filters": {
+        "customerId": 456,
+        "dateRange": {"days": 30},
+        "page": 0,
+        "size": 20,
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/tracking/user/{userId}"],
+      "mock_backend_response": [
+        {
+          "orderId": "ORD-001",
+          "status": "DELIVERED",
+          "createdAt": "2024-01-10T10:00:00Z",
+          "trackingNumber": "1Z555DD123456789"
+        },
+        {
+          "orderId": "ORD-002", 
+          "status": "IN_TRANSIT",
+          "createdAt": "2024-01-12T15:30:00Z",
+          "trackingNumber": "1Z555DD987654321"
+        }
+      ],
+      "expected_answer_contains": ["customer ID 456", "2 orders", "ORD-001", "DELIVERED", "ORD-002", "IN_TRANSIT"],
+      "tags": ["customer", "orders", "english", "date_range"]
+    },
+    {
+      "id": "inventory_001",
+      "category": "inventory_check", 
+      "query": "检查SKU-ABC-123的库存状态",
+      "expected_intent": "inventory_check",
+      "expected_confidence": 0.90,
+      "expected_filters": {
+        "sku": "SKU-ABC-123",
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/inventory/{sku}"],
+      "mock_backend_response": {
+        "sku": "SKU-ABC-123",
+        "quantity": 150,
+        "status": "IN_STOCK",
+        "lastUpdated": "2024-01-16T12:00:00Z",
+        "reorderLevel": 50,
+        "location": "Warehouse A"
+      },
+      "expected_answer_contains": ["SKU-ABC-123", "库存充足", "150", "Warehouse A"],
+      "tags": ["inventory", "chinese", "single_sku"]
+    },
+    {
+      "id": "inventory_002",
+      "category": "inventory_check",
+      "query": "Check inventory for SKU-DEF-456, SKU-GHI-789, and SKU-JKL-012",
+      "expected_intent": "inventory_check",
+      "expected_confidence": 0.87,
+      "expected_filters": {
+        "skus": ["SKU-DEF-456", "SKU-GHI-789", "SKU-JKL-012"],
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/inventory"],
+      "mock_backend_response": [
+        {"sku": "SKU-DEF-456", "quantity": 75, "status": "IN_STOCK"},
+        {"sku": "SKU-GHI-789", "quantity": 5, "status": "LOW_STOCK"},
+        {"sku": "SKU-JKL-012", "quantity": 0, "status": "OUT_OF_STOCK"}
+      ],
+      "expected_answer_contains": ["SKU-DEF-456", "75", "LOW_STOCK", "OUT_OF_STOCK"],
+      "tags": ["inventory", "english", "multiple_skus", "mixed_status"]
+    },
+    {
+      "id": "health_001",
+      "category": "system_health",
+      "query": "系统运行状态如何？",
+      "expected_intent": "service_health",
+      "expected_confidence": 0.85,
+      "expected_filters": {},
+      "expected_endpoints": ["/actuator/health", "/api/admin/system/health"],
+      "mock_backend_response": {
+        "status": "UP",
+        "components": {
+          "database": {"status": "UP", "responseTime": "50ms"},
+          "redis": {"status": "UP", "responseTime": "10ms"},
+          "worldSimulator": {"status": "UP", "lastSync": "2024-01-16T14:00:00Z"}
+        },
+        "uptime": "5 days, 12 hours"
+      },
+      "expected_answer_contains": ["系统运行正常", "数据库连接正常", "5天"],
+      "tags": ["health", "chinese", "system_status"]
+    },
+    {
+      "id": "fleet_001",
+      "category": "fleet_overview",
+      "query": "Show me the current fleet status and truck availability",
+      "expected_intent": "fleet_overview",
+      "expected_confidence": 0.88,
+      "expected_filters": {},
+      "expected_endpoints": ["/api/admin/fleet/overview"],
+      "mock_backend_response": {
+        "totalTrucks": 25,
+        "availableTrucks": 8,
+        "trucksInTransit": 15,
+        "trucksInMaintenance": 2,
+        "averageCapacityUtilization": 0.75,
+        "activeTrucks": [
+          {"truckId": "T001", "status": "IN_TRANSIT", "currentLocation": "Beijing", "destination": "Shanghai"},
+          {"truckId": "T002", "status": "AVAILABLE", "currentLocation": "Warehouse A"}
+        ]
+      },
+      "expected_answer_contains": ["25 trucks", "8 available", "15 in transit", "75% capacity"],
+      "tags": ["fleet", "english", "overview"]
+    },
+    {
+      "id": "dashboard_001",
+      "category": "dashboard_stats",
+      "query": "今天的运营数据和KPI指标",
+      "expected_intent": "dashboard_stats",
+      "expected_confidence": 0.82,
+      "expected_filters": {
+        "dateRange": {"days": 1}
+      },
+      "expected_endpoints": ["/api/admin/dashboard/statistics"],
+      "mock_backend_response": {
+        "date": "2024-01-16",
+        "ordersProcessed": 156,
+        "packagesDelivered": 134,
+        "averageDeliveryTime": "2.3 days",
+        "customerSatisfaction": 4.7,
+        "revenue": 45230.50,
+        "topDestinations": ["Shanghai", "Beijing", "Guangzhou"]
+      },
+      "expected_answer_contains": ["156个订单", "134个包裹", "2.3天", "4.7分", "45,230.50"],
+      "tags": ["dashboard", "chinese", "kpi", "daily"]
+    },
+    {
+      "id": "search_001",
+      "category": "search_orders",
+      "query": "Find all orders going to Shanghai with status 'shipped' in the last week",
+      "expected_intent": "search_orders",
+      "expected_confidence": 0.80,
+      "expected_filters": {
+        "destX": null,
+        "destY": null,
+        "status": "SHIPPED",
+        "dateRange": {"days": 7},
+        "page": 0,
+        "size": 20
+      },
+      "expected_endpoints": ["/api/admin/orders/summary"],
+      "mock_backend_response": {
+        "totalResults": 23,
+        "orders": [
+          {"orderId": "SH001", "destination": "Shanghai", "status": "SHIPPED", "createdAt": "2024-01-15T10:00:00Z"},
+          {"orderId": "SH002", "destination": "Shanghai", "status": "SHIPPED", "createdAt": "2024-01-14T14:30:00Z"}
+        ]
+      },
+      "expected_answer_contains": ["23 orders", "Shanghai", "shipped", "last week"],
+      "tags": ["search", "english", "complex_query", "location"]
+    },
+    {
+      "id": "edge_001",
+      "category": "edge_cases",
+      "query": "无效的追踪号INVALID123查询",
+      "expected_intent": "shipment_status",
+      "expected_confidence": 0.75,
+      "expected_filters": {
+        "trackingId": "INVALID123",
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/tracking/{trackingId}"],
+      "mock_backend_response": null,
+      "mock_backend_error": {"status": 404, "message": "Tracking number not found"},
+      "expected_answer_contains": ["未找到", "追踪号", "INVALID123", "请检查"],
+      "tags": ["edge_case", "chinese", "not_found", "error_handling"]
+    },
+    {
+      "id": "edge_002",
+      "category": "edge_cases",
+      "query": "什么是人工智能？",
+      "expected_intent": "generic_fallback",
+      "expected_confidence": 0.1,
+      "expected_filters": {},
+      "expected_endpoints": ["/actuator/health"],
+      "mock_backend_response": {"status": "UP"},
+      "expected_answer_contains": ["抱歉", "物流", "查询", "帮助"],
+      "tags": ["edge_case", "chinese", "unrelated", "fallback"]
+    },
+    {
+      "id": "multilingual_001",
+      "category": "edge_cases",
+      "query": "Track 包裹 1Z999AA123456789 status please",
+      "expected_intent": "shipment_status",
+      "expected_confidence": 0.85,
+      "expected_filters": {
+        "trackingId": "1Z999AA123456789",
+        "includeDetails": true
+      },
+      "expected_endpoints": ["/api/tracking/{trackingId}"],
+      "mock_backend_response": {
+        "trackingId": "1Z999AA123456789",
+        "status": "DELIVERED",
+        "deliveredAt": "2024-01-15T16:00:00Z"
+      },
+      "expected_answer_contains": ["1Z999AA123456789", "delivered", "已送达"],
+      "tags": ["multilingual", "tracking", "mixed_language"]
+    },
+    {
+      "id": "ambiguous_001",
+      "category": "edge_cases", 
+      "query": "订单",
+      "expected_intent": "generic_fallback",
+      "expected_confidence": 0.3,
+      "expected_filters": {},
+      "expected_endpoints": ["/actuator/health"],
+      "mock_backend_response": {"status": "UP"},
+      "expected_answer_contains": ["需要更具体", "订单号", "追踪号"],
+      "tags": ["edge_case", "chinese", "ambiguous", "insufficient_info"]
+    },
+    {
+      "id": "performance_001",
+      "category": "edge_cases",
+      "query": "Show me orders for customer 999 with tracking IDs 1Z111AA111111111, 1Z222BB222222222, 1Z333CC333333333, 1Z444DD444444444, 1Z555EE555555555",
+      "expected_intent": "customer_orders",
+      "expected_confidence": 0.75,
+      "expected_filters": {
+        "customerId": 999
+      },
+      "expected_endpoints": ["/api/tracking/user/{userId}"],
+      "mock_backend_response": [],
+      "expected_answer_contains": ["customer 999", "未找到", "订单"],
+      "tags": ["performance", "english", "complex", "large_query"]
+    }
+  ],
+  "evaluation_metrics": [
+    {
+      "name": "intent_accuracy",
+      "description": "Percentage of correctly identified intents",
+      "target": 0.90
+    },
+    {
+      "name": "confidence_calibration", 
+      "description": "How well confidence scores match actual accuracy",
+      "target": 0.85
+    },
+    {
+      "name": "endpoint_accuracy",
+      "description": "Percentage of correct API endpoint selections",
+      "target": 0.95
+    },
+    {
+      "name": "filter_extraction_accuracy",
+      "description": "Percentage of correctly extracted query filters",
+      "target": 0.88
+    },
+    {
+      "name": "answer_quality",
+      "description": "Human-evaluated answer quality (1-5 scale)",
+      "target": 4.0
+    },
+    {
+      "name": "response_time",
+      "description": "Average response time in milliseconds",
+      "target": 3000
+    },
+    {
+      "name": "error_handling",
+      "description": "Graceful handling of edge cases and errors",
+      "target": 0.90
+    }
+  ],
+  "test_environments": [
+    {
+      "name": "unit_test",
+      "description": "Isolated testing with mocked dependencies",
+      "backend_mode": "mock"
+    },
+    {
+      "name": "integration_test", 
+      "description": "Testing with live backend in test environment",
+      "backend_mode": "test_backend"
+    },
+    {
+      "name": "load_test",
+      "description": "Performance testing under load",
+      "backend_mode": "load_test_backend",
+      "concurrent_users": 50,
+      "requests_per_second": 10
+    }
+  ]
+}

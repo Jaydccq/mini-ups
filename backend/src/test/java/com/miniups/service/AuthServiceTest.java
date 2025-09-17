@@ -9,6 +9,7 @@ import com.miniups.model.dto.auth.AuthResponseDto;
 import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.dto.auth.PasswordChangeDto;
 import com.miniups.model.dto.auth.RegisterRequestDto;
+import com.miniups.model.dto.auth.SmsLoginRequestDto;
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.UserRole;
 import com.miniups.repository.UserRepository;
@@ -54,6 +55,9 @@ class AuthServiceTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
+
+    @Mock
+    private SmsCodeService smsCodeService;
 
     @InjectMocks
     private AuthService authService;
@@ -471,6 +475,40 @@ class AuthServiceTest {
         verify(userRepository).existsByEmail("");
     }
 
+    @Test
+    @DisplayName("短信验证码登录 - 发送验证码成功")
+    void sendLoginCode_shouldInvokeGenerator_whenUserExists() {
+        String phone = "1234567890";
+        when(userRepository.findByPhone(phone)).thenReturn(Optional.of(testUser));
+
+        authService.sendLoginCode(phone);
+
+        verify(userRepository).findByPhone(phone);
+        verify(smsCodeService).generateAndStoreCode(phone);
+    }
+
+    @Test
+    @DisplayName("短信验证码登录 - 验证通过返回令牌")
+    void loginWithSms_shouldReturnJwt_whenVerificationSucceeds() {
+        String phone = "1234567890";
+        String code = "123456";
+        SmsLoginRequestDto requestDto = new SmsLoginRequestDto(phone, code);
+
+        when(userRepository.findByPhone(phone)).thenReturn(Optional.of(testUser));
+        when(smsCodeService.verifyCode(phone, code)).thenReturn(true);
+        when(jwtTokenProvider.generateToken(testUser.getUsername())).thenReturn("jwt-token");
+        when(jwtTokenProvider.getExpirationTime()).thenReturn(3600L);
+
+        AuthResponseDto response = authService.loginWithSms(requestDto);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isEqualTo("jwt-token");
+        assertThat(response.getUser().getUsername()).isEqualTo(testUser.getUsername());
+
+        verify(smsCodeService).verifyCode(phone, code);
+        verify(jwtTokenProvider).generateToken(testUser.getUsername());
+    }
+
     // Helper methods
 
     private void setupValidRegisterRequest() {
@@ -496,5 +534,6 @@ class AuthServiceTest {
         testUser.setEnabled(true);
         testUser.setRole(UserRole.USER);
         testUser.setPassword("encodedPassword123");
+        testUser.setPhone("1234567890");
     }
 }

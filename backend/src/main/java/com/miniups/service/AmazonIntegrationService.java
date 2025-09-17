@@ -70,11 +70,11 @@ public class AmazonIntegrationService {
     @Autowired
     private TrackingService trackingService;
     
-    @Autowired(required = false)
-    private WorldSimulatorService worldSimulatorService;
+    // @Autowired(required = false)
+    // private WorldSimulatorService worldSimulatorService;
     
-    @Autowired(required = false)
-    private com.miniups.network.netty.service.NettyWorldSimulatorService nettyWorldSimulatorService;
+    // @Autowired(required = false)
+    // private com.miniups.network.netty.service.NettyWorldSimulatorService nettyWorldSimulatorService;
     
     @Autowired
     private TruckManagementService truckManagementService;
@@ -98,11 +98,7 @@ public class AmazonIntegrationService {
      * Helper method to check if any world simulator is connected.
      */
     private boolean isWorldSimulatorConnected() {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.isConnected();
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.isConnected();
-        }
+        // World Simulator services are temporarily disabled
         return false;
     }
     
@@ -110,11 +106,7 @@ public class AmazonIntegrationService {
      * Helper method to send truck to pickup using the available service.
      */
     private java.util.concurrent.CompletableFuture<Boolean> sendTruckToPickup(Integer truckId, Integer warehouseId) {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.sendTruckToPickup(truckId, warehouseId);
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.sendTruckToPickup(truckId, warehouseId);
-        }
+        // World Simulator services are temporarily disabled
         return java.util.concurrent.CompletableFuture.completedFuture(false);
     }
     
@@ -122,11 +114,7 @@ public class AmazonIntegrationService {
      * Helper method to send truck to deliver using the available service.
      */
     private java.util.concurrent.CompletableFuture<Boolean> sendTruckToDeliver(Integer truckId, java.util.Map<Long, int[]> deliveries) {
-        if (worldSimulatorService != null) {
-            return worldSimulatorService.sendTruckToDeliver(truckId, deliveries);
-        } else if (nettyWorldSimulatorService != null) {
-            return nettyWorldSimulatorService.sendTruckToDeliver(truckId, deliveries);
-        }
+        // World Simulator services are temporarily disabled
         return java.util.concurrent.CompletableFuture.completedFuture(false);
     }
     

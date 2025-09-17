@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,27 +7,69 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTinaContent } from '@/hooks/useTinaContent';
 import * as LucideIcons from 'lucide-react';
-import { Package, Search, CheckCircle, ArrowRight, Star } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { Package, Search, CheckCircle, ArrowRight, Star, HelpCircle } from 'lucide-react';
+import ExperienceShowcase from '@/components/home/ExperienceShowcase';
 
 // Helper function to dynamically get Lucide icons
+const iconLibrary = LucideIcons as unknown as Record<string, LucideIcon>;
+
 const getLucideIcon = (iconName: string) => {
-  const IconComponent = (LucideIcons as any)[iconName];
-  return IconComponent ? <IconComponent className="h-8 w-8 text-primary" /> : <Package className="h-8 w-8 text-primary" />;
+  const IconComponent = iconLibrary[iconName] ?? Package;
+  return <IconComponent className="h-8 w-8 text-primary" />;
 };
 
 export const HomePage: React.FC = () => {
   const [trackingNumber, setTrackingNumber] = useState('');
   const navigate = useNavigate();
-  const { content, isLoading, error, hero, features, testimonials, cta } = useTinaContent();
+  const { isLoading, error, hero, features, testimonials, cta } = useTinaContent();
+  const trackingInputRef = useRef<HTMLInputElement>(null);
+  const quickLinksRef = useRef<HTMLDivElement>(null);
+  const trimmedTrackingNumber = useMemo(() => trackingNumber.trim(), [trackingNumber]);
 
   const handleTrackPackage = () => {
-    if (trackingNumber.trim()) {
-      navigate(`/tracking?number=${trackingNumber}`);
+    if (trimmedTrackingNumber) {
+      navigate(`/tracking?number=${trimmedTrackingNumber}`);
     }
   };
 
   const handleCTAClick = () => {
     navigate(cta.button_link);
+  };
+
+  useEffect(() => {
+    const inputElement = trackingInputRef.current;
+    if (!inputElement) {
+      return;
+    }
+
+    const trackingShortcut = (event: KeyboardEvent) => {
+      const isTypingTarget = event.target instanceof HTMLElement &&
+        (event.target.closest('input, textarea, [contenteditable="true"]') !== null);
+
+      if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey && !isTypingTarget) {
+        event.preventDefault();
+        inputElement.focus({ preventScroll: true });
+        inputElement.select();
+        inputElement.setAttribute('data-highlight', 'true');
+        window.setTimeout(() => inputElement.removeAttribute('data-highlight'), 1000);
+      }
+    };
+
+    window.addEventListener('keydown', trackingShortcut);
+
+    return () => window.removeEventListener('keydown', trackingShortcut);
+  }, []);
+
+  const handleScrollToHelp = () => {
+    const element = quickLinksRef.current;
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.dataset.scrolled = 'true';
+      window.setTimeout(() => {
+        element.removeAttribute('data-scrolled');
+      }, 1200);
+    }
   };
 
   // Loading state
@@ -89,26 +131,41 @@ export const HomePage: React.FC = () => {
               <CardContent>
                 <div className="flex gap-2">
                   <Input
+                    id="homepage-tracking-input"
                     placeholder="Enter tracking number"
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleTrackPackage()}
                     className="flex-1"
+                    ref={trackingInputRef}
+                    aria-describedby="tracking-helper"
                   />
-                  <Button onClick={handleTrackPackage} disabled={!trackingNumber.trim()}>
+                  <Button onClick={handleTrackPackage} disabled={!trimmedTrackingNumber}>
                     <Search className="h-4 w-4" />
                   </Button>
                 </div>
+                <p id="tracking-helper" className="sr-only">
+                  Press slash key to focus the tracking field instantly.
+                </p>
               </CardContent>
             </Card>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center" ref={quickLinksRef}>
               <Button size="lg" className="text-lg px-8" onClick={handleCTAClick}>
                 {hero.cta_primary}
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
               <Button size="lg" variant="outline" className="text-lg px-8" onClick={() => navigate('/login')}>
                 {hero.cta_secondary}
+              </Button>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="text-lg px-8"
+                onClick={handleScrollToHelp}
+              >
+                Quick Help
+                <HelpCircle className="h-5 w-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -144,6 +201,8 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <ExperienceShowcase />
 
       {/* Testimonials Section */}
       <section className="py-20 bg-muted/30">
