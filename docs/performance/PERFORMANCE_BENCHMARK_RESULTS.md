@@ -149,7 +149,7 @@ Features:
 
 ### Leaf ID Generator Test Setup
 
-**Test File**: `LeafSegmentQPSTest.java`
+**Test File**: `tools/performance/leaf/LeafSegmentQPSTest.java`
 
 ```java
 // Test Configuration
@@ -168,10 +168,10 @@ private static final int[] THREAD_COUNTS = {10, 20, 50, 100, 200, 500, 1000};
 **Compilation & Execution**:
 ```bash
 # Compile test
-JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac LeafSegmentQPSTest.java
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac tools/performance/leaf/LeafSegmentQPSTest.java
 
 # Run benchmark
-JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH java LeafSegmentQPSTest
+JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH java -cp tools/performance/leaf LeafSegmentQPSTest
 ```
 
 ### Test Phases

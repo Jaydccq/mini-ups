@@ -17,7 +17,7 @@
 - [x] 使用你现有的 GitHub Secrets
 
 ### 3. 部署脚本
-- [x] `deploy-to-ec2.sh` - 手动部署脚本
+- [x] `scripts/deploy/deploy-to-ec2.sh` - 手动部署脚本
 - [x] `EC2_SETUP_GUIDE.md` - 完整设置指南
 
 ### 4. 配置文件更新
@@ -58,7 +58,7 @@ git push origin main
 ### 方式2：手动部署 (测试用)
 ```bash
 # 在本地执行
-./deploy-to-ec2.sh
+./scripts/deploy/deploy-to-ec2.sh
 ```
 
 ## 📋 EC2 准备步骤

@@ -29,6 +29,7 @@ import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.dto.auth.PasswordChangeDto;
 import com.miniups.model.dto.auth.RegisterRequestDto;
 import com.miniups.model.dto.user.UserDto;
+import com.miniups.model.dto.auth.SmsLoginRequestDto;
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.UserRole;
 import com.miniups.model.enums.AuthProvider;
@@ -65,15 +66,18 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final SmsCodeService smsCodeService;
     
     public AuthService(UserRepository userRepository, 
                       PasswordEncoder passwordEncoder,
                       JwtTokenProvider jwtTokenProvider,
-                      AuthenticationManager authenticationManager) {
+                      AuthenticationManager authenticationManager,
+                      SmsCodeService smsCodeService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.authenticationManager = authenticationManager;
+        this.smsCodeService = smsCodeService;
     }
     
     /**
@@ -238,6 +242,47 @@ public class AuthService {
             // For unexpected exceptions, throw a business exception that will be handled properly
             throw new RuntimeException("Login failed, please try again later");
         }
+    }
+
+    /**
+     * Send SMS login code to user phone
+     */
+    public void sendLoginCode(String phoneNumber) {
+        logger.info("Generating SMS login code: phone={}", phoneNumber);
+
+        User user = userRepository.findByPhone(phoneNumber)
+                .orElseThrow(() -> new UserNotFoundException("phone: " + phoneNumber));
+
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new InvalidCredentialsException("Account is disabled, please contact the administrator");
+        }
+
+        smsCodeService.generateAndStoreCode(phoneNumber);
+    }
+
+    /**
+     * Login using SMS verification code
+     */
+    public AuthResponseDto loginWithSms(SmsLoginRequestDto smsLoginRequest) {
+        logger.info("Processing SMS login: phone={}", smsLoginRequest.getPhone());
+
+        User user = userRepository.findByPhone(smsLoginRequest.getPhone())
+                .orElseThrow(() -> new UserNotFoundException("phone: " + smsLoginRequest.getPhone()));
+
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new InvalidCredentialsException("Account is disabled, please contact the administrator");
+        }
+
+        boolean verified = smsCodeService.verifyCode(smsLoginRequest.getPhone(), smsLoginRequest.getCode());
+        if (!verified) {
+            throw new InvalidCredentialsException("Invalid or expired verification code");
+        }
+
+        String token = jwtTokenProvider.generateToken(user.getUsername());
+        Long expiresIn = jwtTokenProvider.getExpirationTime();
+
+        UserDto userDto = UserDto.fromEntity(user);
+        return AuthResponseDto.loginSuccess(token, expiresIn, userDto);
     }
     
     /**

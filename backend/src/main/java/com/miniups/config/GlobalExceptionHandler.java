@@ -23,6 +23,7 @@ package com.miniups.config;
 
 import com.miniups.exception.*;
 import com.miniups.model.dto.common.ApiResponse;
+import com.miniups.shortlink.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,6 +64,26 @@ public class GlobalExceptionHandler {
     
     public GlobalExceptionHandler(ExceptionMetricsConfig exceptionMetrics) {
         this.exceptionMetrics = exceptionMetrics;
+    }
+
+    @ExceptionHandler(ShortLinkRateLimitException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShortLinkRateLimit(ShortLinkRateLimitException ex, WebRequest request) {
+        return buildErrorResponse(ex, "SHORT_LINK_RATE_LIMIT", ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS, null);
+    }
+
+    @ExceptionHandler(ShortLinkNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShortLinkNotFound(ShortLinkNotFoundException ex, WebRequest request) {
+        return buildErrorResponse(ex, "SHORT_LINK_NOT_FOUND", ex.getMessage(), HttpStatus.NOT_FOUND, null);
+    }
+
+    @ExceptionHandler(ShortLinkConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShortLinkConflict(ShortLinkConflictException ex, WebRequest request) {
+        return buildErrorResponse(ex, "SHORT_LINK_CONFLICT", ex.getMessage(), HttpStatus.CONFLICT, null);
+    }
+
+    @ExceptionHandler(ShortLinkServiceException.class)
+    public ResponseEntity<ApiResponse<Void>> handleShortLinkServiceException(ShortLinkServiceException ex, WebRequest request) {
+        return buildErrorResponse(ex, "SHORT_LINK_ERROR", ex.getMessage(), HttpStatus.BAD_REQUEST, null);
     }
 
     /**

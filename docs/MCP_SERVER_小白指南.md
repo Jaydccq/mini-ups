@@ -1562,6 +1562,7 @@ export function getConfig(): AppConfig {
 ### Docker 部署
 
 #### Dockerfile
+
 ```dockerfile
 # 使用 Node.js 20 Alpine 镜像
 FROM node:20-alpine
@@ -1576,7 +1577,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # 复制源代码
-COPY . .
+COPY .. .
 
 # 编译 TypeScript
 RUN npm run build

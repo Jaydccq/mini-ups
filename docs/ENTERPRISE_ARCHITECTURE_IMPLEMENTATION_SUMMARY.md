@@ -139,9 +139,9 @@ backend/src/main/resources/db/migration/
 
 ### 测试和验证
 ```
-/Users/hongxichen/Desktop/mini-ups/
-├── LeafSegmentQPSTest.java                    # Leaf性能测试（600万QPS验证）
-└── ObservabilityPlatformTest.java             # 可观测性平台测试
+/Users/hongxichen/Desktop/mini-ups/tools/performance/
+├── leaf/LeafSegmentQPSTest.java               # Leaf性能测试（600万QPS验证）
+└── observability/ObservabilityPlatformTest.java # 可观测性平台测试
 ```
 
 ## 📊 性能指标达成
