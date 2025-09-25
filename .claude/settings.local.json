@@ -260,7 +260,11 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"RedisBloomFilterServiceTest\" -Dspring.profiles.active=test -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"ShortLinkCodeGeneratorTest\" -Dspring.profiles.active=test -q)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"ShortLinkCodeGeneratorTest,ShortLinkShardUtilsTest,WeightedTableShardingAlgorithmTest,RedisBloomFilterServiceTest\" -Dspring.profiles.active=test -q)",
-      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"ShortLinkPerformanceTest#codeGeneration_shouldMeetThroughputRequirements\" -Dspring.profiles.active=test -q)"
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"ShortLinkPerformanceTest#codeGeneration_shouldMeetThroughputRequirements\" -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=KafkaOutboxMessagePublisherTest -Dspring.profiles.active=test -q -f backend/pom.xml)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile -DskipTests=true -q -f backend/pom.xml)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"!*ShortLink*\" -Dspring.profiles.active=test -q -f backend/pom.xml)",
+      "mcp__zen__planner"
     ],
     "deny": []
   }

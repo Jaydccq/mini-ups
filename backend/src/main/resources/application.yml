@@ -64,6 +64,24 @@ spring:
           max-attempts: 3
           max-interval: 10000
           multiplier: 2.0
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    client-id: ${KAFKA_CLIENT_ID:mini-ups-backend}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: ${KAFKA_PRODUCER_ACKS:all}
+      linger-ms: ${KAFKA_PRODUCER_LINGER_MS:5}
+      retries: ${KAFKA_PRODUCER_RETRIES:3}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:mini-ups-backend}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: ${KAFKA_CONSUMER_OFFSET_RESET:latest}
+    listener:
+      ack-mode: MANUAL
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:3}
   
   jackson:
     default-property-inclusion: non_null
@@ -161,6 +179,19 @@ springdoc:
     url: /v3/api-docs
     operations-sorter: method
 
+messaging:
+  rabbit:
+    outbox-enabled: ${MESSAGING_RABBIT_OUTBOX_ENABLED:true}
+    default-exchange: ${MESSAGING_RABBIT_DEFAULT_EXCHANGE:ups.events.topic}
+  kafka:
+    enabled: ${MESSAGING_KAFKA_ENABLED:false}
+    outbox-enabled: ${MESSAGING_KAFKA_OUTBOX_ENABLED:false}
+    topic-prefix: ${MESSAGING_KAFKA_TOPIC_PREFIX:}
+    default-topic: ${MESSAGING_KAFKA_DEFAULT_TOPIC:}
+    send-timeout-ms: ${MESSAGING_KAFKA_SEND_TIMEOUT_MS:5000}
+    auto-create-topics: ${MESSAGING_KAFKA_AUTO_CREATE_TOPICS:true}
+    topics: []
+
 auth:
   sms:
     code-length: ${AUTH_SMS_CODE_LENGTH:6}
@@ -219,3 +250,29 @@ app:
       enabled: ${DEBUG_WORLD_SIMULATOR:true}
       buffer-size: ${DEBUG_BUFFER_SIZE:5000}
       retention-seconds: ${DEBUG_RETENTION_SECONDS:300}
+
+rag:
+  enabled: ${RAG_ENABLED:true}
+  embedding:
+    provider: ${RAG_EMBEDDING_PROVIDER:openai}
+    model: ${RAG_EMBEDDING_MODEL:text-embedding-3-small}
+    dimensions: ${RAG_EMBEDDING_DIMENSIONS:1536}
+  llm:
+    provider: ${RAG_LLM_PROVIDER:openai}
+    model: ${RAG_LLM_MODEL:gpt-4o-mini}
+    temperature: ${RAG_LLM_TEMPERATURE:0.2}
+    max-output-tokens: ${RAG_LLM_MAX_OUTPUT_TOKENS:800}
+  retrieval:
+    top-k: ${RAG_RETRIEVAL_TOP_K:5}
+    similarity-threshold: ${RAG_RETRIEVAL_SIMILARITY_THRESHOLD:0.7}
+  rate-limit:
+    admin: ${RAG_RATE_LIMIT_ADMIN:100}
+    dispatcher: ${RAG_RATE_LIMIT_DISPATCHER:50}
+    driver: ${RAG_RATE_LIMIT_DRIVER:20}
+  storage:
+    table-name: ${RAG_STORAGE_TABLE:rag_document_chunk}
+    ivf-lists: ${RAG_STORAGE_IVF_LISTS:100}
+  providers:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_API_BASE_URL:https://api.openai.com/v1}

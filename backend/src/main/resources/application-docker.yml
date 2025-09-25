@@ -43,6 +43,24 @@ spring:
     virtual-host: /
     connection-timeout: 10000
     requested-heartbeat: 30
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    client-id: ${KAFKA_CLIENT_ID:mini-ups-backend}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: ${KAFKA_PRODUCER_ACKS:all}
+      linger-ms: ${KAFKA_PRODUCER_LINGER_MS:5}
+      retries: ${KAFKA_PRODUCER_RETRIES:3}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:mini-ups-backend}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: ${KAFKA_CONSUMER_OFFSET_RESET:latest}
+    listener:
+      ack-mode: MANUAL
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:3}
   
   security:
     oauth2:
@@ -120,3 +138,16 @@ springdoc:
     operations-sorter: method
     disable-swagger-default-url: true
     url: /v3/api-docs
+
+messaging:
+  rabbit:
+    outbox-enabled: ${MESSAGING_RABBIT_OUTBOX_ENABLED:true}
+    default-exchange: ${MESSAGING_RABBIT_DEFAULT_EXCHANGE:ups.events.topic}
+  kafka:
+    enabled: ${MESSAGING_KAFKA_ENABLED:false}
+    outbox-enabled: ${MESSAGING_KAFKA_OUTBOX_ENABLED:false}
+    topic-prefix: ${MESSAGING_KAFKA_TOPIC_PREFIX:}
+    default-topic: ${MESSAGING_KAFKA_DEFAULT_TOPIC:}
+    send-timeout-ms: ${MESSAGING_KAFKA_SEND_TIMEOUT_MS:5000}
+    auto-create-topics: ${MESSAGING_KAFKA_AUTO_CREATE_TOPICS:true}
+    topics: []

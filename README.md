@@ -121,6 +121,8 @@ cd frontend && ./run-local.sh   # Frontend Development Server
 | Spring Security | 6.4.3 | JWT Authentication |
 | PostgreSQL | 15 | Relational Database |
 | Redis | 7 | Cache & Session Storage |
+| RabbitMQ | 3.x | Task queues & WebSocket bridge |
+| Apache Kafka | 3.x | Event streaming & analytics fan-out |
 | Protocol Buffers | 4.29.2 | Binary Serialization |
 | Netty | 4.1.117.Final | TCP Client |
 
@@ -140,6 +142,11 @@ cd frontend && ./run-local.sh   # Frontend Development Server
 | AWS ECS Fargate | Serverless Containers |
 | GitHub Actions | CI/CD Pipeline |
 | CloudFormation | Infrastructure as Code |
+
+### 🔄 Messaging
+
+- **Transactional Outbox → RabbitMQ**: Reliable command processing and WebSocket fan-out (default).
+- **Transactional Outbox → Apache Kafka**: Optional event streaming pipeline for analytics, CDC, and downstream services. Enable via `messaging.kafka.enabled=true` and configure bootstrap servers in `application.yml`.
 
 ## 📋 Core Modules
 

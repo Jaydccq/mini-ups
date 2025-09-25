@@ -22,11 +22,11 @@ import java.util.UUID;
  * Event Publisher Service with Transactional Outbox Pattern
  * 
  * This service implements the Transactional Outbox pattern for reliable event publishing.
- * Instead of publishing events directly to RabbitMQ (which creates dual-write problems),
+ * Instead of publishing events directly to an external broker (which creates dual-write problems),
  * events are stored in the database within the same transaction as the business operation.
  * 
  * A separate polling service (OutboxPollerService) reads from the outbox table and
- * publishes events to RabbitMQ, ensuring at-least-once delivery semantics.
+ * publishes events to the configured messaging channels (RabbitMQ, Kafka, ...), ensuring at-least-once delivery semantics.
  * 
  * Architecture Benefits:
  * - Eliminates dual-write consistency problems
@@ -60,7 +60,7 @@ public class EventPublisherService {
      * Publish a shipment creation event using the Transactional Outbox pattern
      * 
      * This method stores the event in the outbox table within the current transaction.
-     * The event will be picked up by the OutboxPollerService and published to RabbitMQ
+     * The event will be picked up by the OutboxPollerService and published to the configured messaging channels
      * asynchronously, ensuring reliable delivery.
      * 
      * @param payload The shipment creation data
@@ -314,7 +314,7 @@ public class EventPublisherService {
      * @param aggregateId Business entity ID
      * @param aggregateType Business entity type
      * @param eventType Type of the event
-     * @param routingKey RabbitMQ routing key
+     * @param routingKey Routing key / topic name for the outbound message
      * @param eventPayload The event data
      * @param correlationId Optional correlation ID for request tracing
      */
@@ -361,7 +361,7 @@ public class EventPublisherService {
      * @param aggregateId Business entity ID
      * @param aggregateType Business entity type
      * @param eventType Type of the event
-     * @param routingKey RabbitMQ routing key
+     * @param routingKey Routing key / topic name for the outbound message
      * @param eventPayload The actual event data
      * @param correlationId Distributed tracing correlation ID
      * @return Configured OutboxEvent ready for persistence

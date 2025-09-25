@@ -2,11 +2,10 @@ package com.miniups.service;
 
 import com.miniups.model.entity.OutboxEvent;
 import com.miniups.repository.OutboxEventRepository;
+import com.miniups.service.messaging.OutboxMessagePublisher;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -20,14 +19,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Outbox Poller Service
  * 
  * This service implements the asynchronous publishing component of the Transactional
  * Outbox pattern. It polls the outbox_events table for pending events and publishes
- * them to RabbitMQ, ensuring reliable event delivery with at-least-once semantics.
+ * them to the configured messaging backends (RabbitMQ, Kafka, ...), ensuring reliable event delivery with
+ * at-least-once semantics.
  * 
  * Architecture Highlights:
  * - Distributed coordination using Redis for multi-instance deployments
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  * - Maintains sub-second latency for event publishing under normal conditions
  * 
  * Fault Tolerance:
- * - Handles RabbitMQ connection failures gracefully with retry logic
+ * - Handles message broker connection failures gracefully with retry logic
  * - Recovers from Redis connection issues with fallback mechanisms
  * - Implements stuck event detection and recovery for crashed instances
  * - Provides detailed metrics for operational monitoring
@@ -58,9 +58,7 @@ public class OutboxPollerService {
     
     private final OutboxEventRepository outboxEventRepository;
     private final RedisTemplate<String, String> redisTemplate;
-    
-    @Autowired(required = false)
-    private RabbitTemplate rabbitTemplate;
+    private final List<OutboxMessagePublisher> messagePublishers;
     
     /**
      * Unique identifier for this polling instance
@@ -114,13 +112,19 @@ public class OutboxPollerService {
             return;
         }
         
-        if (rabbitTemplate == null) {
-            log.warn("RabbitTemplate not available - outbox polling will be disabled");
+        if (messagePublishers == null || messagePublishers.isEmpty()) {
+            log.warn("No messaging publishers available - outbox polling will be disabled");
+            pollingEnabled = false;
             return;
         }
         
-        log.info("Outbox Poller Service initialized with instance ID: {} (batch size: {}, lock timeout: {}s)", 
-                instanceId, batchSize, lockTimeoutSeconds);
+        String channels = messagePublishers.stream()
+                .map(OutboxMessagePublisher::channel)
+                .sorted()
+                .collect(Collectors.joining(", "));
+
+        log.info("Outbox Poller Service initialized with instance ID: {} (batch size: {}, lock timeout: {}s, channels: [{}])",
+                instanceId, batchSize, lockTimeoutSeconds, channels);
         
         // Register this instance in Redis for monitoring
         registerInstance();
@@ -148,7 +152,7 @@ public class OutboxPollerService {
      */
     @Scheduled(fixedDelayString = "${outbox.polling.interval-ms:1000}")
     public void pollAndPublishEvents() {
-        if (!pollingEnabled || rabbitTemplate == null) {
+        if (!pollingEnabled || messagePublishers.isEmpty()) {
             return;
         }
         
@@ -239,7 +243,7 @@ public class OutboxPollerService {
                     successCount++;
                     totalPublished++;
                 } else {
-                    handlePublishFailure(event, "Failed to publish to RabbitMQ");
+                    handlePublishFailure(event, "Failed to publish via configured messaging channels");
                 }
                 
             } catch (Exception e) {
@@ -255,40 +259,35 @@ public class OutboxPollerService {
     }
     
     /**
-     * Publish a single event to RabbitMQ
-     * 
+     * Publish a single event using all configured message publishers.
+     *
+     * An event is considered published only when every active publisher reports success.
+     *
      * @param event The outbox event to publish
-     * @return true if successfully published, false otherwise
+     * @return true if successfully published to all configured channels
      */
     protected boolean publishEvent(OutboxEvent event) {
-        try {
-            // Extract the exchange from configuration (could be made configurable per event)
-            String exchange = extractExchangeFromRoutingKey(event.getRoutingKey());
-            
-            rabbitTemplate.convertAndSend(
-                exchange,
-                event.getRoutingKey(),
-                event.getPayload(),
-                message -> {
-                    // Add correlation ID to message headers for tracing
-                    if (event.getCorrelationId() != null) {
-                        message.getMessageProperties().setCorrelationId(event.getCorrelationId());
-                    }
-                    message.getMessageProperties().setMessageId(event.getEventId());
-                    message.getMessageProperties().setTimestamp(java.util.Date.from(event.getCreatedAt()));
-                    return message;
+        boolean atLeastOneAttempt = false;
+
+        for (OutboxMessagePublisher publisher : messagePublishers) {
+            try {
+                atLeastOneAttempt = true;
+                boolean success = publisher.publish(event);
+                if (!success) {
+                    log.warn("Publisher {} reported failure for event {}", publisher.channel(), event.getEventId());
+                    return false;
                 }
-            );
-            
-            log.debug("Successfully published event: {} to exchange: {} with routing key: {}", 
-                    event.getEventId(), exchange, event.getRoutingKey());
-            
-            return true;
-            
-        } catch (Exception e) {
-            log.error("Failed to publish event: {} to RabbitMQ", event.getEventId(), e);
-            return false;
+            } catch (Exception ex) {
+                log.error("Publisher {} threw exception for event {}", publisher.channel(), event.getEventId(), ex);
+                return false;
+            }
         }
+
+        if (!atLeastOneAttempt) {
+            log.warn("No configured message publishers attempted to publish event {}", event.getEventId());
+        }
+
+        return atLeastOneAttempt;
     }
     
     /**
@@ -334,19 +333,6 @@ public class OutboxPollerService {
         } catch (Exception e) {
             log.error("Failed to handle publish failure for event: {}", event.getEventId(), e);
         }
-    }
-    
-    /**
-     * Extract the exchange name from the routing key
-     * This is a simplified implementation - could be made more sophisticated
-     * 
-     * @param routingKey The routing key
-     * @return The exchange name to use
-     */
-    private String extractExchangeFromRoutingKey(String routingKey) {
-        // For now, use the default topic exchange configured in RabbitMQConfig
-        // In a more sophisticated implementation, this could be configurable per event type
-        return "ups.events.topic"; // RabbitMQConfig.TOPIC_EXCHANGE_NAME
     }
     
     /**

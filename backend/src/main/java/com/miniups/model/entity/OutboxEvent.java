@@ -85,7 +85,7 @@ public class OutboxEvent {
     private String payload;
     
     /**
-     * RabbitMQ routing key for this event
+     * Routing key / topic name for this event depending on the messaging system.
      */
     @Column(name = "routing_key", nullable = false, length = 200)
     private String routingKey;

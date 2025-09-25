@@ -83,6 +83,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Metadata generation for @ConfigurationProperties -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- OpenAPI / Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -94,6 +101,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!-- Kafka -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
 
         <!-- Redis -->
@@ -185,6 +198,13 @@
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>3.25.3</version>
+        </dependency>
+
+        <!-- pgvector support -->
+        <dependency>
+            <groupId>io.github.pgvector</groupId>
+            <artifactId>pgvector-spring-boot-starter</artifactId>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
