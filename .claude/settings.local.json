@@ -264,7 +264,13 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=KafkaOutboxMessagePublisherTest -Dspring.profiles.active=test -q -f backend/pom.xml)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test-compile -DskipTests=true -q -f backend/pom.xml)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"!*ShortLink*\" -Dspring.profiles.active=test -q -f backend/pom.xml)",
-      "mcp__zen__planner"
+      "mcp__zen__planner",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"RagRetrieverTest,HybridScoringTest,RagQueryServiceTest\" -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"RagRetrieverTest,HybridScoringTest,RagQueryServiceTest\" -Dspring.profiles.active=test -q -f backend/pom.xml)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac rag_test_demo.java)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH java rag_test_demo)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 mvn test -Dtest=\"JwtSecurityTest\" -Dspring.profiles.active=test -q)",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH javac /tmp/claude/test-rag-config.java)"
     ],
     "deny": []
   }

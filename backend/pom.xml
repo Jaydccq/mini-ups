@@ -73,7 +73,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- Lombok (optional, used in project) -->
@@ -202,9 +201,9 @@
 
         <!-- pgvector support -->
         <dependency>
-            <groupId>io.github.pgvector</groupId>
-            <artifactId>pgvector-spring-boot-starter</artifactId>
-            <version>0.2.0</version>
+            <groupId>com.pgvector</groupId>
+            <artifactId>pgvector</artifactId>
+            <version>0.1.4</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>

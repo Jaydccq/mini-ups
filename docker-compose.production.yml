@@ -4,7 +4,7 @@ services:
   # ===== UPS Services =====
   # PostgreSQL数据库 (UPS)
   ups-database:
-    image: postgres:15
+    image: ankane/pgvector:pg15
     container_name: mini-ups-postgres
     environment:
       POSTGRES_DB: ${UPS_POSTGRES_DB:-ups_db}

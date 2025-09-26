@@ -157,6 +157,54 @@ cd frontend && ./run-local.sh   # Frontend Development Server
 - **External Integration**: World Simulator + Amazon API
 - **Monitoring**: CloudWatch + Health checks
 
+## 🧠 RAG Assistant (Phase 1)
+
+- **Context-aware guidance**: New Mini-UPS助手提供知识检索 + 大模型生成的组合答案，并附带引用
+- **Role-aware answers**: 自动读取当前登录用户角色（管理员/调度/司机）调整响应语气与速率限制
+- **混合检索**: 语义向量 + PostgreSQL 全文检索双路召回，支持权重调整
+- **知识库摄取**: 后端启动时自动从 `knowledge/` 目录和文档中分块、生成向量并写入 pgvector
+- **前端体验**: 登录后右下角浮动图标即可打开聊天窗口，实时查看回答与参考文档
+- **摄取治理**: 管理员可手动触发重建，并查看最近一次摄取作业的执行状态
+- **用户反馈闭环**: 聊天界面支持点赞/点踩，反馈会写入日志并暴露指标
+  - `rag.feedback.total`：按角色统计正/负反馈数量
+  - `rag.retrieval.query_latency`：区分成功/空/错误的检索耗时
+  - `rag.retrieval.semantic_score` / `keyword_score` / `final_score`：检索得分分布
+  - `rag.retrieval.weight_dominant`：语义或关键词贡献占主导的次数
+
+### 🔐 配置步骤
+
+1. **升级数据库镜像**：`docker-compose*.yml` 已改用 `ankane/pgvector:pg15`，确保 Postgres 自带 `pgvector` 扩展
+2. **提供 OpenAI 凭证**：在后端环境变量中设置
+
+| 环境变量 | 说明 | 默认值 |
+| --- | --- | --- |
+| `OPENROUTER_API_KEY` | OpenRouter 密钥（用于嵌入 + 回答） | _必填_ |
+| `OPENROUTER_BASE_URL` | OpenRouter API 地址 | `https://openrouter.ai/api/v1` |
+| `OPENROUTER_SITE_URL` | 项目对外访问 URL（OpenRouter 统计用） | `http://localhost` |
+| `OPENROUTER_APP_NAME` | 应用名称（展示在 OpenRouter 控制台） | `Mini-UPS RAG` |
+| `OPENAI_API_KEY` | （可选）备用 OpenAI 密钥 | _(空)_ |
+| `OPENAI_API_BASE_URL` | （可选）OpenAI API 地址 | `https://api.openai.com/v1` |
+| `RAG_ENABLED` | 总开关 | `true` |
+| `RAG_INGESTION_ENABLED` | 启动时是否自动摄取知识库 | `true` |
+| `RAG_INGESTION_ROOT_PATHS` | 逗号分隔的本地知识库目录 | `knowledge` |
+| `RAG_INGESTION_SCHEDULE_ENABLED` | 是否启用定时摄取 | `false` |
+| `RAG_INGESTION_SCHEDULE_CRON` | 定时任务 Cron 表达式 | `0 30 2 * * *` |
+| `RAG_RETRIEVAL_SEMANTIC_WEIGHT` | 语义检索权重 (0~1) | `0.7` |
+| `RAG_RETRIEVAL_KEYWORD_WEIGHT` | 关键词检索权重 (0~1) | `0.3` |
+
+> ❗ 未配置 `OPENAI_API_KEY` 时，系统会跳过向量生成/回答，但仍会正常启动。
+
+### 🚀 使用建议
+
+- 本地开发：
+  ```bash
+  export OPENROUTER_API_KEY=sk-or-...
+  docker compose up ups-database -d  # pgvector 支持
+  ./start-local.sh                   # 启动全栈
+  ```
+- 需要重新摄取文档时，更新 `knowledge/` 内容后重启后端即可
+- 当前回答为快速原型，推荐在 Phase 2 继续完善重排序、缓存与准入控制
+
 ## 🔗 API Endpoints
 
 ### 🔑 Authentication
@@ -280,3 +328,22 @@ SOFTWARE.
 [🏠 Project Homepage](https://your-domain.com) | [📖 Documentation](https://docs.your-domain.com) | [🎮 Demo](https://demo.your-domain.com)
 
 </div>
+- 手动重建知识库（管理员）
+  ```bash
+  # 触发摄取 (需 ADMIN 角色)
+  POST /api/rag/ingest
+
+  # 查看最近一次摄取状态 (ADMIN / OPERATOR)
+  GET /api/rag/ingest/status
+  ```
+
+- 反馈采集
+  ```bash
+  # 发送点赞或点踩 (需登录用户)
+  POST /api/rag/feedback
+  {
+    "logId": "<响应中返回的 logId>",
+    "feedback": "POSITIVE" | "NEGATIVE",
+    "comment": "(可选)"
+  }
+  ```

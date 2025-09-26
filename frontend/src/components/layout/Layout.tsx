@@ -6,6 +6,7 @@ import { useNavigation } from '@/hooks/use-navigation';
 import { Button } from '@/components/ui/button';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { RagAssistant } from '@/features/rag-assistant/RagAssistant';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -169,6 +170,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       </footer>
+
+      {isAuthenticated && <RagAssistant />}
     </div>
   );
 };

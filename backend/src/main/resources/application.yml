@@ -254,17 +254,19 @@ app:
 rag:
   enabled: ${RAG_ENABLED:true}
   embedding:
-    provider: ${RAG_EMBEDDING_PROVIDER:openai}
+    provider: ${RAG_EMBEDDING_PROVIDER:openrouter}
     model: ${RAG_EMBEDDING_MODEL:text-embedding-3-small}
     dimensions: ${RAG_EMBEDDING_DIMENSIONS:1536}
   llm:
-    provider: ${RAG_LLM_PROVIDER:openai}
-    model: ${RAG_LLM_MODEL:gpt-4o-mini}
+    provider: ${RAG_LLM_PROVIDER:openrouter}
+    model: ${RAG_LLM_MODEL:openai/gpt-4o-mini}
     temperature: ${RAG_LLM_TEMPERATURE:0.2}
     max-output-tokens: ${RAG_LLM_MAX_OUTPUT_TOKENS:800}
   retrieval:
     top-k: ${RAG_RETRIEVAL_TOP_K:5}
     similarity-threshold: ${RAG_RETRIEVAL_SIMILARITY_THRESHOLD:0.7}
+    semantic-weight: ${RAG_RETRIEVAL_SEMANTIC_WEIGHT:0.7}
+    keyword-weight: ${RAG_RETRIEVAL_KEYWORD_WEIGHT:0.3}
   rate-limit:
     admin: ${RAG_RATE_LIMIT_ADMIN:100}
     dispatcher: ${RAG_RATE_LIMIT_DISPATCHER:50}
@@ -276,3 +278,15 @@ rag:
     openai:
       api-key: ${OPENAI_API_KEY:}
       base-url: ${OPENAI_API_BASE_URL:https://api.openai.com/v1}
+    openrouter:
+      api-key: ${OPENROUTER_API_KEY:}
+      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+      site-url: ${OPENROUTER_SITE_URL:http://localhost}
+      app-name: ${OPENROUTER_APP_NAME:Mini-UPS RAG}
+  ingestion:
+    enabled: ${RAG_INGESTION_ENABLED:true}
+    root-paths: ${RAG_INGESTION_ROOT_PATHS:knowledge}
+    chunk-size: ${RAG_INGESTION_CHUNK_SIZE:1000}
+    chunk-overlap: ${RAG_INGESTION_CHUNK_OVERLAP:200}
+    schedule-enabled: ${RAG_INGESTION_SCHEDULE_ENABLED:false}
+    schedule-cron: ${RAG_INGESTION_SCHEDULE_CRON:0 30 2 * * *}

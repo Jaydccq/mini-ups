@@ -87,7 +87,7 @@ services:
 
   # UPS PostgreSQL Database
   ups-database:
-    image: postgres:15
+    image: ankane/pgvector:pg15
     container_name: mini-ups-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ups_db}
