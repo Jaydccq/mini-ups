@@ -6,6 +6,7 @@ import com.miniups.service.WebSocketRabbitMQService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/metrics")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "metrics.enabled", havingValue = "true", matchIfMissing = false)
 public class MetricsController {
 
     private final MetricsConfig metricsConfig;

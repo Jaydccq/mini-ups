@@ -17,10 +17,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 /**
  * RabbitMQ Configuration for Enterprise Message Queue System with WebSocket STOMP Integration
@@ -43,13 +39,10 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Slf4j
 @Configuration
 @EnableRabbit
-@EnableWebSocketMessageBroker
 @ConditionalOnClass(ConnectionFactory.class)
 @Profile("!test & !rabbitmq-disabled")
-public class RabbitMQConfig implements WebSocketMessageBrokerConfigurer {
+public class RabbitMQConfig {
 
-    @Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
 
     // Exchange Names
     public static final String TOPIC_EXCHANGE_NAME = "ups.events.topic";
@@ -331,45 +324,4 @@ public class RabbitMQConfig implements WebSocketMessageBrokerConfigurer {
         return factory;
     }
 
-    // ==================== WEBSOCKET STOMP CONFIGURATION ====================
-
-    /**
-     * Configure message broker with RabbitMQ STOMP relay for scalable WebSocket messaging
-     * Enables real-time bidirectional communication with message persistence and routing
-     */
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Enable RabbitMQ STOMP relay for high-performance WebSocket messaging
-        registry.enableStompBrokerRelay("/topic", "/queue")
-                .setRelayHost("localhost")
-                .setRelayPort(61613) // STOMP port configured in application.yml
-                .setSystemLogin("guest")
-                .setSystemPasscode("guest")
-                .setClientLogin("guest")
-                .setClientPasscode("guest")
-                .setVirtualHost("/")
-                .setSystemHeartbeatSendInterval(20000) // 20 seconds
-                .setSystemHeartbeatReceiveInterval(20000); // 20 seconds
-
-        // Application destination prefixes for client messages
-        registry.setApplicationDestinationPrefixes("/app");
-
-        // User destination prefix for private messages
-        registry.setUserDestinationPrefix("/user");
-
-        log.info("RabbitMQ STOMP broker relay configured for WebSocket messaging");
-    }
-
-    /**
-     * Register STOMP endpoints with SockJS fallback support
-     * Provides multiple transport options for cross-browser compatibility
-     */
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins(allowedOrigins.split(","))
-                .withSockJS();
-
-        log.info("STOMP WebSocket endpoints registered with SockJS support");
-    }
 }

@@ -5,6 +5,7 @@ import { Layout } from '@/components/layout/Layout'
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Skeleton } from '@/components/ui/skeleton'
+import { RagAssistant } from '@/features/rag-assistant/RagAssistant'
 
 // Lazy load public pages
 const HomePage = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.HomePage })))
@@ -43,6 +44,7 @@ const PageLoader = () => (
 )
 
 function App() {
+
   return (
     <div className="min-h-screen bg-background">
       <Layout>
@@ -75,6 +77,7 @@ function App() {
           </Routes>
         </Suspense>
       </Layout>
+      <RagAssistant />
       <Toaster />
     </div>
   )

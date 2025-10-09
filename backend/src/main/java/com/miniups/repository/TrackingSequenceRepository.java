@@ -102,8 +102,8 @@ public interface TrackingSequenceRepository extends JpaRepository<com.miniups.mo
     @Modifying
     @Transactional
     @Query(value = """
-        INSERT INTO tracking_sequences (biz_tag, max_id, step, description) 
-        VALUES (:bizTag, 0, :step, :description)
+        INSERT INTO tracking_sequences (biz_tag, max_id, step, description, created_at, updated_at)
+        VALUES (:bizTag, 0, :step, :description, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON CONFLICT (biz_tag) DO NOTHING
         """, nativeQuery = true)
     int initializeSequence(@Param("bizTag") String bizTag, 

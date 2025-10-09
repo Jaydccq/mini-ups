@@ -8,7 +8,7 @@
  * 
  * Tracking Number Generation Rules:
  * - Format: UPS + timestamp + random number
- * - Length: Fixed 20 digits
+ * - Length: Fixed 21 characters (3 prefix + 14 timestamp + 4 sequence)
  * - Uniqueness: Guaranteed through database constraints
  * 
  * Status Management:
@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -48,6 +49,13 @@ public class TrackingService {
     
     private static final Logger logger = LoggerFactory.getLogger(TrackingService.class);
     private static final String TRACKING_PREFIX = "UPS";
+    private static final DateTimeFormatter TRACKING_TIMESTAMP_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final int TRACKING_TIMESTAMP_LENGTH = 14;
+    private static final int TRACKING_SEQUENCE_DIGITS = 4;
+    private static final long TRACKING_SEQUENCE_MOD = (long) Math.pow(10, TRACKING_SEQUENCE_DIGITS);
+    private static final int TRACKING_NUMBER_TOTAL_LENGTH =
+            TRACKING_PREFIX.length() + TRACKING_TIMESTAMP_LENGTH + TRACKING_SEQUENCE_DIGITS;
     
     @Autowired
     private ShipmentRepository shipmentRepository;
@@ -66,20 +74,32 @@ public class TrackingService {
      * - Database queries: Reduced by 1000x (batch pre-allocation)
      * - Concurrency: Lock-free with double buffering
      * 
-     * Format: UPS + 12-digit sequence (no timestamp)
-     * Example: UPS000000123456
+     * Format: UPS + 14-digit timestamp + 4-digit sequence
+     * Example: UPS202401151030450001
      * 
      * @return Unique tracking number
      */
     public String generateTrackingNumber() {
+        String timestamp = LocalDateTime.now().format(TRACKING_TIMESTAMP_FORMATTER);
+
         try {
-            String trackingNumber = leafSegmentIdGenerator.generateTrackingNumber();
+            if (leafSegmentIdGenerator == null) {
+                throw new IllegalStateException("LeafSegmentIdGenerator not initialized");
+            }
+
+            long rawSequence = leafSegmentIdGenerator.generateId("tracking_number");
+            if (rawSequence < 0) {
+                throw new IllegalStateException("LeafSegmentIdGenerator returned invalid sequence");
+            }
+
+            long normalizedSequence = rawSequence % TRACKING_SEQUENCE_MOD;
+            String trackingNumber = buildTrackingNumber(timestamp, normalizedSequence);
             logger.debug("Generated tracking number: {}", trackingNumber);
             return trackingNumber;
         } catch (Exception e) {
             logger.error("Failed to generate tracking number using Leaf-Segment, falling back to legacy method", e);
-            // Fallback to simple timestamp-based generation in extreme cases
-            return generateFallbackTrackingNumber();
+            // Fallback to timestamp + random sequence generation in extreme cases
+            return generateFallbackTrackingNumber(timestamp);
         }
     }
     
@@ -202,14 +222,15 @@ public class TrackingService {
             return false;
         }
         
-        // Check exact length: UPS + 12 digits = 15 chars
-        if (trimmed.length() != (TRACKING_PREFIX.length() + 12)) {
+        // Check exact length: UPS + timestamp + sequence
+        if (trimmed.length() != TRACKING_NUMBER_TOTAL_LENGTH) {
             return false;
         }
-        
+
         // Check that part after prefix contains only digits
         String numberPart = trimmed.substring(TRACKING_PREFIX.length());
-        return numberPart.matches("\\d{12}");
+        int expectedDigits = TRACKING_TIMESTAMP_LENGTH + TRACKING_SEQUENCE_DIGITS;
+        return numberPart.matches("\\d{" + expectedDigits + "}");
     }
     
     /**
@@ -226,13 +247,13 @@ public class TrackingService {
     /**
      * Fallback tracking number generation
      * Only used when Leaf-Segment generator fails (extremely rare)
-     * 
-     * @return UPS + 12-digit sequence
+     *
+     * @param timestamp pre-generated timestamp string to keep monotonic ordering
+     * @return Tracking number in the same 21-character format
      */
-    private String generateFallbackTrackingNumber() {
-        long n = Math.abs(System.nanoTime());
-        long seq = n % 1_000_000_000_000L; // 12 digits
-        String fallbackNumber = TRACKING_PREFIX + String.format("%012d", seq);
+    private String generateFallbackTrackingNumber(String timestamp) {
+        long seq = generateFallbackSequence();
+        String fallbackNumber = buildTrackingNumber(timestamp, seq);
         logger.warn("Generated fallback tracking number: {}", fallbackNumber);
         try {
             if (meterRegistry != null) {
@@ -243,6 +264,15 @@ public class TrackingService {
             }
         } catch (Exception ignore) { }
         return fallbackNumber;
+    }
+
+    private long generateFallbackSequence() {
+        return Math.abs(System.nanoTime()) % TRACKING_SEQUENCE_MOD;
+    }
+
+    private String buildTrackingNumber(String timestamp, long sequenceValue) {
+        return TRACKING_PREFIX + timestamp + String.format("%0" + TRACKING_SEQUENCE_DIGITS + "d",
+                sequenceValue % TRACKING_SEQUENCE_MOD);
     }
     
     // Private helper methods removed - now using Leaf-Segment generator

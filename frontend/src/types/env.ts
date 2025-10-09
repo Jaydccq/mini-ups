@@ -49,6 +49,9 @@ export interface EnvironmentConfig {
   // Third-party Integrations
   VITE_STRIPE_PUBLISHABLE_KEY?: string;
   VITE_PAYPAL_CLIENT_ID?: string;
+
+  // AI Services
+  VITE_OPENROUTER_API_KEY?: string;
 }
 
 // Extend Vite's ImportMetaEnv interface

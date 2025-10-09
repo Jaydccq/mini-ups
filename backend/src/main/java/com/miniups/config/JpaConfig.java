@@ -85,7 +85,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "com.miniups.repository")
+@EnableJpaRepositories(basePackages = "com.miniups")
 @EnableJpaAuditing
 public class JpaConfig {
 }

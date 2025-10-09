@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 @Configuration
 @EnableScheduling
+@ConditionalOnProperty(name = "metrics.enabled", havingValue = "true", matchIfMissing = false)
 public class MetricsConfig {
 
     private final MeterRegistry meterRegistry;
@@ -71,7 +73,7 @@ public class MetricsConfig {
         log.info("Initializing Prometheus custom metrics for Mini-UPS");
 
         // HTTP Request Metrics
-        registerCounter("miniups.http.requests.total", "Total HTTP requests", "endpoint", "method", "status");
+        registerCounter("miniups.http.requests.total", "Total HTTP requests");
         registerTimer("miniups.http.request.duration", "HTTP request duration");
 
         // Business Metrics
@@ -92,13 +94,13 @@ public class MetricsConfig {
         registerTimer("miniups.rabbitmq.message.processing.duration", "RabbitMQ message processing time");
 
         // Authentication & Security Metrics
-        registerCounter("miniups.auth.attempts.total", "Total authentication attempts", "result");
+        registerCounter("miniups.auth.attempts.total", "Total authentication attempts");
         registerCounter("miniups.auth.jwt.tokens.issued.total", "Total JWT tokens issued");
-        registerCounter("miniups.oauth2.logins.total", "Total OAuth2 logins", "provider");
+        registerCounter("miniups.oauth2.logins.total", "Total OAuth2 logins");
 
         // Database Metrics
-        registerTimer("miniups.database.query.duration", "Database query duration", "operation");
-        registerCounter("miniups.database.connections.total", "Database connection attempts", "result");
+        registerTimer("miniups.database.query.duration", "Database query duration");
+        registerCounter("miniups.database.connections.total", "Database connection attempts");
 
         // Truck & Logistics Metrics
         registerGauge("miniups.trucks.active", "Active trucks in service", new AtomicInteger(0));
@@ -107,7 +109,7 @@ public class MetricsConfig {
 
         // Performance SLO Metrics
         registerTimer("miniups.api.response.time", "API response time for SLO monitoring");
-        registerCounter("miniups.slo.violations.total", "SLO violations count", "slo_type");
+        registerCounter("miniups.slo.violations.total", "SLO violations count");
 
         log.info("Prometheus metrics initialization completed");
     }
@@ -116,10 +118,20 @@ public class MetricsConfig {
      * Register a counter metric with tags
      */
     private void registerCounter(String name, String description, String... tags) {
-        Counter.builder(name)
-                .description(description)
-                .tags(tags.length > 0 ? tags : new String[0])
-                .register(meterRegistry);
+        Counter.Builder builder = Counter.builder(name)
+                .description(description);
+
+        // Add tags if provided (must be even number of arguments: key1, value1, key2, value2, ...)
+        if (tags != null && tags.length > 0) {
+            if (tags.length % 2 != 0) {
+                throw new IllegalArgumentException("Tags must be provided in key-value pairs (even number of arguments)");
+            }
+            for (int i = 0; i < tags.length; i += 2) {
+                builder.tag(tags[i], tags[i + 1]);
+            }
+        }
+
+        builder.register(meterRegistry);
     }
 
     /**
@@ -144,10 +156,20 @@ public class MetricsConfig {
      * Register a timer metric
      */
     private void registerTimer(String name, String description, String... tags) {
-        Timer.builder(name)
-                .description(description)
-                .tags(tags.length > 0 ? tags : new String[0])
-                .register(meterRegistry);
+        Timer.Builder builder = Timer.builder(name)
+                .description(description);
+
+        // Add tags if provided (must be even number of arguments: key1, value1, key2, value2, ...)
+        if (tags != null && tags.length > 0) {
+            if (tags.length % 2 != 0) {
+                throw new IllegalArgumentException("Tags must be provided in key-value pairs (even number of arguments)");
+            }
+            for (int i = 0; i < tags.length; i += 2) {
+                builder.tag(tags[i], tags[i + 1]);
+            }
+        }
+
+        builder.register(meterRegistry);
     }
 
     // ==================== METRIC UPDATE METHODS ====================
