@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -16,7 +17,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,7 +52,11 @@ class RagRetrieverIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        DataSource dataSource = postgres.createDataSource();
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName(postgres.getDriverClassName());
+        dataSource.setUrl(postgres.getJdbcUrl());
+        dataSource.setUsername(postgres.getUsername());
+        dataSource.setPassword(postgres.getPassword());
         jdbcTemplate = new JdbcTemplate(dataSource);
 
         properties = new RagProperties();
@@ -120,13 +124,25 @@ class RagRetrieverIntegrationTest {
 
         try {
             String metadataJson = new ObjectMapper().writeValueAsString(metadata);
-            String embeddingStr = "[" + String.join(",", java.util.Arrays.stream(embedding)
-                .mapToObj(String::valueOf).toArray(String[]::new)) + "]";
+            String embeddingStr = toVectorLiteral(embedding);
 
             jdbcTemplate.update(sql, documentId, source, chunkIndex, content, content, metadataJson, embeddingStr);
         } catch (Exception e) {
             throw new RuntimeException("Failed to insert test data", e);
         }
+    }
+
+    private String toVectorLiteral(float[] embedding) {
+        StringBuilder builder = new StringBuilder(embedding.length * 8);
+        builder.append('[');
+        for (int i = 0; i < embedding.length; i++) {
+            if (i > 0) {
+                builder.append(',');
+            }
+            builder.append(Float.toString(embedding[i]));
+        }
+        builder.append(']');
+        return builder.toString();
     }
 
     private float[] generateEmbedding(float... values) {

@@ -192,7 +192,11 @@ class RagRetrieverTest {
             List<RagSearchResult> results = retriever.hybridSearch("", queryVector, 5, 0.5);
 
             // Then - Should still work with semantic search only
-            verify(jdbcTemplate, atLeast(1)).query(contains("embedding"), any(), any());
+            verify(jdbcTemplate, atLeast(1)).query(
+                contains("embedding"),
+                any(PreparedStatementSetter.class),
+                any(RowMapper.class)
+            );
         }
     }
 

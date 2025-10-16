@@ -3,12 +3,13 @@ package com.miniups.service.messaging.kafka;
 import com.miniups.config.KafkaMessagingProperties;
 import com.miniups.model.entity.OutboxEvent;
 import org.apache.kafka.clients.producer.MockProducer;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -95,8 +96,17 @@ class KafkaOutboxMessagePublisherTest {
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
-        DefaultKafkaProducerFactory<String, String> producerFactory = new DefaultKafkaProducerFactory<>(configs);
-        producerFactory.setProducerSupplier(() -> mockProducer);
+        ProducerFactory<String, String> producerFactory = new ProducerFactory<>() {
+            @Override
+            public Producer<String, String> createProducer() {
+                return mockProducer;
+            }
+
+            @Override
+            public Map<String, Object> getConfigurationProperties() {
+                return configs;
+            }
+        };
 
         KafkaTemplate<String, String> template = new KafkaTemplate<>(producerFactory);
         template.setDefaultTopic("unused");

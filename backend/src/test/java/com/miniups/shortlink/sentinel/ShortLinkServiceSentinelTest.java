@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -156,8 +157,14 @@ class ShortLinkServiceSentinelTest {
 
         // Setup repository mocks
         when(shortLinkRepository.findByShortCode(anyString())).thenReturn(Optional.empty());
-        when(shortLinkRepository.insert(any())).thenReturn(1);
-        when(shortLinkRouteRepository.insertRoute(any())).thenReturn(1);
+        when(shortLinkRepository.insert(any())).thenAnswer(invocation -> {
+            ShortLinkRecord record = invocation.getArgument(0);
+            if (record.getId() == null) {
+                record.setId(1L);
+            }
+            return record;
+        });
+        doAnswer(invocation -> null).when(shortLinkRouteRepository).insertRoute(any());
 
         // Setup HTTP request mocks
         when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("127.0.0.1");
