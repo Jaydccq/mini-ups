@@ -29,7 +29,7 @@ class OutboxPollerServiceTest {
     }
 
     @Test
-    void publishEventReturnsTrueWhenAllPublishersSucceed() {
+    void publishEventReturnsTrueWhenAllPublishersSucceed() throws Exception {
         OutboxMessagePublisher publisherOne = mockPublisher("rabbitmq", true, false);
         OutboxMessagePublisher publisherTwo = mockPublisher("kafka", true, false);
 
@@ -42,7 +42,7 @@ class OutboxPollerServiceTest {
     }
 
     @Test
-    void publishEventReturnsFalseWhenPublisherReportsFailure() {
+    void publishEventReturnsFalseWhenPublisherReportsFailure() throws Exception {
         OutboxMessagePublisher successPublisher = mockPublisher("rabbitmq", true, false);
         OutboxMessagePublisher failingPublisher = mockPublisher("kafka", false, false);
 
@@ -55,7 +55,7 @@ class OutboxPollerServiceTest {
     }
 
     @Test
-    void publishEventReturnsFalseWhenPublisherThrowsException() {
+    void publishEventReturnsFalseWhenPublisherThrowsException() throws Exception {
         OutboxMessagePublisher throwingPublisher = mockPublisher("kafka", true, true);
 
         TestableOutboxPollerService service = new TestableOutboxPollerService(
@@ -66,7 +66,7 @@ class OutboxPollerServiceTest {
         assertFalse(result, "Exceptions from publishers should surface as failures");
     }
 
-    private OutboxMessagePublisher mockPublisher(String channel, boolean shouldSucceed, boolean shouldThrow) {
+    private OutboxMessagePublisher mockPublisher(String channel, boolean shouldSucceed, boolean shouldThrow) throws Exception {
         OutboxMessagePublisher publisher = mock(OutboxMessagePublisher.class);
         when(publisher.channel()).thenReturn(channel);
         if (shouldThrow) {
