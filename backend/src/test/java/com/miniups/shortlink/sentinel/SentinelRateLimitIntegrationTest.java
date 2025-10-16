@@ -75,7 +75,7 @@ class SentinelRateLimitIntegrationTest {
     }
 
     @Test
-    void createShortLink_shouldAllowWithinRateLimit() throws InterruptedException {
+    void createShortLink_shouldAllowWithinRateLimit() throws Exception {
         Long userId = 123L;
         int allowedRequests = properties.getSentinel().getCreateThresholdPerSecond();
 
@@ -97,7 +97,7 @@ class SentinelRateLimitIntegrationTest {
     }
 
     @Test
-    void createShortLink_shouldBlockWhenExceedingRateLimit() throws InterruptedException {
+    void createShortLink_shouldBlockWhenExceedingRateLimit() throws Exception {
         Long userId = 123L;
         int allowedRequests = properties.getSentinel().getCreateThresholdPerSecond();
         AtomicInteger blockedCount = new AtomicInteger(0);
@@ -122,7 +122,7 @@ class SentinelRateLimitIntegrationTest {
     }
 
     @Test
-    void redirectShortLink_shouldAllowWithinRateLimit() throws InterruptedException {
+    void redirectShortLink_shouldAllowWithinRateLimit() throws Exception {
         Long userId = 456L;
         int allowedRequests = properties.getSentinel().getRedirectThresholdPerSecond();
 
@@ -144,7 +144,7 @@ class SentinelRateLimitIntegrationTest {
     }
 
     @Test
-    void redirectShortLink_shouldBlockWhenExceedingRateLimit() throws InterruptedException {
+    void redirectShortLink_shouldBlockWhenExceedingRateLimit() throws Exception {
         Long userId = 456L;
         int allowedRequests = properties.getSentinel().getRedirectThresholdPerSecond();
         AtomicInteger blockedCount = new AtomicInteger(0);
@@ -169,7 +169,7 @@ class SentinelRateLimitIntegrationTest {
     }
 
     @Test
-    void differentUsers_shouldHaveIndependentRateLimits() throws InterruptedException, ExecutionException {
+    void differentUsers_shouldHaveIndependentRateLimits() throws InterruptedException, ExecutionException, TimeoutException {
         Long user1 = 111L;
         Long user2 = 222L;
         int allowedRequests = properties.getSentinel().getCreateThresholdPerSecond();
