@@ -1,4 +1,8 @@
 spring:
+  liquibase:
+    enabled: false
+  flyway:
+    enabled: false
   
   # Database Configuration for Tests
   # Uses H2 for fast unit tests with explicit configuration to avoid PostgreSQL conflicts

@@ -8,8 +8,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import javax.sql.DataSource;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -26,6 +32,7 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest
 @ActiveProfiles("test")
 @DisplayName("ShipmentRepository Integration Tests")
+@Import(ShipmentRepositoryIntegrationTest.TestJdbcConfig.class)
 class ShipmentRepositoryIntegrationTest {
 
     @Autowired
@@ -341,3 +348,11 @@ class ShipmentRepositoryIntegrationTest {
         return shipment;
     }
 }
+    @TestConfiguration
+    static class TestJdbcConfig {
+        @Bean
+        @Qualifier("shortLinkJdbcTemplate")
+        NamedParameterJdbcTemplate shortLinkJdbcTemplate(DataSource dataSource) {
+            return new NamedParameterJdbcTemplate(dataSource);
+        }
+    }

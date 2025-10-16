@@ -39,8 +39,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -150,7 +151,7 @@ class ShortLinkServiceSentinelTest {
         doNothing().when(readLock).unlock();
 
         // Setup code generator
-        when(codeGenerator.generate(anyString(), any(), any())).thenReturn("test123");
+        when(codeGenerator.generate(anyString(), anyLong(), anyInt())).thenReturn("test123");
 
         // Setup bloom filter
         when(bloomFilterService.mightContain(anyString())).thenReturn(false);
@@ -164,7 +165,7 @@ class ShortLinkServiceSentinelTest {
             }
             return record;
         });
-        doAnswer(invocation -> null).when(shortLinkRouteRepository).insertRoute(any());
+        doNothing().when(shortLinkRouteRepository).insertRoute(any());
 
         // Setup HTTP request mocks
         when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("127.0.0.1");
