@@ -347,7 +347,7 @@ class ShipmentRepositoryIntegrationTest {
                 trackingNumber.contains("123") ? 2 : 1)); // Different creation times
         return shipment;
     }
-}
+
     @TestConfiguration
     static class TestJdbcConfig {
         @Bean
@@ -356,3 +356,4 @@ class ShipmentRepositoryIntegrationTest {
             return new NamedParameterJdbcTemplate(dataSource);
         }
     }
+}
