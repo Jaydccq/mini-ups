@@ -45,6 +45,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 /**
@@ -145,9 +146,9 @@ class ShortLinkServiceSentinelTest {
 
     private void setupMocks() {
         // Setup Redisson mocks
-        when(redissonClient.getReadWriteLock(anyString())).thenReturn(readWriteLock);
-        when(readWriteLock.writeLock()).thenReturn(writeLock);
-        when(readWriteLock.readLock()).thenReturn(readLock);
+        lenient().when(redissonClient.getReadWriteLock(anyString())).thenReturn(readWriteLock);
+        lenient().when(readWriteLock.writeLock()).thenReturn(writeLock);
+        lenient().when(readWriteLock.readLock()).thenReturn(readLock);
         doNothing().when(writeLock).lock();
         doNothing().when(writeLock).unlock();
         doNothing().when(readLock).lock();
@@ -157,11 +158,11 @@ class ShortLinkServiceSentinelTest {
         when(codeGenerator.generate(anyString(), anyLong(), anyInt())).thenReturn("test123");
 
         // Setup bloom filter
-        when(bloomFilterService.mightContain(anyString())).thenReturn(false);
+        lenient().when(bloomFilterService.mightContain(anyString())).thenReturn(false);
 
         // Setup repository mocks
-        when(shortLinkRepository.findByShortCode(anyString())).thenReturn(Optional.empty());
-        when(shortLinkRepository.insert(any())).thenAnswer(invocation -> {
+        lenient().when(shortLinkRepository.findByShortCode(anyString())).thenReturn(Optional.empty());
+        lenient().when(shortLinkRepository.insert(any())).thenAnswer(invocation -> {
             ShortLinkRecord record = invocation.getArgument(0);
             if (record.getId() == null) {
                 record.setId(1L);
@@ -171,8 +172,8 @@ class ShortLinkServiceSentinelTest {
         doNothing().when(shortLinkRouteRepository).insertRoute(any());
 
         // Setup HTTP request mocks
-        when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("127.0.0.1");
-        when(httpRequest.getHeader("User-Agent")).thenReturn("Test-Agent");
+        lenient().when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("127.0.0.1");
+        lenient().when(httpRequest.getHeader("User-Agent")).thenReturn("Test-Agent");
     }
 
     @Test

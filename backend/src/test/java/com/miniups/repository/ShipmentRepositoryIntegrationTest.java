@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import com.miniups.config.TestShortLinkJdbcConfig;
+import org.springframework.boot.test.context.TestConfiguration;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest
 @ActiveProfiles("test")
 @DisplayName("ShipmentRepository Integration Tests")
-@Import(TestShortLinkJdbcConfig.class)
+@Import(ShipmentRepositoryIntegrationTest.TestJdbcConfig.class)
 class ShipmentRepositoryIntegrationTest {
 
     @Autowired
@@ -342,5 +343,9 @@ class ShipmentRepositoryIntegrationTest {
         shipment.setCreatedAt(LocalDateTime.now().minusHours(
                 trackingNumber.contains("123") ? 2 : 1)); // Different creation times
         return shipment;
+    }
+
+    @TestConfiguration
+    static class TestJdbcConfig extends TestShortLinkJdbcConfig {
     }
 }
