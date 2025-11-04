@@ -10,14 +10,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.SendResult;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class KafkaOutboxMessagePublisherTest {
 
@@ -77,11 +82,13 @@ class KafkaOutboxMessagePublisherTest {
 
     @Test
     void publishReturnsFalseOnProducerFailure() {
-        MockProducer<String, String> mockProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
-        mockProducer.errorNext(new RuntimeException("synthetic failure"));
+        @SuppressWarnings("unchecked")
+        KafkaTemplate<String, String> template = mock(KafkaTemplate.class);
+        CompletableFuture<SendResult<String, String>> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("synthetic failure"));
+        when(template.send(any())).thenReturn(failedFuture);
 
-        KafkaOutboxMessagePublisher publisher = new KafkaOutboxMessagePublisher(
-                kafkaTemplate(mockProducer), properties);
+        KafkaOutboxMessagePublisher publisher = new KafkaOutboxMessagePublisher(template, properties);
 
         OutboxEvent event = sampleEvent("shipment.create.request");
 

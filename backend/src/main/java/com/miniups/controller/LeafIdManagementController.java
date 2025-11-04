@@ -40,9 +40,14 @@ import java.util.Map;
 @RequestMapping("/api/admin/leaf")
 @RequiredArgsConstructor
 public class LeafIdManagementController {
-    
+
     private final LeafIdGeneratorService leafIdGeneratorService;
-    
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public LeafIdManagementController(LeafIdGeneratorService leafIdGeneratorService) {
+        this.leafIdGeneratorService = leafIdGeneratorService;
+    }
+
     /**
      * Get comprehensive health and performance statistics
      * 

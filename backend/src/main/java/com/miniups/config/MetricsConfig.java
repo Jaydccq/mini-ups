@@ -4,7 +4,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Prometheus Metrics Configuration for High-Performance Monitoring
  *
@@ -40,12 +41,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * @version 1.0
  * @since 2024-12-01
  */
-@Slf4j
 @Configuration
 @EnableScheduling
 @ConditionalOnProperty(name = "metrics.enabled", havingValue = "true", matchIfMissing = false)
 public class MetricsConfig {
 
+
+    private static final Logger log = LoggerFactory.getLogger(MetricsConfig.class);
     private final MeterRegistry meterRegistry;
 
     // Custom metrics storage

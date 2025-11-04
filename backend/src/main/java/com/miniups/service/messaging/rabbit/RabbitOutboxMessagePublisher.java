@@ -4,7 +4,8 @@ import com.miniups.config.RabbitMQConfig;
 import com.miniups.model.entity.OutboxEvent;
 import com.miniups.service.messaging.OutboxMessagePublisher;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,14 +20,20 @@ import java.util.Optional;
 /**
  * RabbitMQ implementation of the {@link OutboxMessagePublisher} contract.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnBean(RabbitTemplate.class)
 @ConditionalOnProperty(prefix = "messaging.rabbit", name = "outbox-enabled", havingValue = "true", matchIfMissing = true)
 public class RabbitOutboxMessagePublisher implements OutboxMessagePublisher {
 
+    private static final Logger log = LoggerFactory.getLogger(RabbitOutboxMessagePublisher.class);
+
     private final RabbitTemplate rabbitTemplate;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RabbitOutboxMessagePublisher(RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     @Value("${messaging.rabbit.default-exchange:" + RabbitMQConfig.TOPIC_EXCHANGE_NAME + "}")
     private String defaultExchange;

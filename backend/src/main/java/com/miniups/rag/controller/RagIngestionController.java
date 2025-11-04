@@ -2,7 +2,6 @@ package com.miniups.rag.controller;
 
 import com.miniups.rag.ingestion.RagIngestionJobSummary;
 import com.miniups.rag.ingestion.RagIngestionService;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -20,18 +19,28 @@ public class RagIngestionController {
 
     private final RagIngestionService ingestionService;
 
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagIngestionController(RagIngestionService ingestionService) {
+        this.ingestionService = ingestionService;
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RagIngestionJobSummary> triggerIngestion() {
-        Optional<RagIngestionJobSummary> job = ingestionService.triggerManualIngestion();
-        return job.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.accepted().build());
+        RagIngestionJobSummary job = ingestionService.triggerManualIngestion();
+        if (job != null) {
+            return ResponseEntity.ok(job);
+        }
+        return ResponseEntity.accepted().build();
     }
 
     @GetMapping("/status")
     @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
     public ResponseEntity<RagIngestionJobSummary> latest() {
-        return ingestionService.latestJob()
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.noContent().build());
+        RagIngestionJobSummary job = ingestionService.latestJob();
+        if (job != null) {
+            return ResponseEntity.ok(job);
+        }
+        return ResponseEntity.noContent().build();
     }
 }

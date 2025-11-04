@@ -155,7 +155,9 @@ class ShortLinkServiceSentinelTest {
         doNothing().when(readLock).unlock();
 
         // Setup code generator
-        when(codeGenerator.generate(anyString(), anyLong(), anyInt())).thenReturn("test123");
+        AtomicInteger sequence = new AtomicInteger();
+        when(codeGenerator.generate(anyString(), anyLong(), anyInt()))
+            .thenAnswer(invocation -> "test" + sequence.incrementAndGet());
 
         // Setup bloom filter
         lenient().when(bloomFilterService.mightContain(anyString())).thenReturn(false);

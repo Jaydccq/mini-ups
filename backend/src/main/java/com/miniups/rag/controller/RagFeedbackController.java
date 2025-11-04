@@ -6,7 +6,6 @@ import com.miniups.rag.model.RagQueryLog;
 import com.miniups.rag.service.RagFeedbackService;
 import jakarta.validation.Valid;
 import java.util.Locale;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +25,11 @@ public class RagFeedbackController {
 
     private final RagFeedbackService feedbackService;
 
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagFeedbackController(RagFeedbackService feedbackService) {
+        this.feedbackService = feedbackService;
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','USER','DRIVER','OPERATOR')")
     public ResponseEntity<Void> submitFeedback(@Valid @RequestBody RagFeedbackRequest request) {
@@ -41,7 +45,10 @@ public class RagFeedbackController {
             return ResponseEntity.badRequest().build();
         }
 
-        Optional<RagQueryLog> updated = feedbackService.submitFeedback(request.getLogId(), feedbackType, request.getComment(), role);
-        return updated.map(log -> ResponseEntity.accepted().<Void>build()).orElseGet(() -> ResponseEntity.notFound().<Void>build());
+        RagQueryLog updated = feedbackService.submitFeedback(request.getLogId(), feedbackType, request.getComment(), role);
+        if (updated != null) {
+            return ResponseEntity.accepted().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

@@ -14,4 +14,9 @@ public class RagFeedbackRequest {
     private String feedback; // POSITIVE or NEGATIVE
 
     private String comment;
+
+    // Manual getters
+    public UUID getLogId() { return logId; }
+    public String getFeedback() { return feedback; }
+    public String getComment() { return comment; }
 }

@@ -31,49 +31,33 @@
 
 package com.miniups.model.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "packages", indexes = {
-    @Index(name = "idx_package_package_id", columnList = "package_id"),
-    @Index(name = "idx_package_shipment", columnList = "shipment_id")
-})
 public class ShipmentPackage extends BaseEntity {
     
     @NotBlank
     @Size(max = 100)
-    @Column(name = "package_id", nullable = false, unique = true, length = 100)
     private String packageId;
     
     @Size(max = 500)
-    @Column(name = "description", length = 500)
     private String description;
     
-    @Column(name = "weight", precision = 10, scale = 2)
     private BigDecimal weight;
     
-    @Column(name = "length_cm", precision = 8, scale = 2)
     private BigDecimal length;
     
-    @Column(name = "width_cm", precision = 8, scale = 2)
     private BigDecimal width;
     
-    @Column(name = "height_cm", precision = 8, scale = 2)
     private BigDecimal height;
     
-    @Column(name = "\"value\"", precision = 12, scale = 2)
     private BigDecimal value;
     
-    @Column(name = "fragile", nullable = false)
     private Boolean fragile = false;
     
     // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipment_id", nullable = false)
     private Shipment shipment;
     
     // Constructors

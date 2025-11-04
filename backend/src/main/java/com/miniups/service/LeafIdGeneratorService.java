@@ -61,10 +61,17 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class LeafIdGeneratorService {
     private static final Logger log = LoggerFactory.getLogger(LeafIdGeneratorService.class);
-    
+
     private final LeafAllocRepository leafAllocRepository;
     private final RedisTemplate<String, String> redisTemplate;
-    
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public LeafIdGeneratorService(LeafAllocRepository leafAllocRepository,
+                                 RedisTemplate<String, String> redisTemplate) {
+        this.leafAllocRepository = leafAllocRepository;
+        this.redisTemplate = redisTemplate;
+    }
+
     /**
      * In-memory segment cache for each business tag
      * Key: business tag, Value: segment buffer managing current and next segments
@@ -202,8 +209,10 @@ public class LeafIdGeneratorService {
             
             try {
                 // Load current allocation state
-                LeafAlloc allocation = leafAllocRepository.findByBizTag(bizTag)
-                    .orElseThrow(() -> new RuntimeException("No allocation found for bizTag: " + bizTag));
+                LeafAlloc allocation = leafAllocRepository.findByBizTag(bizTag);
+                if (allocation == null) {
+                    throw new RuntimeException("No allocation found for bizTag: " + bizTag);
+                }
                 
                 if (!allocation.getActive()) {
                     throw new RuntimeException("Allocation is disabled for bizTag: " + bizTag);
@@ -412,8 +421,8 @@ public class LeafIdGeneratorService {
         
         // Database status
         var dbStatus = leafAllocRepository.getAllocationStatus(bizTag);
-        if (dbStatus.isPresent()) {
-            status.putAll(dbStatus.get());
+        if (dbStatus != null) {
+            status.putAll(dbStatus);
         }
         
         // Buffer status

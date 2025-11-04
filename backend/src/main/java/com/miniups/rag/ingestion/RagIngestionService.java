@@ -5,11 +5,9 @@ import com.miniups.rag.embedding.RagEmbeddingClient;
 import com.miniups.rag.ingestion.RagTextChunker.TextChunk;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -17,12 +15,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "rag.enabled", havingValue = "true", matchIfMissing = true)
 public class RagIngestionService {
 
+
+    private static final Logger log = LoggerFactory.getLogger(RagIngestionService.class);
     private static final int DEFAULT_BATCH_SIZE = 16;
 
     private final RagProperties properties;
@@ -31,6 +32,22 @@ public class RagIngestionService {
     private final RagEmbeddingClient embeddingClient;
     private final RagChunkWriter chunkWriter;
     private final RagIngestionJobRepository jobRepository;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagIngestionService(RagProperties properties,
+                              FileSystemDocumentLoader documentLoader,
+                              RagTextChunker chunker,
+                              RagEmbeddingClient embeddingClient,
+                              RagChunkWriter chunkWriter,
+                              RagIngestionJobRepository jobRepository) {
+        this.properties = properties;
+        this.documentLoader = documentLoader;
+        this.chunker = chunker;
+        this.embeddingClient = embeddingClient;
+        this.chunkWriter = chunkWriter;
+        this.jobRepository = jobRepository;
+    }
+
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     @EventListener(ApplicationReadyEvent.class)
@@ -50,7 +67,7 @@ public class RagIngestionService {
         triggerIngestion("SCHEDULE", true);
     }
 
-    public Optional<RagIngestionJobSummary> triggerManualIngestion() {
+    public RagIngestionJobSummary triggerManualIngestion() {
         if (!properties.isEnabled() || !properties.getIngestion().isEnabled()) {
             throw new IllegalStateException("RAG ingestion is disabled by configuration");
         }
@@ -58,11 +75,11 @@ public class RagIngestionService {
         return triggerIngestion("MANUAL", true);
     }
 
-    public Optional<RagIngestionJobSummary> latestJob() {
+    public RagIngestionJobSummary latestJob() {
         return jobRepository.findLatest();
     }
 
-    private Optional<RagIngestionJobSummary> triggerIngestion(String trigger, boolean failIfRunning) {
+    private RagIngestionJobSummary triggerIngestion(String trigger, boolean failIfRunning) {
         if (failIfRunning) {
             if (!running.compareAndSet(false, true)) {
                 throw new IllegalStateException("RAG ingestion is already running");
@@ -70,7 +87,7 @@ public class RagIngestionService {
         } else {
             if (!running.compareAndSet(false, true)) {
                 log.info("RAG ingestion already in progress; skip {} trigger", trigger);
-                return Optional.empty();
+                return null;
             }
         }
 

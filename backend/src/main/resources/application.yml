@@ -21,15 +21,12 @@ spring:
       idle-timeout: 300000
       connection-timeout: 20000
   
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        use_sql_comments: true
-    open-in-view: false
+  # MyBatis Configuration
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      continue-on-error: true
   
   data:
     redis:
@@ -292,3 +289,21 @@ rag:
     chunk-overlap: ${RAG_INGESTION_CHUNK_OVERLAP:200}
     schedule-enabled: ${RAG_INGESTION_SCHEDULE_ENABLED:false}
     schedule-cron: ${RAG_INGESTION_SCHEDULE_CRON:0 30 2 * * *}
+
+# MyBatis Configuration
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.miniups.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    use-generated-keys: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# PageHelper Configuration
+pagehelper:
+  helper-dialect: postgresql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql

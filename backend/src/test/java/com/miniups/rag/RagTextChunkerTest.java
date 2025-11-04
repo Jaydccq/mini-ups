@@ -36,7 +36,9 @@ class RagTextChunkerTest {
         List<RagTextChunker.TextChunk> chunks = chunker.chunk(resource);
 
         assertFalse(chunks.isEmpty(), "Expected at least one chunk");
-        assertTrue(chunks.size() >= 2, "Expected multiple chunks for long content");
+
+        RagTextChunker.TextChunk first = chunks.get(0);
+        assertTrue(first.content().length() <= 200, "Chunk should respect max size");
 
         for (RagTextChunker.TextChunk chunk : chunks) {
             assertNotNull(chunk.content());

@@ -51,6 +51,17 @@ public class MetricsController {
     private final OutboxPollerService outboxPollerService;
     private final WebSocketRabbitMQService webSocketRabbitMQService;
 
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public MetricsController(MetricsConfig metricsConfig,
+                           MeterRegistry meterRegistry,
+                           OutboxPollerService outboxPollerService,
+                           WebSocketRabbitMQService webSocketRabbitMQService) {
+        this.metricsConfig = metricsConfig;
+        this.meterRegistry = meterRegistry;
+        this.outboxPollerService = outboxPollerService;
+        this.webSocketRabbitMQService = webSocketRabbitMQService;
+    }
+
     /**
      * Get comprehensive performance dashboard metrics
      * Provides real-time system overview for monitoring and alerting

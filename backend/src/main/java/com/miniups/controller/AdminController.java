@@ -84,9 +84,12 @@ public class AdminController {
             @PageableDefault(size = 10, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         
         logger.debug("Fetching recent activities");
-        
-        Map<String, Object> responseData = adminService.getRecentActivities(pageable);
-        
+
+        Map<String, Object> responseData = adminService.getRecentActivities(
+            pageable.getPageNumber(),
+            pageable.getPageSize()
+        );
+
         return ResponseEntity.ok(ApiResponse.success("Recent activities retrieved successfully", responseData));
     }
     

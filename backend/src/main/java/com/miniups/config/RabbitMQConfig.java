@@ -1,7 +1,6 @@
 package com.miniups.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -18,6 +17,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * RabbitMQ Configuration for Enterprise Message Queue System with WebSocket STOMP Integration
  *
@@ -36,7 +37,6 @@ import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainer
  * @version 2.0
  * @since 2024-12-01
  */
-@Slf4j
 @Configuration
 @EnableRabbit
 @ConditionalOnClass(ConnectionFactory.class)
@@ -44,6 +44,8 @@ import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainer
 public class RabbitMQConfig {
 
 
+
+    private static final Logger log = LoggerFactory.getLogger(RabbitMQConfig.class);
     // Exchange Names
     public static final String TOPIC_EXCHANGE_NAME = "ups.events.topic";
     public static final String DLX_NAME = "ups.events.dlx";

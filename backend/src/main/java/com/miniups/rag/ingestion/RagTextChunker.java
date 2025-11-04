@@ -14,6 +14,11 @@ public class RagTextChunker {
 
     private final RagProperties properties;
 
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagTextChunker(RagProperties properties) {
+        this.properties = properties;
+    }
+
     public List<TextChunk> chunk(RagDocumentResource resource) {
         List<TextChunk> chunks = new ArrayList<>();
         String content = normalize(resource.content());

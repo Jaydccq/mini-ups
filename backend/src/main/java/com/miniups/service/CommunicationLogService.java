@@ -50,14 +50,15 @@ public class CommunicationLogService {
     public CommunicationLog logIncomingMessage(String messageType, String endpoint, Object payload) {
         CommunicationLog log = CommunicationLog.incoming(messageType, endpoint);
         log.setPayload(serializeToJson(payload));
-        
+
         // Extract common fields
         if (payload instanceof Map) {
             Map<?, ?> payloadMap = (Map<?, ?>) payload;
             extractCommonFields(log, payloadMap);
         }
-        
-        return communicationLogRepository.save(log);
+
+        communicationLogRepository.insert(log);
+        return log;
     }
     
     /**
@@ -66,8 +67,9 @@ public class CommunicationLogService {
     public CommunicationLog logOutgoingMessage(String messageType, String endpoint, Object payload) {
         CommunicationLog log = CommunicationLog.outgoing(messageType, endpoint);
         log.setPayload(serializeToJson(payload));
-        
-        return communicationLogRepository.save(log);
+
+        communicationLogRepository.insert(log);
+        return log;
     }
     
     /**
@@ -78,8 +80,8 @@ public class CommunicationLogService {
         log.setStatusCode(statusCode);
         log.setProcessingTimeMs(processingTimeMs);
         log.setSuccess(statusCode >= 200 && statusCode < 300);
-        
-        communicationLogRepository.save(log);
+
+        communicationLogRepository.update(log);
     }
     
     /**
@@ -87,7 +89,7 @@ public class CommunicationLogService {
      */
     public void markLogAsError(CommunicationLog log, String errorMessage, Integer statusCode) {
         log.markAsError(statusCode != null ? statusCode : 500, errorMessage);
-        communicationLogRepository.save(log);
+        communicationLogRepository.update(log);
     }
     
     /**

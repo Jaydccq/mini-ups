@@ -17,47 +17,32 @@
  */
 package com.miniups.model.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "communication_logs")
 public class CommunicationLog extends BaseEntity {
     
-    @Column(name = "direction", nullable = false, length = 20)
     private String direction; // "INCOMING" or "OUTGOING"
     
-    @Column(name = "message_type", nullable = false, length = 50)
     private String messageType;
     
-    @Column(name = "endpoint", length = 200)
     private String endpoint;
     
-    @Column(name = "payload", columnDefinition = "TEXT")
     private String payload;
     
-    @Column(name = "response", columnDefinition = "TEXT")
     private String response;
     
-    @Column(name = "status_code")
     private Integer statusCode;
     
-    @Column(name = "processing_time_ms")
     private Long processingTimeMs;
     
-    @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
     
-    @Column(name = "success")
     private Boolean success;
     
-    @Column(name = "shipment_id", length = 50)
     private String shipmentId;
     
-    @Column(name = "truck_id")
     private Integer truckId;
     
-    @Column(name = "warehouse_id", length = 50)
     private String warehouseId;
     
     // Constructors

@@ -3,7 +3,6 @@ package com.miniups.rag.controller;
 import com.miniups.rag.api.RagQueryRequest;
 import com.miniups.rag.api.RagQueryResponse;
 import com.miniups.rag.api.RagSourceDto;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,12 +13,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @RestController
 @RequestMapping("/api/rag")
 @ConditionalOnProperty(name = "rag.mock.enabled", havingValue = "true", matchIfMissing = false)
 public class MockRagController {
 
+
+    private static final Logger log = LoggerFactory.getLogger(MockRagController.class);
     private static final Map<String, String> MOCK_ANSWERS = Map.of(
         "sync", "To sync world simulator status:\n1. Check the current world ID in backend configuration\n2. Use the /api/world/sync endpoint to refresh status\n3. Monitor the trucks table for updated positions\n4. Verify warehouse inventory is synchronized\n\nThe system automatically syncs every 30 seconds, but manual sync can be triggered via the admin dashboard.",
 
@@ -46,31 +48,31 @@ public class MockRagController {
             .orElse(MOCK_ANSWERS.get("default"));
 
         List<RagSourceDto> sources = List.of(
-            RagSourceDto.builder()
-                .title("Mini-UPS Operations Manual")
-                .source("docs/operations-guide.md")
-                .similarity(0.85)
-                .confidence(0.92)
-                .semanticScore(0.80)
-                .keywordScore(0.90)
-                .build(),
-            RagSourceDto.builder()
-                .title("World Simulator Integration Guide")
-                .source("docs/world-simulator.md")
-                .similarity(0.78)
-                .confidence(0.88)
-                .semanticScore(0.75)
-                .keywordScore(0.82)
-                .build()
+            new RagSourceDto(
+                "Mini-UPS Operations Manual",
+                "docs/operations-guide.md",
+                0.85,
+                0.92,
+                0.80,
+                0.90
+            ),
+            new RagSourceDto(
+                "World Simulator Integration Guide",
+                "docs/world-simulator.md",
+                0.78,
+                0.88,
+                0.75,
+                0.82
+            )
         );
 
-        RagQueryResponse response = RagQueryResponse.builder()
-            .logId(UUID.randomUUID())
-            .answer(answer)
-            .confidence(0.90)
-            .sources(sources)
-            .warnings(List.of())
-            .build();
+        RagQueryResponse response = new RagQueryResponse(
+            UUID.randomUUID(),
+            answer,
+            0.90,
+            sources,
+            List.of()
+        );
 
         return ResponseEntity.ok(response);
     }

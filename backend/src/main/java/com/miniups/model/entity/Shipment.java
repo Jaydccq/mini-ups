@@ -31,7 +31,7 @@
 package com.miniups.model.entity;
 
 import com.miniups.model.enums.ShipmentStatus;
-import jakarta.persistence.*;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -41,91 +41,64 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "shipments", indexes = {
-    @Index(name = "idx_shipment_shipment_id", columnList = "shipment_id"),
-    @Index(name = "idx_shipment_tracking_id", columnList = "ups_tracking_id"),
-    @Index(name = "idx_shipment_status", columnList = "status"),
-    @Index(name = "idx_shipment_user", columnList = "user_id")
-})
 public class Shipment extends BaseEntity {
     
     @NotBlank
     @Size(max = 100)
-    @Column(name = "shipment_id", nullable = false, unique = true, length = 100)
     private String shipmentId;
     
     @Size(max = 100)
-    @Column(name = "ups_tracking_id", unique = true, length = 100)
     private String upsTrackingId;
     
     @Size(max = 100)
-    @Column(name = "amazon_order_id", length = 100)
     private String amazonOrderId;
     
-    @Column(name = "warehouse_id", length = 50)
     private String warehouseId;
     
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     private ShipmentStatus status = ShipmentStatus.CREATED;
     
     @NotNull
-    @Column(name = "origin_x", nullable = false)
     private Integer originX;
     
     @NotNull
-    @Column(name = "origin_y", nullable = false)
     private Integer originY;
     
     @NotNull
-    @Column(name = "dest_x", nullable = false)
     private Integer destX;
     
     @NotNull
-    @Column(name = "dest_y", nullable = false)
     private Integer destY;
     
-    @Column(name = "weight", precision = 10, scale = 2)
     private BigDecimal weight;
     
-    @Column(name = "estimated_delivery")
     private LocalDateTime estimatedDelivery;
     
-    @Column(name = "actual_delivery")
     private LocalDateTime actualDelivery;
     
-    @Column(name = "pickup_time")
     private LocalDateTime pickupTime;
     
-    @Column(name = "world_id")
     private Long worldId;
     
-    @Column(name = "delivery_address")
     private String deliveryAddress;
     
-    @Column(name = "delivery_city")
     private String deliveryCity;
     
-    @Column(name = "delivery_zip_code")
     private String deliveryZipCode;
-    
-    // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+
+    // Foreign key fields
+    private Long userId;
+
+    private Long truckId;
+
+    // Transient relationships (loaded separately if needed)
     private User user;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "truck_id")
+
     private Truck truck;
-    
-    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+
     private List<ShipmentPackage> packages = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+
     private List<ShipmentStatusHistory> statusHistory = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+
     private List<AddressChange> addressChanges = new ArrayList<>();
     
     // Constructors
@@ -156,7 +129,6 @@ public class Shipment extends BaseEntity {
     public void setUpsTrackingId(String upsTrackingId) {
         this.upsTrackingId = upsTrackingId;
     }
-    
     
     public String getAmazonOrderId() {
         return amazonOrderId;
@@ -213,7 +185,6 @@ public class Shipment extends BaseEntity {
     public void setDestY(Integer destY) {
         this.destY = destY;
     }
-    
     
     public BigDecimal getWeight() {
         return weight;

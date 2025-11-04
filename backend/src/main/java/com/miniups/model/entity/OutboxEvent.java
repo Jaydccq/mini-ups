@@ -1,12 +1,9 @@
 package com.miniups.model.entity;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -35,87 +32,68 @@ import java.time.Instant;
  * @author Mini-UPS Development Team
  * @version 1.0
  */
-@Entity
-@Table(name = "outbox_events", indexes = {
-    @Index(name = "idx_outbox_status_created", columnList = "status, created_at"),
-    @Index(name = "idx_outbox_aggregate_id", columnList = "aggregate_id"),
-    @Index(name = "idx_outbox_event_type", columnList = "event_type")
-})
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class OutboxEvent {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     /**
      * Unique identifier for this event
      * Used for deduplication and correlation tracking
      */
-    @Column(name = "event_id", nullable = false, unique = true, length = 36)
     private String eventId;
     
     /**
      * ID of the business entity this event relates to
      * Enables event ordering and correlation
      */
-    @Column(name = "aggregate_id", nullable = false, length = 100)
     private String aggregateId;
     
     /**
      * Type of the business entity (e.g., "Shipment", "User", "Truck")
      */
-    @Column(name = "aggregate_type", nullable = false, length = 50)
     private String aggregateType;
     
     /**
      * Type of the event (e.g., "ShipmentCreated", "StatusUpdated")
      */
-    @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
     
     /**
      * JSON payload containing the event data
      * Stored as TEXT to handle large payloads efficiently
      */
-    @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
     private String payload;
     
     /**
      * Routing key / topic name for this event depending on the messaging system.
      */
-    @Column(name = "routing_key", nullable = false, length = 200)
     private String routingKey;
     
     /**
      * Current status of the event in the outbox processing pipeline
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     private OutboxStatus status;
     
     /**
      * Correlation ID for distributed tracing
      * Links this event to the original request
      */
-    @Column(name = "correlation_id", length = 36)
     private String correlationId;
     
     /**
      * Number of processing attempts
      * Used for exponential backoff and dead letter handling
      */
-    @Column(name = "retry_count", nullable = false)
     @Builder.Default
     private Integer retryCount = 0;
     
     /**
      * Maximum number of retry attempts before moving to failed status
      */
-    @Column(name = "max_retries", nullable = false)
     @Builder.Default
     private Integer maxRetries = 5;
     
@@ -123,39 +101,31 @@ public class OutboxEvent {
      * Timestamp when the event should be processed next
      * Supports exponential backoff for failed events
      */
-    @Column(name = "next_retry_at")
     private Instant nextRetryAt;
     
     /**
      * Error message from the last failed processing attempt
      */
-    @Column(name = "error_message", length = 1000)
     private String errorMessage;
     
     /**
      * Source service that created this event
      */
-    @Column(name = "source_service", nullable = false, length = 50)
     private String sourceService;
     
     /**
      * Event creation timestamp
      */
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
     
     /**
      * Last update timestamp
      */
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
     
     /**
      * Timestamp when the event was successfully published
      */
-    @Column(name = "published_at")
     private Instant publishedAt;
     
     /**
@@ -240,10 +210,47 @@ public class OutboxEvent {
     
     /**
      * Check if the event has exceeded maximum retry attempts
-     * 
+     *
      * @return true if the event should be moved to failed status
      */
     public boolean hasExceededMaxRetries() {
         return retryCount >= maxRetries;
     }
+
+    // Manual getters (Lombok @Data not generating them properly)
+    public Long getId() { return id; }
+    public String getEventId() { return eventId; }
+    public String getAggregateId() { return aggregateId; }
+    public String getAggregateType() { return aggregateType; }
+    public String getEventType() { return eventType; }
+    public String getPayload() { return payload; }
+    public String getRoutingKey() { return routingKey; }
+    public OutboxStatus getStatus() { return status; }
+    public String getCorrelationId() { return correlationId; }
+    public Integer getRetryCount() { return retryCount; }
+    public Integer getMaxRetries() { return maxRetries; }
+    public Instant getNextRetryAt() { return nextRetryAt; }
+    public String getErrorMessage() { return errorMessage; }
+    public String getSourceService() { return sourceService; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public Instant getPublishedAt() { return publishedAt; }
+
+    public void setId(Long id) { this.id = id; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
+    public void setAggregateId(String aggregateId) { this.aggregateId = aggregateId; }
+    public void setAggregateType(String aggregateType) { this.aggregateType = aggregateType; }
+    public void setEventType(String eventType) { this.eventType = eventType; }
+    public void setPayload(String payload) { this.payload = payload; }
+    public void setRoutingKey(String routingKey) { this.routingKey = routingKey; }
+    public void setStatus(OutboxStatus status) { this.status = status; }
+    public void setCorrelationId(String correlationId) { this.correlationId = correlationId; }
+    public void setRetryCount(Integer retryCount) { this.retryCount = retryCount; }
+    public void setMaxRetries(Integer maxRetries) { this.maxRetries = maxRetries; }
+    public void setNextRetryAt(Instant nextRetryAt) { this.nextRetryAt = nextRetryAt; }
+    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+    public void setSourceService(String sourceService) { this.sourceService = sourceService; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public void setPublishedAt(Instant publishedAt) { this.publishedAt = publishedAt; }
 }

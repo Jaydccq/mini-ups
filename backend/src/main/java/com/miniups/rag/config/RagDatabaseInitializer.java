@@ -2,21 +2,29 @@ package com.miniups.rag.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "rag.enabled", havingValue = "true", matchIfMissing = true)
 public class RagDatabaseInitializer {
 
+
+    private static final Logger log = LoggerFactory.getLogger(RagDatabaseInitializer.class);
     private final JdbcTemplate jdbcTemplate;
     private final RagProperties properties;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagDatabaseInitializer(JdbcTemplate jdbcTemplate, RagProperties properties) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.properties = properties;
+    }
 
     @PostConstruct
     public void onStartup() {

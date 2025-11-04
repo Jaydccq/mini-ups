@@ -14,19 +14,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "rag.ingestion.enabled", havingValue = "true", matchIfMissing = true)
 public class FileSystemDocumentLoader {
 
+
+    private static final Logger log = LoggerFactory.getLogger(FileSystemDocumentLoader.class);
     private static final Set<String> SUPPORTED_EXTENSIONS = Set.of("txt", "md", "markdown", "json");
 
     private final RagProperties properties;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public FileSystemDocumentLoader(RagProperties properties) {
+        this.properties = properties;
+    }
 
     public List<RagDocumentResource> loadDocuments() {
         List<RagDocumentResource> documents = new ArrayList<>();

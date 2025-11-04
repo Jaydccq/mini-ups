@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -37,12 +36,15 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "rag.enabled", havingValue = "true", matchIfMissing = true)
 public class RagQueryService {
 
+
+    private static final Logger log = LoggerFactory.getLogger(RagQueryService.class);
     private static final String SYSTEM_PROMPT = "You are Mini-UPS operations assistant. " +
         "Provide concise, actionable answers grounded in the provided context. " +
         "Cite sources in-line using [n] markers matching the returned references. " +
@@ -56,6 +58,25 @@ public class RagQueryService {
     private final RagQueryLogRepository queryLogRepository;
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagQueryService(RagProperties properties,
+                          RagEmbeddingClient embeddingClient,
+                          RagRetriever retriever,
+                          RagChatClient chatClient,
+                          RagRateLimiter rateLimiter,
+                          RagQueryLogRepository queryLogRepository,
+                          ObjectMapper objectMapper,
+                          MeterRegistry meterRegistry) {
+        this.properties = properties;
+        this.embeddingClient = embeddingClient;
+        this.retriever = retriever;
+        this.chatClient = chatClient;
+        this.rateLimiter = rateLimiter;
+        this.queryLogRepository = queryLogRepository;
+        this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
+    }
 
     public RagQueryResponse handleQuery(RagQueryRequest request, Authentication authentication) {
         Timer.Sample sample = Timer.start(meterRegistry);
@@ -91,12 +112,13 @@ public class RagQueryService {
                     "status",
                     "empty"
                 ));
-                return RagQueryResponse.builder()
-                    .answer("未能在当前知识库中找到相关信息，请联系管理员或查阅手册。")
-                    .confidence(0.0)
-                    .sources(List.of())
-                    .warnings(List.of("未检索到相关内容"))
-                    .build();
+                return new RagQueryResponse(
+                    null,  // logId
+                    "未能在当前知识库中找到相关信息，请联系管理员或查阅手册。",  // answer
+                    0.0,  // confidence
+                    List.of(),  // sources
+                    List.of("未检索到相关内容")  // warnings
+                );
             }
 
             String prompt = buildUserPrompt(query, searchResults, userContext);
@@ -114,12 +136,13 @@ public class RagQueryService {
 
             UUID logId = persistQueryLog(userContext, query, answer, confidence, sources);
 
-            RagQueryResponse response = RagQueryResponse.builder()
-                .logId(logId)
-                .answer(answer)
-                .confidence(confidence)
-                .sources(sources)
-                .build();
+            RagQueryResponse response = new RagQueryResponse(
+                logId,
+                answer,
+                confidence,
+                sources,
+                null  // warnings
+            );
 
             sample.stop(meterRegistry.timer(
                 "rag.retrieval.query_latency",
@@ -216,14 +239,14 @@ public class RagQueryService {
         int index = 1;
         for (RagSearchResult result : results) {
             String title = Objects.toString(result.metadata().getOrDefault("title", result.source()), result.source());
-            sources.add(RagSourceDto.builder()
-                .title(title)
-                .source(result.source())
-                .similarity(result.finalScore())
-                .confidence(result.finalScore())
-                .semanticScore(result.semanticScore())
-                .keywordScore(result.keywordScore())
-                .build());
+            sources.add(new RagSourceDto(
+                title,
+                result.source(),
+                result.finalScore(),  // similarity
+                result.finalScore(),  // confidence
+                result.semanticScore(),
+                result.keywordScore()
+            ));
             index++;
         }
         return sources;
@@ -286,8 +309,8 @@ public class RagQueryService {
             if (sources != null && !sources.isEmpty()) {
                 logEntry.setSources(objectMapper.writeValueAsString(sources));
             }
-            RagQueryLog saved = queryLogRepository.save(logEntry);
-            return saved.getId();
+            queryLogRepository.insert(logEntry);
+            return logEntry.getId();
         } catch (JsonProcessingException ex) {
             log.warn("Failed to serialize RAG sources for logging", ex);
         } catch (Exception ex) {

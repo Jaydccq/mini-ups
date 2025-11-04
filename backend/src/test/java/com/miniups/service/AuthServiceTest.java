@@ -15,13 +15,15 @@ import com.miniups.model.enums.UserRole;
 import com.miniups.repository.UserRepository;
 import com.miniups.security.JwtTokenProvider;
 import com.miniups.util.TestDataFactory;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,6 +36,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import java.sql.SQLException;
 
 /**
  * AuthService 核心业务逻辑测试
@@ -87,8 +90,6 @@ class AuthServiceTest {
         savedUser.setEnabled(true);
         savedUser.setPassword("encodedPassword");
         
-        when(userRepository.existsByUsername(validRegisterRequest.getUsername())).thenReturn(false);
-        when(userRepository.existsByEmail(validRegisterRequest.getEmail())).thenReturn(false);
         when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtTokenProvider.generateToken(savedUser.getUsername())).thenReturn("jwt-token");
@@ -103,44 +104,47 @@ class AuthServiceTest {
         assertThat(response.getUser().getUsername()).isEqualTo(validRegisterRequest.getUsername());
         assertThat(response.getUser().getEmail()).isEqualTo(validRegisterRequest.getEmail());
         
-        verify(userRepository).existsByUsername(validRegisterRequest.getUsername());
-        verify(userRepository).existsByEmail(validRegisterRequest.getEmail());
         verify(passwordEncoder).encode(validRegisterRequest.getPassword());
         verify(userRepository).save(any(User.class));
         verify(jwtTokenProvider).generateToken(savedUser.getUsername());
+        verify(userRepository, never()).existsByUsername(anyString());
+        verify(userRepository, never()).existsByEmail(anyString());
     }
 
     @Test
     @DisplayName("用户注册 - 用户名已存在")
     void register_shouldThrowException_whenUsernameExists() {
         // Given
-        when(userRepository.existsByUsername(validRegisterRequest.getUsername())).thenReturn(true);
+        when(userRepository.save(any(User.class)))
+            .thenThrow(uniqueConstraintViolation("users_username_key"));
+        when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
 
         // When & Then
         assertThatThrownBy(() -> authService.register(validRegisterRequest))
             .isInstanceOf(UserAlreadyExistsException.class)
             .hasMessageContaining("username");
 
-        verify(userRepository).existsByUsername(validRegisterRequest.getUsername());
+        verify(userRepository).save(any(User.class));
+        verify(userRepository, never()).existsByUsername(anyString());
         verify(userRepository, never()).existsByEmail(anyString());
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     @DisplayName("用户注册 - 邮箱已存在")
     void register_shouldThrowException_whenEmailExists() {
         // Given
-        when(userRepository.existsByUsername(validRegisterRequest.getUsername())).thenReturn(false);
-        when(userRepository.existsByEmail(validRegisterRequest.getEmail())).thenReturn(true);
+        when(userRepository.save(any(User.class)))
+            .thenThrow(uniqueConstraintViolation("users_email_key"));
+        when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
 
         // When & Then
         assertThatThrownBy(() -> authService.register(validRegisterRequest))
             .isInstanceOf(UserAlreadyExistsException.class)
             .hasMessageContaining("email");
 
-        verify(userRepository).existsByUsername(validRegisterRequest.getUsername());
-        verify(userRepository).existsByEmail(validRegisterRequest.getEmail());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository).save(any(User.class));
+        verify(userRepository, never()).existsByUsername(anyString());
+        verify(userRepository, never()).existsByEmail(anyString());
     }
 
     @Test
@@ -537,3 +541,8 @@ class AuthServiceTest {
         testUser.setPhone("1234567890");
     }
 }
+
+    private DataIntegrityViolationException uniqueConstraintViolation(String constraintName) {
+        ConstraintViolationException cause = new ConstraintViolationException("Unique constraint", new SQLException(), constraintName);
+        return new DataIntegrityViolationException("Unique constraint", cause);
+    }

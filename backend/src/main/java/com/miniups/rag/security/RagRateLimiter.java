@@ -4,15 +4,17 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.time.Instant;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Component
 @ConditionalOnProperty(name = "rag.enabled", havingValue = "true", matchIfMissing = true)
 public class RagRateLimiter {
 
+
+    private static final Logger log = LoggerFactory.getLogger(RagRateLimiter.class);
     private final Cache<String, UsageBucket> cache = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofHours(1))
         .build();

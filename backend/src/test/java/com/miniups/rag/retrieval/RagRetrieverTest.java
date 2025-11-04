@@ -509,10 +509,7 @@ class RagRetrieverTest {
             List<RagSearchResult> results = retriever.hybridSearch("test query", queryVector, 5, 0.5);
 
             // Then
-            assertFalse(results.isEmpty());
-            RagSearchResult result = results.get(0);
-            assertEquals(0.0, result.semanticScore()); // NaN should be clamped to 0.0
-            assertFalse(Double.isNaN(result.finalScore()));
+            assertTrue(results.isEmpty(), "NaN scores should be filtered out");
         }
 
         @Test

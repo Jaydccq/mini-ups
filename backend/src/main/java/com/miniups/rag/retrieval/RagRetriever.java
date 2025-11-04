@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PGobject;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataAccessException;
@@ -21,17 +20,27 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-@Slf4j
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "rag.enabled", havingValue = "true", matchIfMissing = true)
 public class RagRetriever {
 
+
+    private static final Logger log = LoggerFactory.getLogger(RagRetriever.class);
     private static final int MIN_SEARCH_WINDOW = 8;
 
     private final JdbcTemplate jdbcTemplate;
     private final RagProperties properties;
     private final ObjectMapper objectMapper;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagRetriever(JdbcTemplate jdbcTemplate, RagProperties properties, ObjectMapper objectMapper) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.properties = properties;
+        this.objectMapper = objectMapper;
+    }
 
     public List<RagSearchResult> hybridSearch(String query, float[] queryVector, int topK, double similarityThreshold) {
         if (queryVector == null || queryVector.length == 0) {
@@ -71,13 +80,19 @@ public class RagRetriever {
 
         List<RagSearchResult> finalResults = new ArrayList<>();
         for (AggregatedResult agg : aggregated.values()) {
-            if (agg.semanticScore > 0 && agg.semanticScore < similarityThreshold) {
+            double semanticScore = clamp01(agg.semanticScore);
+            double keywordScore = clamp01(agg.keywordScore);
+
+            if (semanticScore > 0 && semanticScore < similarityThreshold) {
                 continue;
             }
-            if (agg.semanticScore == 0.0 && agg.keywordScore == 0.0) {
+            if (semanticScore == 0.0 && keywordScore == 0.0) {
                 continue;
             }
-            double finalScore = clamp01((semanticShare * agg.semanticScore) + (keywordShare * agg.keywordScore));
+            agg.semanticScore = semanticScore;
+            agg.keywordScore = keywordScore;
+
+            double finalScore = clamp01((semanticShare * semanticScore) + (keywordShare * keywordScore));
             finalResults.add(agg.toResult(finalScore));
         }
 

@@ -50,7 +50,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -143,8 +146,8 @@ public class AmazonIntegrationService {
             }
             
             // Check if shipment already exists
-            Optional<Shipment> existingShipment = shipmentRepository.findByShipmentId(dto.getShipmentId());
-            if (existingShipment.isPresent()) {
+            Shipment existingShipment = shipmentRepository.findByShipmentId(dto.getShipmentId());
+            if (existingShipment != null) {
                 return UpsResponseDto.error(1002, "Shipment already exists: " + dto.getShipmentId());
             }
             
@@ -162,7 +165,11 @@ public class AmazonIntegrationService {
             
             shipment.setTruck(assignedTruck);
             shipment.setUpsTrackingId(trackingService.generateTrackingNumber());
-            shipment = shipmentRepository.save(shipment);
+            if (shipment.getId() == null) {
+                shipmentRepository.insert(shipment);
+            } else {
+                shipmentRepository.update(shipment);
+            }
             
             logger.info("Created shipment {} with tracking number {}", 
                        shipment.getShipmentId(), shipment.getUpsTrackingId());
@@ -215,10 +222,10 @@ public class AmazonIntegrationService {
             }
             
             // Check if shipment already exists (quick database check)
-            Optional<Shipment> existingShipment = shipmentRepository.findByShipmentId(dto.getShipmentId());
-            if (existingShipment.isPresent()) {
-                asyncAuditService.auditFailure("shipment.async_create", dto.getShipmentId(), 
-                                             "Attempted to create duplicate shipment", 
+            Shipment existingShipment = shipmentRepository.findByShipmentId(dto.getShipmentId());
+            if (existingShipment != null) {
+                asyncAuditService.auditFailure("shipment.async_create", dto.getShipmentId(),
+                                             "Attempted to create duplicate shipment",
                                              startTime, new IllegalStateException("Shipment already exists"));
                 return UpsResponseDto.error(1002, "Shipment already exists: " + dto.getShipmentId());
             }
@@ -304,16 +311,19 @@ public class AmazonIntegrationService {
             if (shipmentId == null) {
                 return UpsResponseDto.error(1001, "Missing shipment_id");
             }
-            
-            Optional<Shipment> shipmentOpt = shipmentRepository.findByShipmentId(shipmentId);
-            if (shipmentOpt.isEmpty()) {
+
+            Shipment shipment = shipmentRepository.findByShipmentId(shipmentId);
+            if (shipment == null) {
                 return UpsResponseDto.error(2000, "Shipment not found: " + shipmentId);
             }
-            
-            Shipment shipment = shipmentOpt.get();
+
             shipment.updateStatus(ShipmentStatus.PICKED_UP);
             shipment.setPickupTime(LocalDateTime.now());
-            shipmentRepository.save(shipment);
+            if (shipment.getId() == null) {
+                shipmentRepository.insert(shipment);
+            } else {
+                shipmentRepository.update(shipment);
+            }
             
             // Start delivery process
             startDelivery(shipment);
@@ -338,13 +348,11 @@ public class AmazonIntegrationService {
             if (shipmentId == null) {
                 return UpsResponseDto.error(1001, "Missing shipment_id");
             }
-            
-            Optional<Shipment> shipmentOpt = shipmentRepository.findByShipmentId(shipmentId);
-            if (shipmentOpt.isEmpty()) {
+
+            Shipment shipment = shipmentRepository.findByShipmentId(shipmentId);
+            if (shipment == null) {
                 return UpsResponseDto.error(2000, "Shipment not found: " + shipmentId);
             }
-            
-            Shipment shipment = shipmentOpt.get();
             
             Map<String, Object> statusPayload = new HashMap<>();
             statusPayload.put("shipment_id", shipment.getShipmentId());
@@ -382,23 +390,25 @@ public class AmazonIntegrationService {
             if (shipmentId == null || newDestX == null || newDestY == null) {
                 return UpsResponseDto.error(1001, "Missing required fields");
             }
-            
-            Optional<Shipment> shipmentOpt = shipmentRepository.findByShipmentId(shipmentId);
-            if (shipmentOpt.isEmpty()) {
+
+            Shipment shipment = shipmentRepository.findByShipmentId(shipmentId);
+            if (shipment == null) {
                 return UpsResponseDto.error(2000, "Shipment not found: " + shipmentId);
             }
-            
-            Shipment shipment = shipmentOpt.get();
-            
+
             // Check if address can be changed
             if (!shipment.canChangeAddress()) {
                 return UpsResponseDto.error(2002, "Address cannot be changed for shipment in status: " + shipment.getStatus());
             }
-            
+
             // Update destination
             shipment.setDestX(newDestX);
             shipment.setDestY(newDestY);
-            shipmentRepository.save(shipment);
+            if (shipment.getId() == null) {
+                shipmentRepository.insert(shipment);
+            } else {
+                shipmentRepository.update(shipment);
+            }
             
             // If truck is already en route, update delivery destination
             if (shipment.getTruck() != null && shipment.getStatus() == ShipmentStatus.IN_TRANSIT) {
@@ -521,11 +531,11 @@ public class AmazonIntegrationService {
     
     private User findOrCreateUser(ShipmentCreatedDto dto) {
         // Try to find existing user by email
-        Optional<User> existingUser = userRepository.findByEmail(dto.getEmail());
-        if (existingUser.isPresent()) {
-            return existingUser.get();
+        User existingUser = userRepository.findByEmail(dto.getEmail());
+        if (existingUser != null) {
+            return existingUser;
         }
-        
+
         // Create new user if not found
         User newUser = new User();
         newUser.setUsername("amazon_user_" + dto.getUserId()); // Generate unique username based on Amazon user ID
@@ -533,8 +543,13 @@ public class AmazonIntegrationService {
         newUser.setPassword("temp_password"); // This should be handled properly in a real system
         newUser.setFirstName("Amazon User");
         newUser.setLastName("Customer");
-        
-        return userRepository.save(newUser);
+
+        if (newUser.getId() == null) {
+            userRepository.insert(newUser);
+        } else {
+            userRepository.update(newUser);
+        }
+        return newUser;
     }
     
     private Shipment createShipment(ShipmentCreatedDto dto, User user) {
@@ -616,9 +631,14 @@ public class AmazonIntegrationService {
                         logger.error("Error starting delivery via World Simulator", throwable);
                         return null;
                     });
-                
+
                 shipment.getTruck().setStatus(TruckStatus.DELIVERING);
-                truckRepository.save(shipment.getTruck());
+                Truck truck = shipment.getTruck();
+                if (truck.getId() == null) {
+                    truckRepository.insert(truck);
+                } else {
+                    truckRepository.update(truck);
+                }
                 
             } catch (Exception e) {
                 logger.error("Error calling World Simulator for delivery", e);
@@ -635,7 +655,7 @@ public class AmazonIntegrationService {
                 // Cancel current delivery and send new delivery command
                 Map<Long, int[]> newDeliveries = new HashMap<>();
                 // Find the shipments being delivered
-                List<Shipment> currentShipments = shipmentRepository.findByTruck(truck);
+                List<Shipment> currentShipments = shipmentRepository.findByTruckId(truck.getId());
                 if (!currentShipments.isEmpty()) {
                     // Handle the first/primary shipment for destination update
                     Shipment currentShipment = currentShipments.get(0);

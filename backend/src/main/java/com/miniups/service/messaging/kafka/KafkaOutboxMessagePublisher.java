@@ -4,9 +4,10 @@ import com.miniups.config.KafkaMessagingProperties;
 import com.miniups.model.entity.OutboxEvent;
 import com.miniups.service.messaging.OutboxMessagePublisher;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -21,15 +22,23 @@ import java.util.concurrent.TimeUnit;
 /**
  * Kafka implementation of the {@link OutboxMessagePublisher} contract.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnBean(KafkaTemplate.class)
 @ConditionalOnProperty(prefix = "messaging.kafka", name = "outbox-enabled", havingValue = "true")
 public class KafkaOutboxMessagePublisher implements OutboxMessagePublisher {
 
+    private static final Logger log = LoggerFactory.getLogger(KafkaOutboxMessagePublisher.class);
+
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaMessagingProperties properties;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public KafkaOutboxMessagePublisher(KafkaTemplate<String, String> kafkaTemplate,
+                                      KafkaMessagingProperties properties) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.properties = properties;
+    }
 
     @Override
     public String channel() {

@@ -24,6 +24,11 @@ public class RagController {
 
     private final RagQueryService queryService;
 
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagController(RagQueryService queryService) {
+        this.queryService = queryService;
+    }
+
     @PostMapping("/query")
     @PreAuthorize("hasAnyRole('ADMIN','USER','DRIVER','OPERATOR')")
     public ResponseEntity<RagQueryResponse> query(

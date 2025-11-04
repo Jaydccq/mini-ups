@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miniups.config.RabbitMQConfig;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageProperties;
@@ -20,6 +19,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * WebSocket-RabbitMQ Integration Service
  *
@@ -42,14 +43,24 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version 1.0
  * @since 2024-12-01
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WebSocketRabbitMQService {
 
+
+    private static final Logger log = LoggerFactory.getLogger(WebSocketRabbitMQService.class);
     private final SimpMessageSendingOperations messagingTemplate;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public WebSocketRabbitMQService(SimpMessageSendingOperations messagingTemplate,
+                                   RabbitTemplate rabbitTemplate,
+                                   ObjectMapper objectMapper) {
+        this.messagingTemplate = messagingTemplate;
+        this.rabbitTemplate = rabbitTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @Value("${management.metrics.tags.application:mini-ups-backend}")
     private String applicationName;

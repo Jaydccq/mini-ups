@@ -47,36 +47,22 @@
 package com.miniups.model.entity;
 
 import com.miniups.model.enums.ShipmentStatus;
-import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "shipment_status_history", indexes = {
-    @Index(name = "idx_status_history_shipment", columnList = "shipment_id"),
-    @Index(name = "idx_status_history_timestamp", columnList = "timestamp")
-})
 public class ShipmentStatusHistory extends BaseEntity {
     
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     private ShipmentStatus status;
     
-    @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
     
-    @Column(name = "location_x")
     private Integer locationX;
     
-    @Column(name = "location_y")
     private Integer locationY;
     
-    @Column(name = "notes", length = 500)
     private String notes;
     
     // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipment_id", nullable = false)
     private Shipment shipment;
     
     // Constructors

@@ -1,7 +1,6 @@
 package com.miniups.config;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,17 +18,25 @@ import java.util.stream.Collectors;
 
 import static com.miniups.config.RabbitMQConfig.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Kafka infrastructure configuration responsible for topic management and enabling {@code @KafkaListener} support.
  */
-@Slf4j
 @Configuration
 @EnableKafka
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "messaging.kafka", name = "enabled", havingValue = "true")
 public class KafkaConfig {
 
+
+    private static final Logger log = LoggerFactory.getLogger(KafkaConfig.class);
     private final KafkaMessagingProperties messagingProperties;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public KafkaConfig(KafkaMessagingProperties messagingProperties) {
+        this.messagingProperties = messagingProperties;
+    }
 
     @Bean
     @ConditionalOnBean(KafkaAdmin.class)

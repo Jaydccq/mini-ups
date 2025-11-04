@@ -213,7 +213,7 @@ public class AnalyticsConsumer {
         // In the future, we might want to create separate analytics tables
         try {
             if (auditLog.getId() == null) {
-                auditLogRepository.save(auditLog);
+                auditLogRepository.insert(auditLog);
             }
         } catch (Exception e) {
             logger.error("Error storing analytics data: {}", e.getMessage(), e);

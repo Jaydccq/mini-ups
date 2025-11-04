@@ -2,7 +2,6 @@ package com.miniups.model.entity;
 
 import com.miniups.model.enums.UserRole;
 import com.miniups.model.enums.AuthProvider;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -10,58 +9,41 @@ import jakarta.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "users", indexes = {
-    @Index(name = "idx_user_email", columnList = "email"),
-    @Index(name = "idx_user_username", columnList = "username")
-})
 public class User extends BaseEntity {
-    
+
     @NotBlank
     @Size(min = 3, max = 50)
-    @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
-    
+
     @NotBlank
     @Email
     @Size(max = 100)
-    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
-    
+
     @Size(min = 8, max = 255)
-    @Column(name = "password", nullable = true)
     private String password;
-    
+
     @Size(max = 50)
-    @Column(name = "first_name", length = 50)
     private String firstName;
-    
+
     @Size(max = 50)
-    @Column(name = "last_name", length = 50)
     private String lastName;
-    
+
     @Size(max = 20)
-    @Column(name = "phone", length = 20, unique = true)
     private String phone;
-    
-    @Column(name = "address", columnDefinition = "TEXT")
+
     private String address;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
+
     private UserRole role = UserRole.USER;
-    
-    @Column(name = "enabled", nullable = false)
+
     private Boolean enabled = true;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auth_provider", nullable = false, length = 20)
+
     private AuthProvider authProvider = AuthProvider.LOCAL;
-    
-    @Column(name = "provider_id")
+
     private String providerId;
-    
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+
+    // Note: In MyBatis, relationships are typically handled through separate queries
+    // instead of automatic cascading like in JPA
     private List<Shipment> shipments = new ArrayList<>();
     
     public User() {}

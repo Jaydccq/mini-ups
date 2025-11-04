@@ -56,36 +56,22 @@
 package com.miniups.model.entity;
 
 import com.miniups.model.enums.TruckStatus;
-import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "truck_location_history", indexes = {
-    @Index(name = "idx_truck_location_truck", columnList = "truck_id"),
-    @Index(name = "idx_truck_location_timestamp", columnList = "timestamp")
-})
 public class TruckLocationHistory extends BaseEntity {
     
-    @Column(name = "x_coordinate", nullable = false)
     private Integer xCoordinate;
     
-    @Column(name = "y_coordinate", nullable = false)
     private Integer yCoordinate;
     
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     private TruckStatus status;
     
-    @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
     
-    @Column(name = "notes", length = 255)
     private String notes;
     
     // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "truck_id", nullable = false)
     private Truck truck;
     
     // Constructors

@@ -12,4 +12,8 @@ public class RagQueryRequest {
     private String query;
 
     private Map<String, Object> context = new HashMap<>();
+
+    // Manual getters
+    public String getQuery() { return query; }
+    public Map<String, Object> getContext() { return context; }
 }

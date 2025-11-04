@@ -59,7 +59,16 @@ public class OutboxPollerService {
     private final OutboxEventRepository outboxEventRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final List<OutboxMessagePublisher> messagePublishers;
-    
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public OutboxPollerService(OutboxEventRepository outboxEventRepository,
+                              RedisTemplate<String, String> redisTemplate,
+                              List<OutboxMessagePublisher> messagePublishers) {
+        this.outboxEventRepository = outboxEventRepository;
+        this.redisTemplate = redisTemplate;
+        this.messagePublishers = messagePublishers;
+    }
+
     /**
      * Unique identifier for this polling instance
      * Used for distributed coordination and stuck event recovery
@@ -299,10 +308,10 @@ public class OutboxPollerService {
     protected void markEventAsPublished(OutboxEvent event) {
         try {
             event.markAsPublished();
-            outboxEventRepository.save(event);
-            
+            outboxEventRepository.update(event);
+
             log.debug("Marked event as published: {}", event.getEventId());
-            
+
         } catch (Exception e) {
             log.error("Failed to mark event as published: {}", event.getEventId(), e);
         }
@@ -318,8 +327,8 @@ public class OutboxPollerService {
     protected void handlePublishFailure(OutboxEvent event, String errorMessage) {
         try {
             event.markAsFailed(errorMessage);
-            outboxEventRepository.save(event);
-            
+            outboxEventRepository.update(event);
+
             totalFailed++;
             
             if (event.getStatus() == OutboxEvent.OutboxStatus.FAILED) {

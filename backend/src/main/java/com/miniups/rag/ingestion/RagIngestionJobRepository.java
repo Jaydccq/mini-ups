@@ -3,7 +3,6 @@ package com.miniups.rag.ingestion;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,6 +14,11 @@ import org.springframework.stereotype.Repository;
 public class RagIngestionJobRepository {
 
     private final JdbcTemplate jdbcTemplate;
+
+    // Manual constructor (Lombok @RequiredArgsConstructor not working)
+    public RagIngestionJobRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public UUID startJob(String trigger) {
         UUID id = UUID.randomUUID();
@@ -46,19 +50,21 @@ public class RagIngestionJobRepository {
         );
     }
 
-    public Optional<RagIngestionJobSummary> findLatest() {
-        return jdbcTemplate.query(
+    public RagIngestionJobSummary findLatest() {
+        var results = jdbcTemplate.query(
             "SELECT * FROM rag_ingestion_job ORDER BY started_at DESC LIMIT 1",
             new JobRowMapper()
-        ).stream().findFirst();
+        );
+        return results.isEmpty() ? null : results.get(0);
     }
 
-    public Optional<RagIngestionJobSummary> findById(UUID id) {
-        return jdbcTemplate.query(
+    public RagIngestionJobSummary findById(UUID id) {
+        var results = jdbcTemplate.query(
             "SELECT * FROM rag_ingestion_job WHERE id = ?",
             new JobRowMapper(),
             id
-        ).stream().findFirst();
+        );
+        return results.isEmpty() ? null : results.get(0);
     }
 
     private static class JobRowMapper implements RowMapper<RagIngestionJobSummary> {

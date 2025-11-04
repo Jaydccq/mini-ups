@@ -39,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Counter;
 
@@ -105,16 +104,16 @@ public class TrackingService {
     
     /**
      * Query package information by tracking number
-     * 
+     *
      * @param trackingNumber UPS tracking number
      * @return Package shipment information
      */
     @Transactional(readOnly = true)
-    public Optional<Shipment> findByTrackingNumber(String trackingNumber) {
+    public Shipment findByTrackingNumber(String trackingNumber) {
         if (trackingNumber == null || trackingNumber.trim().isEmpty()) {
-            return Optional.empty();
+            return null;
         }
-        
+
         return shipmentRepository.findByUpsTrackingId(trackingNumber.trim());
     }
     
@@ -137,47 +136,46 @@ public class TrackingService {
     
     private boolean doUpdateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String comment) {
         try {
-            Optional<Shipment> shipmentOpt = findByTrackingNumber(trackingNumber);
-            
-            if (shipmentOpt.isEmpty()) {
+            Shipment shipment = findByTrackingNumber(trackingNumber);
+
+            if (shipment == null) {
                 logger.warn("Shipment not found for tracking number: {}", trackingNumber);
                 return false;
             }
-            
-            Shipment shipment = shipmentOpt.get();
+
             ShipmentStatus oldStatus = shipment.getStatus();
-            
+
             // Validate status transition
             if (!isValidStatusTransition(oldStatus, newStatus)) {
-                logger.warn("Invalid status transition from {} to {} for tracking number: {}", 
+                logger.warn("Invalid status transition from {} to {} for tracking number: {}",
                            oldStatus, newStatus, trackingNumber);
                 return false;
             }
-            
+
             // Update status
             shipment.setStatus(newStatus);
-            
+
             // Add status history entry with comment
             ShipmentStatusHistory history = new ShipmentStatusHistory();
             history.setShipment(shipment);
             history.setStatus(newStatus);
             history.setTimestamp(LocalDateTime.now());
             history.setNotes(comment);
-            
+
             shipment.getStatusHistory().add(history);
-            
+
             // Update delivery time if delivered
             if (newStatus == ShipmentStatus.DELIVERED) {
                 shipment.setActualDelivery(LocalDateTime.now());
             }
-            
-            shipmentRepository.save(shipment);
-            
-            logger.info("Updated shipment {} status from {} to {}", 
+
+            shipmentRepository.update(shipment);
+
+            logger.info("Updated shipment {} status from {} to {}",
                        trackingNumber, oldStatus, newStatus);
-            
+
             return true;
-            
+
         } catch (OptimisticLockingFailureException e) {
             logger.debug("Optimistic locking failure for tracking number: {}, will retry", trackingNumber);
             throw e; // Re-throw to trigger retry
@@ -189,18 +187,18 @@ public class TrackingService {
     
     /**
      * Get package status history
-     * 
+     *
      * @param trackingNumber UPS tracking number
      * @return Status history list
      */
     @Transactional(readOnly = true)
     public List<ShipmentStatusHistory> getStatusHistory(String trackingNumber) {
-        Optional<Shipment> shipmentOpt = findByTrackingNumber(trackingNumber);
-        
-        if (shipmentOpt.isPresent()) {
-            return shipmentOpt.get().getStatusHistory();
+        Shipment shipment = findByTrackingNumber(trackingNumber);
+
+        if (shipment != null) {
+            return shipment.getStatusHistory();
         }
-        
+
         return List.of();
     }
     
