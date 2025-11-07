@@ -53,7 +53,6 @@ public class WebSocketRabbitMQService {
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public WebSocketRabbitMQService(SimpMessageSendingOperations messagingTemplate,
                                    RabbitTemplate rabbitTemplate,
                                    ObjectMapper objectMapper) {

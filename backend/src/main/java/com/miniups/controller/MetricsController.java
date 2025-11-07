@@ -51,7 +51,6 @@ public class MetricsController {
     private final OutboxPollerService outboxPollerService;
     private final WebSocketRabbitMQService webSocketRabbitMQService;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public MetricsController(MetricsConfig metricsConfig,
                            MeterRegistry meterRegistry,
                            OutboxPollerService outboxPollerService,

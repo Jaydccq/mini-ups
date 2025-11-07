@@ -25,7 +25,6 @@ public class RagFeedbackController {
 
     private final RagFeedbackService feedbackService;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagFeedbackController(RagFeedbackService feedbackService) {
         this.feedbackService = feedbackService;
     }

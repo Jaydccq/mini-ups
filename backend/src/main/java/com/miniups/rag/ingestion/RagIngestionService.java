@@ -33,7 +33,6 @@ public class RagIngestionService {
     private final RagChunkWriter chunkWriter;
     private final RagIngestionJobRepository jobRepository;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagIngestionService(RagProperties properties,
                               FileSystemDocumentLoader documentLoader,
                               RagTextChunker chunker,

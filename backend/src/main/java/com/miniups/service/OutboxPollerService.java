@@ -60,7 +60,6 @@ public class OutboxPollerService {
     private final RedisTemplate<String, String> redisTemplate;
     private final List<OutboxMessagePublisher> messagePublishers;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public OutboxPollerService(OutboxEventRepository outboxEventRepository,
                               RedisTemplate<String, String> redisTemplate,
                               List<OutboxMessagePublisher> messagePublishers) {

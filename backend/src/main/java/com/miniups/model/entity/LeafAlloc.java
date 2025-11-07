@@ -212,12 +212,11 @@ public class LeafAlloc {
          */
         private long endId;
 
-        // Manual constructor (Lombok @AllArgsConstructor not working)
         public Segment(long startId, long endId) {
             this.startId = startId;
             this.endId = endId;
         }
-        
+
         /**
          * Check if this segment contains the given ID
          */

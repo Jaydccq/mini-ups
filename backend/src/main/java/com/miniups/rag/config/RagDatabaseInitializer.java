@@ -20,7 +20,6 @@ public class RagDatabaseInitializer {
     private final JdbcTemplate jdbcTemplate;
     private final RagProperties properties;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagDatabaseInitializer(JdbcTemplate jdbcTemplate, RagProperties properties) {
         this.jdbcTemplate = jdbcTemplate;
         this.properties = properties;

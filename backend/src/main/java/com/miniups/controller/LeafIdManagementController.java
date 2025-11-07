@@ -43,7 +43,6 @@ public class LeafIdManagementController {
 
     private final LeafIdGeneratorService leafIdGeneratorService;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public LeafIdManagementController(LeafIdGeneratorService leafIdGeneratorService) {
         this.leafIdGeneratorService = leafIdGeneratorService;
     }

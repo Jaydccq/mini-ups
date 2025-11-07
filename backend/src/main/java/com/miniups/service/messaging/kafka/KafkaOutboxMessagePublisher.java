@@ -33,7 +33,6 @@ public class KafkaOutboxMessagePublisher implements OutboxMessagePublisher {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaMessagingProperties properties;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public KafkaOutboxMessagePublisher(KafkaTemplate<String, String> kafkaTemplate,
                                       KafkaMessagingProperties properties) {
         this.kafkaTemplate = kafkaTemplate;

@@ -30,7 +30,6 @@ public class RabbitOutboxMessagePublisher implements OutboxMessagePublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RabbitOutboxMessagePublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }

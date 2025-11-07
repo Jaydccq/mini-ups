@@ -21,7 +21,6 @@ public class RagFeedbackService {
     private final RagQueryLogRepository queryLogRepository;
     private final MeterRegistry meterRegistry;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagFeedbackService(RagQueryLogRepository queryLogRepository, MeterRegistry meterRegistry) {
         this.queryLogRepository = queryLogRepository;
         this.meterRegistry = meterRegistry;

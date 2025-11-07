@@ -53,7 +53,6 @@ public class EventPublisherService {
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public EventPublisherService(OutboxEventRepository outboxEventRepository, ObjectMapper objectMapper) {
         this.outboxEventRepository = outboxEventRepository;
         this.objectMapper = objectMapper;

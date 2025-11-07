@@ -27,7 +27,6 @@ public class RagChunkWriter {
     private final RagProperties properties;
     private final ObjectMapper objectMapper;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagChunkWriter(JdbcTemplate jdbcTemplate, RagProperties properties, ObjectMapper objectMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.properties = properties;

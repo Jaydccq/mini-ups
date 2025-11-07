@@ -59,7 +59,6 @@ public class RagQueryService {
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagQueryService(RagProperties properties,
                           RagEmbeddingClient embeddingClient,
                           RagRetriever retriever,

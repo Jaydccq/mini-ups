@@ -30,7 +30,6 @@ public class FileSystemDocumentLoader {
 
     private final RagProperties properties;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public FileSystemDocumentLoader(RagProperties properties) {
         this.properties = properties;
     }

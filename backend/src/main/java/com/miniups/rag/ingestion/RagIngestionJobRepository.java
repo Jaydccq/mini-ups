@@ -15,7 +15,6 @@ public class RagIngestionJobRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagIngestionJobRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }

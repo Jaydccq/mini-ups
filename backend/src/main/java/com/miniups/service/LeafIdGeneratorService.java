@@ -65,7 +65,6 @@ public class LeafIdGeneratorService {
     private final LeafAllocRepository leafAllocRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public LeafIdGeneratorService(LeafAllocRepository leafAllocRepository,
                                  RedisTemplate<String, String> redisTemplate) {
         this.leafAllocRepository = leafAllocRepository;

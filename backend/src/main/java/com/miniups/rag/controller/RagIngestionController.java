@@ -19,7 +19,6 @@ public class RagIngestionController {
 
     private final RagIngestionService ingestionService;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagIngestionController(RagIngestionService ingestionService) {
         this.ingestionService = ingestionService;
     }

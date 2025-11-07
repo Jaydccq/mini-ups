@@ -35,7 +35,6 @@ public class RagRetriever {
     private final RagProperties properties;
     private final ObjectMapper objectMapper;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagRetriever(JdbcTemplate jdbcTemplate, RagProperties properties, ObjectMapper objectMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.properties = properties;

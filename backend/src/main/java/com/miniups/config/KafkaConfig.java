@@ -33,7 +33,6 @@ public class KafkaConfig {
     private static final Logger log = LoggerFactory.getLogger(KafkaConfig.class);
     private final KafkaMessagingProperties messagingProperties;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public KafkaConfig(KafkaMessagingProperties messagingProperties) {
         this.messagingProperties = messagingProperties;
     }

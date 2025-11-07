@@ -24,7 +24,6 @@ public class RagController {
 
     private final RagQueryService queryService;
 
-    // Manual constructor (Lombok @RequiredArgsConstructor not working)
     public RagController(RagQueryService queryService) {
         this.queryService = queryService;
     }
