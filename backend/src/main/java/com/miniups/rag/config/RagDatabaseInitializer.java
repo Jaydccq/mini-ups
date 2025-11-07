@@ -20,11 +20,6 @@ public class RagDatabaseInitializer {
     private final JdbcTemplate jdbcTemplate;
     private final RagProperties properties;
 
-    public RagDatabaseInitializer(JdbcTemplate jdbcTemplate, RagProperties properties) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.properties = properties;
-    }
-
     @PostConstruct
     public void onStartup() {
         initialize();

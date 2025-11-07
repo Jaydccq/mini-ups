@@ -43,10 +43,6 @@ public class LeafIdManagementController {
 
     private final LeafIdGeneratorService leafIdGeneratorService;
 
-    public LeafIdManagementController(LeafIdGeneratorService leafIdGeneratorService) {
-        this.leafIdGeneratorService = leafIdGeneratorService;
-    }
-
     /**
      * Get comprehensive health and performance statistics
      * 

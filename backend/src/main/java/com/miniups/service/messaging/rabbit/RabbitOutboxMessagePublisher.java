@@ -30,10 +30,6 @@ public class RabbitOutboxMessagePublisher implements OutboxMessagePublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    public RabbitOutboxMessagePublisher(RabbitTemplate rabbitTemplate) {
-        this.rabbitTemplate = rabbitTemplate;
-    }
-
     @Value("${messaging.rabbit.default-exchange:" + RabbitMQConfig.TOPIC_EXCHANGE_NAME + "}")
     private String defaultExchange;
 

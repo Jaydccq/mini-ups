@@ -60,14 +60,6 @@ public class OutboxPollerService {
     private final RedisTemplate<String, String> redisTemplate;
     private final List<OutboxMessagePublisher> messagePublishers;
 
-    public OutboxPollerService(OutboxEventRepository outboxEventRepository,
-                              RedisTemplate<String, String> redisTemplate,
-                              List<OutboxMessagePublisher> messagePublishers) {
-        this.outboxEventRepository = outboxEventRepository;
-        this.redisTemplate = redisTemplate;
-        this.messagePublishers = messagePublishers;
-    }
-
     /**
      * Unique identifier for this polling instance
      * Used for distributed coordination and stuck event recovery

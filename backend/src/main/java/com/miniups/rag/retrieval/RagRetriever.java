@@ -35,12 +35,6 @@ public class RagRetriever {
     private final RagProperties properties;
     private final ObjectMapper objectMapper;
 
-    public RagRetriever(JdbcTemplate jdbcTemplate, RagProperties properties, ObjectMapper objectMapper) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.properties = properties;
-        this.objectMapper = objectMapper;
-    }
-
     public List<RagSearchResult> hybridSearch(String query, float[] queryVector, int topK, double similarityThreshold) {
         if (queryVector == null || queryVector.length == 0) {
             return List.of();

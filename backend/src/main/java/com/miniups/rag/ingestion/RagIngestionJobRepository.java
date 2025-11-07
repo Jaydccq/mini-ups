@@ -15,10 +15,6 @@ public class RagIngestionJobRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public RagIngestionJobRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
     public UUID startJob(String trigger) {
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(

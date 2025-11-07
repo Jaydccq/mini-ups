@@ -53,14 +53,6 @@ public class WebSocketRabbitMQService {
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
 
-    public WebSocketRabbitMQService(SimpMessageSendingOperations messagingTemplate,
-                                   RabbitTemplate rabbitTemplate,
-                                   ObjectMapper objectMapper) {
-        this.messagingTemplate = messagingTemplate;
-        this.rabbitTemplate = rabbitTemplate;
-        this.objectMapper = objectMapper;
-    }
-
     @Value("${management.metrics.tags.application:mini-ups-backend}")
     private String applicationName;
 

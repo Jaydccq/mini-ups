@@ -19,10 +19,6 @@ public class RagIngestionController {
 
     private final RagIngestionService ingestionService;
 
-    public RagIngestionController(RagIngestionService ingestionService) {
-        this.ingestionService = ingestionService;
-    }
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RagIngestionJobSummary> triggerIngestion() {

@@ -59,24 +59,6 @@ public class RagQueryService {
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
 
-    public RagQueryService(RagProperties properties,
-                          RagEmbeddingClient embeddingClient,
-                          RagRetriever retriever,
-                          RagChatClient chatClient,
-                          RagRateLimiter rateLimiter,
-                          RagQueryLogRepository queryLogRepository,
-                          ObjectMapper objectMapper,
-                          MeterRegistry meterRegistry) {
-        this.properties = properties;
-        this.embeddingClient = embeddingClient;
-        this.retriever = retriever;
-        this.chatClient = chatClient;
-        this.rateLimiter = rateLimiter;
-        this.queryLogRepository = queryLogRepository;
-        this.objectMapper = objectMapper;
-        this.meterRegistry = meterRegistry;
-    }
-
     public RagQueryResponse handleQuery(RagQueryRequest request, Authentication authentication) {
         Timer.Sample sample = Timer.start(meterRegistry);
         RagUserContext userContext = resolveUser(authentication);

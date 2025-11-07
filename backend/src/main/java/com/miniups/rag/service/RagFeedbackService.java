@@ -21,11 +21,6 @@ public class RagFeedbackService {
     private final RagQueryLogRepository queryLogRepository;
     private final MeterRegistry meterRegistry;
 
-    public RagFeedbackService(RagQueryLogRepository queryLogRepository, MeterRegistry meterRegistry) {
-        this.queryLogRepository = queryLogRepository;
-        this.meterRegistry = meterRegistry;
-    }
-
     public RagQueryLog submitFeedback(UUID logId, RagFeedbackType feedbackType, String comment, String role) {
         RagQueryLog logEntry = queryLogRepository.selectById(logId);
         if (logEntry == null) {

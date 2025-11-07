@@ -33,20 +33,6 @@ public class RagIngestionService {
     private final RagChunkWriter chunkWriter;
     private final RagIngestionJobRepository jobRepository;
 
-    public RagIngestionService(RagProperties properties,
-                              FileSystemDocumentLoader documentLoader,
-                              RagTextChunker chunker,
-                              RagEmbeddingClient embeddingClient,
-                              RagChunkWriter chunkWriter,
-                              RagIngestionJobRepository jobRepository) {
-        this.properties = properties;
-        this.documentLoader = documentLoader;
-        this.chunker = chunker;
-        this.embeddingClient = embeddingClient;
-        this.chunkWriter = chunkWriter;
-        this.jobRepository = jobRepository;
-    }
-
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     @EventListener(ApplicationReadyEvent.class)

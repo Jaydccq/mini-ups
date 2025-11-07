@@ -65,12 +65,6 @@ public class LeafIdGeneratorService {
     private final LeafAllocRepository leafAllocRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
-    public LeafIdGeneratorService(LeafAllocRepository leafAllocRepository,
-                                 RedisTemplate<String, String> redisTemplate) {
-        this.leafAllocRepository = leafAllocRepository;
-        this.redisTemplate = redisTemplate;
-    }
-
     /**
      * In-memory segment cache for each business tag
      * Key: business tag, Value: segment buffer managing current and next segments

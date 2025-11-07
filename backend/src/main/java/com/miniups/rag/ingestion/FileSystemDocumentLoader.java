@@ -30,10 +30,6 @@ public class FileSystemDocumentLoader {
 
     private final RagProperties properties;
 
-    public FileSystemDocumentLoader(RagProperties properties) {
-        this.properties = properties;
-    }
-
     public List<RagDocumentResource> loadDocuments() {
         List<RagDocumentResource> documents = new ArrayList<>();
         for (String root : properties.getIngestion().getRootPaths()) {

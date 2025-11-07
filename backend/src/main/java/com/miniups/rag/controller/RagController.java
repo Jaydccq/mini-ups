@@ -24,10 +24,6 @@ public class RagController {
 
     private final RagQueryService queryService;
 
-    public RagController(RagQueryService queryService) {
-        this.queryService = queryService;
-    }
-
     @PostMapping("/query")
     @PreAuthorize("hasAnyRole('ADMIN','USER','DRIVER','OPERATOR')")
     public ResponseEntity<RagQueryResponse> query(

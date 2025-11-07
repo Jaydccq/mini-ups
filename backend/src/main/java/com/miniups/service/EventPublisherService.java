@@ -53,11 +53,6 @@ public class EventPublisherService {
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
 
-    public EventPublisherService(OutboxEventRepository outboxEventRepository, ObjectMapper objectMapper) {
-        this.outboxEventRepository = outboxEventRepository;
-        this.objectMapper = objectMapper;
-    }
-
     @Value("${spring.application.name:mini-ups-backend}")
     private String sourceService;
     

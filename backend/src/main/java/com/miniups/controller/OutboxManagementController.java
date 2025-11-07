@@ -46,12 +46,6 @@ public class OutboxManagementController {
     private final EventPublisherService eventPublisherService;
     private final OutboxPollerService outboxPollerService;
 
-    public OutboxManagementController(EventPublisherService eventPublisherService,
-                                     OutboxPollerService outboxPollerService) {
-        this.eventPublisherService = eventPublisherService;
-        this.outboxPollerService = outboxPollerService;
-    }
-
     /**
      * Get comprehensive outbox health information
      * 

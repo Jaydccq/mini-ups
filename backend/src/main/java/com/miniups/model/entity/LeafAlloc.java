@@ -212,11 +212,6 @@ public class LeafAlloc {
          */
         private long endId;
 
-        public Segment(long startId, long endId) {
-            this.startId = startId;
-            this.endId = endId;
-        }
-
         /**
          * Check if this segment contains the given ID
          */

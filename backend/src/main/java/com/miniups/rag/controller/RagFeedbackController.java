@@ -25,10 +25,6 @@ public class RagFeedbackController {
 
     private final RagFeedbackService feedbackService;
 
-    public RagFeedbackController(RagFeedbackService feedbackService) {
-        this.feedbackService = feedbackService;
-    }
-
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','USER','DRIVER','OPERATOR')")
     public ResponseEntity<Void> submitFeedback(@Valid @RequestBody RagFeedbackRequest request) {

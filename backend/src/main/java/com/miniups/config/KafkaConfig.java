@@ -33,10 +33,6 @@ public class KafkaConfig {
     private static final Logger log = LoggerFactory.getLogger(KafkaConfig.class);
     private final KafkaMessagingProperties messagingProperties;
 
-    public KafkaConfig(KafkaMessagingProperties messagingProperties) {
-        this.messagingProperties = messagingProperties;
-    }
-
     @Bean
     @ConditionalOnBean(KafkaAdmin.class)
     @ConditionalOnProperty(prefix = "messaging.kafka", name = "auto-create-topics", havingValue = "true", matchIfMissing = true)
