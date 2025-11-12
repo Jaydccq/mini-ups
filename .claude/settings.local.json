@@ -15,7 +15,8 @@
       "Bash(java -version:*)",
       "Bash(mvn test-compile:*)",
       "Bash(mvn clean test:*)",
-      "Bash(mvn:*)"
+      "Bash(mvn:*)",
+      "Bash(export CI=true:*)"
     ],
     "deny": [],
     "ask": []

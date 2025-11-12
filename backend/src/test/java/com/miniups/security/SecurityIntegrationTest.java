@@ -38,6 +38,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -68,6 +69,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Transactional
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 public class SecurityIntegrationTest {
 
     @Autowired

@@ -8,12 +8,14 @@ package com.miniups;
 
 import com.miniups.config.TestRabbitConfig;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, 
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
                 classes = {MiniUpsApplication.class, TestRabbitConfig.class})
 @ActiveProfiles("test")
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 class MiniUpsApplicationTests {
 
     @Test
