@@ -452,8 +452,6 @@ class AuthServiceTest {
     @DisplayName("异常处理 - 数据库保存异常")
     void register_shouldHandleDatabaseSaveException() {
         // Given
-        when(userRepository.existsByUsername(validRegisterRequest.getUsername())).thenReturn(false);
-        when(userRepository.existsByEmail(validRegisterRequest.getEmail())).thenReturn(false);
         when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
         when(userRepository.insert(any(User.class))).thenThrow(new RuntimeException("Database save failed"));
 

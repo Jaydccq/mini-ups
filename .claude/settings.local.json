@@ -13,7 +13,9 @@
       "Bash(mvn clean test-compile:*)",
       "Bash(cat:*)",
       "Bash(java -version:*)",
-      "Bash(mvn test-compile:*)"
+      "Bash(mvn test-compile:*)",
+      "Bash(mvn clean test:*)",
+      "Bash(mvn:*)"
     ],
     "deny": [],
     "ask": []

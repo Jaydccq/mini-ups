@@ -5,6 +5,7 @@ import com.miniups.rag.config.RagProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,12 +24,26 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * RAG Retriever Integration Tests with PostgreSQL Testcontainers.
+ *
+ * IMPORTANT: This test requires Docker to run Testcontainers.
+ * In CI/CD environments without Docker, set CI=true to skip these tests.
+ *
+ * To run locally with Docker:
+ *   mvn test -Dtest=RagRetrieverIntegrationTest
+ *
+ * To skip in CI/CD without Docker:
+ *   export CI=true
+ *   mvn test
+ */
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Transactional
 @DisplayName("RAG Retriever Integration Tests")
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true", disabledReason = "Requires Docker/Testcontainers which is not available in CI/CD")
 class RagRetrieverIntegrationTest {
 
     @Container

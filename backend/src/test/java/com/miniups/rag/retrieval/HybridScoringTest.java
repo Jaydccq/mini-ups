@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -181,12 +182,12 @@ class HybridScoringTest {
     @DisplayName("Should maintain score ordering after aggregation")
     void shouldMaintainScoreOrderingAfterAggregation() {
         // Create scenarios with different score combinations
-        List<ScoreScenario> scenarios = List.of(
+        List<ScoreScenario> scenarios = new ArrayList<>(List.of(
             new ScoreScenario("High semantic, high keyword", 0.9, 0.8),
             new ScoreScenario("High semantic, low keyword", 0.9, 0.2),
             new ScoreScenario("Low semantic, high keyword", 0.4, 0.9),
             new ScoreScenario("Medium semantic, medium keyword", 0.6, 0.6)
-        );
+        ));
 
         // Calculate final scores
         double semanticWeight = 0.7;

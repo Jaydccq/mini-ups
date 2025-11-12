@@ -28,6 +28,7 @@
 package com.miniups.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.miniups.config.IntegrationTestConfiguration;
 import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.UserRole;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -53,9 +55,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(IntegrationTestConfiguration.class)
 @TestPropertySource(properties = {
     "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "rag.enabled=false",
+    "spring.rabbitmq.host=localhost",
+    "spring.rabbitmq.port=5672",
+    "spring.kafka.bootstrap-servers=localhost:9092",
+    "spring.data.redis.host=localhost",
+    "spring.data.redis.port=6379"
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Transactional
