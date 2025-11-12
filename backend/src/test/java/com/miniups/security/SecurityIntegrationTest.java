@@ -85,12 +85,12 @@ public class SecurityIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // 清理数据库
-        userRepository.deleteAll();
-        
+        // Note: Database cleanup is handled by @Transactional at class level
+        // Each test runs in its own transaction that is rolled back after the test
+
         // 创建测试用户
         setupTestUsers();
-        
+
         // 生成 JWT 令牌
         setupJwtTokens();
     }
@@ -103,7 +103,7 @@ public class SecurityIntegrationTest {
         adminUser.setPassword(passwordEncoder.encode("password123"));
         adminUser.setRole(UserRole.ADMIN);
         adminUser.setEnabled(true);
-        adminUser = userRepository.save(adminUser);
+        userRepository.insert(adminUser);
 
         // 创建普通用户
         normalUser = new User();
@@ -112,7 +112,7 @@ public class SecurityIntegrationTest {
         normalUser.setPassword(passwordEncoder.encode("password123"));
         normalUser.setRole(UserRole.USER);
         normalUser.setEnabled(true);
-        normalUser = userRepository.save(normalUser);
+        userRepository.insert(normalUser);
 
         // 创建驱动员用户
         driverUser = new User();
@@ -121,7 +121,7 @@ public class SecurityIntegrationTest {
         driverUser.setPassword(passwordEncoder.encode("password123"));
         driverUser.setRole(UserRole.DRIVER);
         driverUser.setEnabled(true);
-        driverUser = userRepository.save(driverUser);
+        userRepository.insert(driverUser);
     }
 
     private void setupJwtTokens() {

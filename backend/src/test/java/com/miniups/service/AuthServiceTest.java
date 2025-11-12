@@ -15,7 +15,7 @@ import com.miniups.model.enums.UserRole;
 import com.miniups.repository.UserRepository;
 import com.miniups.security.JwtTokenProvider;
 import com.miniups.util.TestDataFactory;
-import org.hibernate.exception.ConstraintViolationException;
+import java.sql.SQLException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -91,7 +91,7 @@ class AuthServiceTest {
         savedUser.setPassword("encodedPassword");
         
         when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.insert(any(User.class))).thenReturn(1);
         when(jwtTokenProvider.generateToken(savedUser.getUsername())).thenReturn("jwt-token");
         when(jwtTokenProvider.getExpirationTime()).thenReturn(3600000L);
 
@@ -105,7 +105,7 @@ class AuthServiceTest {
         assertThat(response.getUser().getEmail()).isEqualTo(validRegisterRequest.getEmail());
         
         verify(passwordEncoder).encode(validRegisterRequest.getPassword());
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).insert(any(User.class));
         verify(jwtTokenProvider).generateToken(savedUser.getUsername());
         verify(userRepository, never()).existsByUsername(anyString());
         verify(userRepository, never()).existsByEmail(anyString());
@@ -115,7 +115,7 @@ class AuthServiceTest {
     @DisplayName("用户注册 - 用户名已存在")
     void register_shouldThrowException_whenUsernameExists() {
         // Given
-        when(userRepository.save(any(User.class)))
+        when(userRepository.insert(any(User.class)))
             .thenThrow(uniqueConstraintViolation("users_username_key"));
         when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
 
@@ -124,7 +124,7 @@ class AuthServiceTest {
             .isInstanceOf(UserAlreadyExistsException.class)
             .hasMessageContaining("username");
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).insert(any(User.class));
         verify(userRepository, never()).existsByUsername(anyString());
         verify(userRepository, never()).existsByEmail(anyString());
     }
@@ -133,7 +133,7 @@ class AuthServiceTest {
     @DisplayName("用户注册 - 邮箱已存在")
     void register_shouldThrowException_whenEmailExists() {
         // Given
-        when(userRepository.save(any(User.class)))
+        when(userRepository.insert(any(User.class)))
             .thenThrow(uniqueConstraintViolation("users_email_key"));
         when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
 
@@ -142,7 +142,7 @@ class AuthServiceTest {
             .isInstanceOf(UserAlreadyExistsException.class)
             .hasMessageContaining("email");
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).insert(any(User.class));
         verify(userRepository, never()).existsByUsername(anyString());
         verify(userRepository, never()).existsByEmail(anyString());
     }
@@ -156,7 +156,7 @@ class AuthServiceTest {
         
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenReturn(mockAuthentication);
-        when(userRepository.findByUsername(testUser.getUsername())).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(testUser.getUsername())).thenReturn(testUser);
         when(jwtTokenProvider.generateToken(testUser.getUsername())).thenReturn("jwt-token");
         when(jwtTokenProvider.getExpirationTime()).thenReturn(3600000L);
 
@@ -202,7 +202,7 @@ class AuthServiceTest {
         
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenReturn(mockAuthentication);
-        when(userRepository.findByUsername(testUser.getUsername())).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(testUser.getUsername())).thenReturn(testUser);
 
         // When & Then
         // 禁用用户会直接触发InvalidCredentialsException
@@ -231,11 +231,11 @@ class AuthServiceTest {
         User user = TestDataFactory.createTestUser();
         user.setPassword(encodedCurrentPassword);
         
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername(username)).thenReturn(user);
         when(passwordEncoder.matches(currentPassword, encodedCurrentPassword)).thenReturn(true);
         when(passwordEncoder.matches(newPassword, encodedCurrentPassword)).thenReturn(false);
         when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
-        when(userRepository.save(user)).thenReturn(user);
+        when(userRepository.update(user)).thenReturn(1);
 
         // When
         authService.changePassword(username, passwordChangeDto);
@@ -246,7 +246,7 @@ class AuthServiceTest {
         verify(passwordEncoder).matches(currentPassword, encodedCurrentPassword);
         verify(passwordEncoder).matches(newPassword, encodedCurrentPassword);
         verify(passwordEncoder).encode(newPassword);
-        verify(userRepository).save(user);
+        verify(userRepository).update(user);
     }
 
     @Test
@@ -264,7 +264,7 @@ class AuthServiceTest {
         User user = TestDataFactory.createTestUser();
         user.setPassword(encodedCurrentPassword);
         
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername(username)).thenReturn(user);
         when(passwordEncoder.matches(wrongCurrentPassword, encodedCurrentPassword)).thenReturn(false);
 
         // When & Then
@@ -275,7 +275,7 @@ class AuthServiceTest {
         verify(userRepository).findByUsername(username);
         verify(passwordEncoder).matches(wrongCurrentPassword, encodedCurrentPassword);
         verify(passwordEncoder, never()).encode(anyString());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).update(any(User.class));
     }
 
     @Test
@@ -294,7 +294,7 @@ class AuthServiceTest {
         User user = TestDataFactory.createTestUser();
         user.setPassword(encodedCurrentPassword);
         
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername(username)).thenReturn(user);
         when(passwordEncoder.matches(currentPassword, encodedCurrentPassword)).thenReturn(true);
         when(passwordEncoder.matches(newPassword, encodedCurrentPassword)).thenReturn(true);
 
@@ -304,7 +304,7 @@ class AuthServiceTest {
             .hasMessageContaining("New password must not be the same as current password");
 
         verify(passwordEncoder, never()).encode(anyString());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).update(any(User.class));
     }
 
     @Test
@@ -316,7 +316,7 @@ class AuthServiceTest {
         passwordChangeDto.setCurrentPassword("currentPass");
         passwordChangeDto.setNewPassword("newPass");
         
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+        when(userRepository.findByUsername(username)).thenReturn(null);
 
         // When & Then
         assertThatThrownBy(() -> authService.changePassword(username, passwordChangeDto))
@@ -324,7 +324,7 @@ class AuthServiceTest {
 
         verify(userRepository).findByUsername(username);
         verify(passwordEncoder, never()).matches(anyString(), anyString());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).update(any(User.class));
     }
 
     @Test
@@ -455,13 +455,13 @@ class AuthServiceTest {
         when(userRepository.existsByUsername(validRegisterRequest.getUsername())).thenReturn(false);
         when(userRepository.existsByEmail(validRegisterRequest.getEmail())).thenReturn(false);
         when(passwordEncoder.encode(validRegisterRequest.getPassword())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("Database save failed"));
+        when(userRepository.insert(any(User.class))).thenThrow(new RuntimeException("Database save failed"));
 
         // When & Then
         assertThatThrownBy(() -> authService.register(validRegisterRequest))
             .isInstanceOf(RuntimeException.class);
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).insert(any(User.class));
     }
 
     @Test
@@ -483,7 +483,7 @@ class AuthServiceTest {
     @DisplayName("短信验证码登录 - 发送验证码成功")
     void sendLoginCode_shouldInvokeGenerator_whenUserExists() {
         String phone = "1234567890";
-        when(userRepository.findByPhone(phone)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByPhone(phone)).thenReturn(testUser);
 
         authService.sendLoginCode(phone);
 
@@ -498,7 +498,7 @@ class AuthServiceTest {
         String code = "123456";
         SmsLoginRequestDto requestDto = new SmsLoginRequestDto(phone, code);
 
-        when(userRepository.findByPhone(phone)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByPhone(phone)).thenReturn(testUser);
         when(smsCodeService.verifyCode(phone, code)).thenReturn(true);
         when(jwtTokenProvider.generateToken(testUser.getUsername())).thenReturn("jwt-token");
         when(jwtTokenProvider.getExpirationTime()).thenReturn(3600L);
@@ -542,7 +542,7 @@ class AuthServiceTest {
     }
 
     private DataIntegrityViolationException uniqueConstraintViolation(String constraintName) {
-        ConstraintViolationException cause = new ConstraintViolationException("Unique constraint", new SQLException(), constraintName);
+        SQLException cause = new SQLException("Unique constraint violation: " + constraintName);
         return new DataIntegrityViolationException("Unique constraint", cause);
     }
 }

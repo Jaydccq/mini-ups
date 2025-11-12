@@ -53,7 +53,7 @@ class CustomUserDetailsServiceTest {
     void testLoadUserByUsername_Success() {
         // Given
         String username = "testuser";
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -75,7 +75,7 @@ class CustomUserDetailsServiceTest {
     void testLoadUserByUsername_UserNotFound() {
         // Given
         String username = "nonexistentuser";
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+        when(userRepository.findByUsername(username)).thenReturn(null);
 
         // When & Then
         assertThatThrownBy(() -> customUserDetailsService.loadUserByUsername(username))
@@ -91,7 +91,7 @@ class CustomUserDetailsServiceTest {
         // Given
         String username = "regularuser";
         testUser.setRole(UserRole.USER);
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -108,7 +108,7 @@ class CustomUserDetailsServiceTest {
         // Given
         String username = "adminuser";
         testUser.setRole(UserRole.ADMIN);
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -125,7 +125,7 @@ class CustomUserDetailsServiceTest {
         // Given
         String username = "driveruser";
         testUser.setRole(UserRole.DRIVER);
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -142,7 +142,7 @@ class CustomUserDetailsServiceTest {
         // Given
         String username = "operatoruser";
         testUser.setRole(UserRole.OPERATOR);
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -160,7 +160,7 @@ class CustomUserDetailsServiceTest {
         String username = "disableduser";
         testUser.setUsername(username);
         testUser.setEnabled(false);
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -176,7 +176,7 @@ class CustomUserDetailsServiceTest {
     void testLoadUserByUsername_CustomUserPrincipal() {
         // Given
         String username = "testuser";
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -225,7 +225,7 @@ class CustomUserDetailsServiceTest {
         // Given
         String username = "testuser";
         testUser.setId(12345L);
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
@@ -256,7 +256,7 @@ class CustomUserDetailsServiceTest {
     void testUserDetails_AllMethods() {
         // Given
         String username = "testuser";
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername(username)).thenReturn(testUser);
 
         // When
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);

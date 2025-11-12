@@ -75,12 +75,12 @@ class RagQueryServiceTest {
         meterRegistry = new SimpleMeterRegistry();
 
         when(rateLimiter.tryConsume(anyString(), anyInt())).thenReturn(true);
-        when(queryLogRepository.save(any())).thenAnswer(invocation -> {
+        when(queryLogRepository.insert(any())).thenAnswer(invocation -> {
             RagQueryLog log = invocation.getArgument(0);
             if (log.getId() == null) {
                 log.setId(UUID.randomUUID());
             }
-            return log;
+            return 1; // MyBatis insert returns int (number of rows affected)
         });
 
         queryService = new RagQueryService(

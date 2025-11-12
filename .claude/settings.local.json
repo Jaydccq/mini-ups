@@ -11,7 +11,9 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(mvn clean test-compile:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(java -version:*)",
+      "Bash(mvn test-compile:*)"
     ],
     "deny": [],
     "ask": []

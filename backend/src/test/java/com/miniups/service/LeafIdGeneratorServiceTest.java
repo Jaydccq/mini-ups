@@ -62,7 +62,7 @@ public class LeafIdGeneratorServiceTest {
                 .build();
                 
         when(leafAllocRepository.findByBizTag(anyString()))
-                .thenReturn(Optional.of(mockAlloc));
+                .thenReturn(mockAlloc);
                 
         when(leafAllocRepository.allocateNextSegment(anyString(), anyLong()))
                 .thenReturn(1); // Success

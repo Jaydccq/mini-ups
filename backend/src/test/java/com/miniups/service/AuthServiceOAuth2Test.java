@@ -65,13 +65,13 @@ class AuthServiceOAuth2Test {
     void processOAuth2PostLogin_NewUser_ShouldCreateUser() {
         // Arrange
         when(userRepository.findByAuthProviderAndProviderId(AuthProvider.GOOGLE, "google-user-123"))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
         when(userRepository.findByEmail("test@gmail.com"))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
         when(userRepository.existsByUsername("test")).thenReturn(false);
         
         User savedUser = createTestUser();
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.insert(any(User.class))).thenReturn(1);
 
         // Act
         User result = authService.processOAuth2PostLogin(oidcUser);
@@ -87,7 +87,7 @@ class AuthServiceOAuth2Test {
         assertEquals(UserRole.USER, result.getRole());
         assertTrue(result.getEnabled());
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).insert(any(User.class));
     }
 
     @Test
@@ -95,7 +95,7 @@ class AuthServiceOAuth2Test {
         // Arrange
         User existingUser = createTestUser();
         when(userRepository.findByAuthProviderAndProviderId(AuthProvider.GOOGLE, "google-user-123"))
-                .thenReturn(Optional.of(existingUser));
+                .thenReturn(existingUser);
 
         // Act
         User result = authService.processOAuth2PostLogin(oidcUser);
@@ -103,7 +103,7 @@ class AuthServiceOAuth2Test {
         // Assert
         assertNotNull(result);
         assertEquals(existingUser, result);
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).insert(any(User.class));
     }
 
     @Test
@@ -113,9 +113,9 @@ class AuthServiceOAuth2Test {
         localUser.setAuthProvider(AuthProvider.LOCAL);
         
         when(userRepository.findByAuthProviderAndProviderId(AuthProvider.GOOGLE, "google-user-123"))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
         when(userRepository.findByEmail("test@gmail.com"))
-                .thenReturn(Optional.of(localUser));
+                .thenReturn(localUser);
 
         // Act & Assert
         OAuth2AuthenticationProcessingException exception = assertThrows(
@@ -124,7 +124,7 @@ class AuthServiceOAuth2Test {
         );
 
         assertTrue(exception.getMessage().contains("account with this email already exists"));
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).insert(any(User.class));
     }
 
     @Test
@@ -139,7 +139,7 @@ class AuthServiceOAuth2Test {
         );
 
         assertEquals("Email not found from OAuth2 provider", exception.getMessage());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).insert(any(User.class));
     }
 
     @Test
@@ -154,22 +154,22 @@ class AuthServiceOAuth2Test {
         );
 
         assertEquals("Provider ID not found from OAuth2 provider", exception.getMessage());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).insert(any(User.class));
     }
 
     @Test
     void processOAuth2PostLogin_DuplicateUsername_ShouldGenerateUniqueUsername() {
         // Arrange
         when(userRepository.findByAuthProviderAndProviderId(AuthProvider.GOOGLE, "google-user-123"))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
         when(userRepository.findByEmail("test@gmail.com"))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
         when(userRepository.existsByUsername("test")).thenReturn(true);
         when(userRepository.existsByUsername("test1")).thenReturn(false);
         
         User savedUser = createTestUser();
         savedUser.setUsername("test1");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.insert(any(User.class))).thenReturn(1);
 
         // Act
         User result = authService.processOAuth2PostLogin(oidcUser);
@@ -177,7 +177,7 @@ class AuthServiceOAuth2Test {
         // Assert
         assertNotNull(result);
         assertEquals("test1", result.getUsername());
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).insert(any(User.class));
     }
 
     @Test
@@ -185,7 +185,7 @@ class AuthServiceOAuth2Test {
         // Arrange
         User localUser = createTestUser();
         localUser.setAuthProvider(AuthProvider.LOCAL);
-        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(localUser));
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(localUser);
 
         // Act
         boolean result = authService.requiresAccountLinking("test@gmail.com");
@@ -199,7 +199,7 @@ class AuthServiceOAuth2Test {
         // Arrange
         User googleUser = createTestUser();
         googleUser.setAuthProvider(AuthProvider.GOOGLE);
-        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(googleUser));
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(googleUser);
 
         // Act
         boolean result = authService.requiresAccountLinking("test@gmail.com");
@@ -211,7 +211,7 @@ class AuthServiceOAuth2Test {
     @Test
     void requiresAccountLinking_NoUserExists_ShouldReturnFalse() {
         // Arrange
-        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(null);
 
         // Act
         boolean result = authService.requiresAccountLinking("test@gmail.com");

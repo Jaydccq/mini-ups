@@ -5,6 +5,7 @@ import com.miniups.model.entity.OutboxEvent;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,7 +87,7 @@ class KafkaOutboxMessagePublisherTest {
         KafkaTemplate<String, String> template = mock(KafkaTemplate.class);
         CompletableFuture<SendResult<String, String>> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new RuntimeException("synthetic failure"));
-        when(template.send(any())).thenReturn(failedFuture);
+        when(template.send(any(ProducerRecord.class))).thenReturn(failedFuture);
 
         KafkaOutboxMessagePublisher publisher = new KafkaOutboxMessagePublisher(template, properties);
 
