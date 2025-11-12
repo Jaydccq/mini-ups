@@ -16,7 +16,9 @@
       "Bash(mvn test-compile:*)",
       "Bash(mvn clean test:*)",
       "Bash(mvn:*)",
-      "Bash(export CI=true:*)"
+      "Bash(export CI=true:*)",
+      "Bash(echo:*)",
+      "Bash(/usr/libexec/java_home:*)"
     ],
     "deny": [],
     "ask": []

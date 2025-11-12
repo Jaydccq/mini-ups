@@ -295,13 +295,13 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public Page<UserDto> getAllUsers(Pageable pageable) {
-        logger.debug("Getting all users list with pagination: page={}, size={}", 
+        logger.debug("Getting all users list with pagination: page={}, size={}",
                     pageable.getPageNumber(), pageable.getPageSize());
-        
-        Page<User> userPage = userRepository.findAll(pageable);
+
+        Page<User> userPage = userRepository.findAllWithPage(pageable);
         Page<UserDto> userDtoPage = userPage.map(UserDto::fromEntity);
-        
-        logger.debug("Successfully retrieved user page, total {} users on page {}/{}", 
+
+        logger.debug("Successfully retrieved user page, total {} users on page {}/{}",
                     userDtoPage.getNumberOfElements(), userDtoPage.getNumber() + 1, userDtoPage.getTotalPages());
         return userDtoPage;
     }
@@ -336,13 +336,13 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public Page<UserDto> getUsersByRole(UserRole role, Pageable pageable) {
-        logger.debug("Getting users list by role with pagination: role={}, page={}, size={}", 
+        logger.debug("Getting users list by role with pagination: role={}, page={}, size={}",
                     role, pageable.getPageNumber(), pageable.getPageSize());
-        
-        Page<User> userPage = userRepository.findByRole(role, pageable);
+
+        Page<User> userPage = userRepository.findByRoleWithPage(role, pageable);
         Page<UserDto> userDtoPage = userPage.map(UserDto::fromEntity);
-        
-        logger.debug("Successfully retrieved role user page: role={}, total {} users on page {}/{}", 
+
+        logger.debug("Successfully retrieved role user page: role={}, total {} users on page {}/{}",
                     role, userDtoPage.getNumberOfElements(), userDtoPage.getNumber() + 1, userDtoPage.getTotalPages());
         return userDtoPage;
     }

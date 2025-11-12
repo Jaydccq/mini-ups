@@ -114,10 +114,10 @@ public interface UserRepository {
     @Select("SELECT * FROM users WHERE id = #{id}")
     User findById(Long id);
 
-    // Pageable methods - will work with PageHelper interceptor
+    // Pageable methods - unique names to avoid MyBatis conflicts
     @Select("SELECT * FROM users")
-    Page<User> findAll(Pageable pageable);
+    Page<User> findAllWithPage(Pageable pageable);
 
     @Select("SELECT * FROM users WHERE role = #{role}")
-    Page<User> findByRole(@Param("role") UserRole role, Pageable pageable);
+    Page<User> findByRoleWithPage(@Param("role") UserRole role, Pageable pageable);
 }
