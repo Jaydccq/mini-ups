@@ -540,9 +540,9 @@ class AuthServiceTest {
         testUser.setPassword("encodedPassword123");
         testUser.setPhone("1234567890");
     }
-}
 
     private DataIntegrityViolationException uniqueConstraintViolation(String constraintName) {
         ConstraintViolationException cause = new ConstraintViolationException("Unique constraint", new SQLException(), constraintName);
         return new DataIntegrityViolationException("Unique constraint", cause);
     }
+}

@@ -9,7 +9,9 @@
       "Bash(1)",
       "Bash(python3:*)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(mvn clean test-compile:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
