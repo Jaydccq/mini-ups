@@ -27,7 +27,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableRetry
 @ConfigurationPropertiesScan
-@MapperScan("com.miniups.repository")
+@MapperScan({
+    "com.miniups.repository",
+    "com.miniups.rag.repository"
+})
 public class MiniUpsApplication {
     
     public static void main(String[] args) {
