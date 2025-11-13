@@ -83,18 +83,18 @@ public class DriverService {
     @Transactional(readOnly = true)
     public Page<DriverDto> getDriversWithPagination(DriverStatus status, Pageable pageable) {
         logger.info("Getting drivers page {} with status filter: {}", pageable.getPageNumber(), status);
-        
+
         Page<Driver> driverPage;
         if (status != null) {
-            driverPage = driverRepository.findByStatus(status, pageable);
+            driverPage = driverRepository.findByStatusWithPage(status, pageable);
         } else {
-            driverPage = driverRepository.findAll(pageable);
+            driverPage = driverRepository.findAllWithPage(pageable);
         }
-        
+
         List<DriverDto> driverDtos = driverPage.getContent().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-        
+
         return new PageImpl<>(driverDtos, pageable, driverPage.getTotalElements());
     }
     

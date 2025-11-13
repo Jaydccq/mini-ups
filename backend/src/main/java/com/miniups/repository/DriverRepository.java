@@ -52,13 +52,12 @@ public interface DriverRepository {
     @Select("SELECT * FROM drivers WHERE id = #{id}")
     Driver findById(Long id);
 
-    // Pageable methods - will work with PageHelper interceptor
-    // PageHelper automatically intercepts these methods and adds LIMIT/OFFSET
+    // Pageable methods - unique names to avoid MyBatis conflicts
     @Select("SELECT * FROM drivers WHERE status = #{status}")
-    Page<Driver> findByStatus(@Param("status") DriverStatus status, Pageable pageable);
+    Page<Driver> findByStatusWithPage(@Param("status") DriverStatus status, Pageable pageable);
 
     @Select("SELECT * FROM drivers")
-    Page<Driver> findAll(Pageable pageable);
+    Page<Driver> findAllWithPage(Pageable pageable);
 
     // Additional query methods
     @Select("SELECT * FROM drivers WHERE status = #{status}")
