@@ -42,10 +42,17 @@ public class LeafIdGeneratorStandaloneTest {
         private final int step = 1000;
 
         @Override
-        public TrackingSequenceRepository.SegmentInfo getNextSegment(String bizTag) {
+        public int allocateNextSegment(String bizTag) {
             // 模拟原子更新：UPDATE tracking_sequences SET max_id = max_id + step WHERE biz_tag = ?
-            long newMaxId = currentMaxId.addAndGet(step);
-            return new MockSequenceInfo(newMaxId, step);
+            currentMaxId.addAndGet(step);
+            return 1; // 返回更新的行数
+        }
+
+        @Override
+        public TrackingSequenceRepository.SegmentInfo getNextSegment(String bizTag) {
+            // 返回当前的maxId和step
+            long currentMax = currentMaxId.get();
+            return new MockSequenceInfo(currentMax, step);
         }
 
         @Override

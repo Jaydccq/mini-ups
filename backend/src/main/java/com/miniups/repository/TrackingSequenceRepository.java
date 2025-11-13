@@ -30,18 +30,23 @@ public interface TrackingSequenceRepository {
     long count();
 
     /**
-     * 获取下一个ID段（使用乐观锁）
-     * 返回更新后的maxId和step
+     * 分配下一个ID段（原子递增）
+     * 返回更新的行数
      */
     @Update("UPDATE tracking_sequences SET current_value = current_value + step, " +
             "updated_at = NOW(), version = version + 1 " +
-            "WHERE sequence_name = #{bizTag} AND version = " +
-            "(SELECT version FROM tracking_sequences WHERE sequence_name = #{bizTag})")
+            "WHERE sequence_name = #{bizTag}")
+    int allocateNextSegment(@Param("bizTag") String bizTag);
+
+    /**
+     * 获取当前ID段信息
+     * 返回当前的maxId和step
+     */
+    @Select("SELECT current_value as maxId, step FROM tracking_sequences WHERE sequence_name = #{bizTag}")
     @Results({
-        @Result(property = "maxId", column = "current_value"),
+        @Result(property = "maxId", column = "maxId"),
         @Result(property = "step", column = "step")
     })
-    @Select("SELECT current_value + step as maxId, step FROM tracking_sequences WHERE sequence_name = #{bizTag}")
     SegmentInfo getNextSegment(@Param("bizTag") String bizTag);
 
     /**
