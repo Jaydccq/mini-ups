@@ -80,30 +80,30 @@ class TrackingServiceTest {
         // Given
         String trackingNumber = "UPS123456789";
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
-                .thenReturn(Optional.of(testShipment));
+                .thenReturn(testShipment);
 
         // When
-        Optional<Shipment> result = trackingService.findByTrackingNumber(trackingNumber);
+        Shipment result = trackingService.findByTrackingNumber(trackingNumber);
 
         // Then
-        assertThat(result).isPresent();
-        assertThat(result.get().getUpsTrackingId()).isEqualTo(trackingNumber);
+        assertThat(result).isNotNull();
+        assertThat(result.getUpsTrackingId()).isEqualTo(trackingNumber);
         verify(shipmentRepository).findByUpsTrackingId(trackingNumber);
     }
 
     @Test
-    @DisplayName("Should return empty when tracking number not found")
+    @DisplayName("Should return null when tracking number not found")
     void testFindByTrackingNumber_NotFound() {
         // Given
         String trackingNumber = "UPS999999999";
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
 
         // When
-        Optional<Shipment> result = trackingService.findByTrackingNumber(trackingNumber);
+        Shipment result = trackingService.findByTrackingNumber(trackingNumber);
 
         // Then
-        assertThat(result).isEmpty();
+        assertThat(result).isNull();
         verify(shipmentRepository).findByUpsTrackingId(trackingNumber);
     }
 
@@ -116,8 +116,8 @@ class TrackingServiceTest {
         String notes = "Package picked up";
 
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
-                .thenReturn(Optional.of(testShipment));
-        when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
+                .thenReturn(testShipment);
+        when(shipmentRepository.update(any(Shipment.class))).thenReturn(1);
 
         // When
         boolean result = trackingService.updateShipmentStatus(trackingNumber, newStatus, notes);
@@ -126,7 +126,7 @@ class TrackingServiceTest {
         assertThat(result).isTrue();
         assertThat(testShipment.getStatus()).isEqualTo(newStatus);
         verify(shipmentRepository).findByUpsTrackingId(trackingNumber);
-        verify(shipmentRepository).save(testShipment);
+        verify(shipmentRepository).update(testShipment);
     }
 
     @Test
@@ -138,7 +138,7 @@ class TrackingServiceTest {
         String notes = "Package picked up";
 
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
 
         // When
         boolean result = trackingService.updateShipmentStatus(trackingNumber, newStatus, notes);
@@ -146,7 +146,7 @@ class TrackingServiceTest {
         // Then
         assertThat(result).isFalse();
         verify(shipmentRepository).findByUpsTrackingId(trackingNumber);
-        verify(shipmentRepository, never()).save(any());
+        verify(shipmentRepository, never()).update(any());
     }
 
     @Test
@@ -161,7 +161,7 @@ class TrackingServiceTest {
         testShipment.setStatusHistory(mockHistory);
 
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
-                .thenReturn(Optional.of(testShipment));
+                .thenReturn(testShipment);
 
         // When
         List<ShipmentStatusHistory> result = trackingService.getStatusHistory(trackingNumber);
@@ -217,8 +217,8 @@ class TrackingServiceTest {
         testShipment.setVersion(1L); // Simulate optimistic locking
 
         when(shipmentRepository.findByUpsTrackingId(trackingNumber))
-                .thenReturn(Optional.of(testShipment));
-        when(shipmentRepository.save(any(Shipment.class)))
+                .thenReturn(testShipment);
+        when(shipmentRepository.update(any(Shipment.class)))
                 .thenThrow(new RuntimeException("Optimistic locking failure"));
 
         // When

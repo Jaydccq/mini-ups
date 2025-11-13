@@ -51,7 +51,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setLastName("Administrator");
             admin.setRole(UserRole.ADMIN);
             admin.setEnabled(true);
-            userRepository.save(admin);
+            userRepository.insert(admin);
             logger.info("Created admin user: admin@miniups.com");
 
             // Operator user
@@ -63,7 +63,7 @@ public class DataInitializer implements CommandLineRunner {
             operator.setLastName("Operator");
             operator.setRole(UserRole.OPERATOR);
             operator.setEnabled(true);
-            userRepository.save(operator);
+            userRepository.insert(operator);
             logger.info("Created operator user: operator@miniups.com");
 
             // Test user
@@ -75,7 +75,7 @@ public class DataInitializer implements CommandLineRunner {
             testUser.setLastName("User");
             testUser.setRole(UserRole.USER);
             testUser.setEnabled(true);
-            userRepository.save(testUser);
+            userRepository.insert(testUser);
             logger.info("Created test user: testuser@miniups.com");
 
             // Test admin user
@@ -87,7 +87,7 @@ public class DataInitializer implements CommandLineRunner {
             testAdmin.setLastName("Admin");
             testAdmin.setRole(UserRole.ADMIN);
             testAdmin.setEnabled(true);
-            userRepository.save(testAdmin);
+            userRepository.insert(testAdmin);
             logger.info("Created test admin user: testadmin@miniups.com");
 
             logger.info("Default users created successfully");
@@ -112,7 +112,7 @@ public class DataInitializer implements CommandLineRunner {
                 truck.setCurrentX(truckPositions[i][0]);
                 truck.setCurrentY(truckPositions[i][1]);
                 truck.setCapacity(truckCapacities[i]);
-                truckRepository.save(truck);
+                truckRepository.insert(truck);
             }
 
             logger.info("Created {} initial trucks", 5);

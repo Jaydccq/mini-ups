@@ -154,9 +154,8 @@ class AdminServiceTest {
     void getOrderSummary_shouldReturnOrderBreakdownAndRecentOrders() {
         // Given
         when(shipmentRepository.getStatusCounts()).thenReturn(mockStatusCounts);
-        
-        Page<Shipment> mockPage = new PageImpl<>(testShipments.subList(0, 2));
-        when(shipmentRepository.findRecentShipments(any(Pageable.class))).thenReturn(mockPage);
+
+        when(shipmentRepository.findRecentShipments()).thenReturn(testShipments.subList(0, 2));
 
         // When
         Map<String, Object> orderSummary = adminService.getOrderSummary();
@@ -178,7 +177,7 @@ class AdminServiceTest {
         assertThat(firstOrder).containsKeys("id", "upsTrackingId", "status", "senderName", "createdAt");
 
         verify(shipmentRepository).getStatusCounts();
-        verify(shipmentRepository).findRecentShipments(any(Pageable.class));
+        verify(shipmentRepository).findRecentShipments();
     }
 
     @Test
@@ -291,12 +290,11 @@ class AdminServiceTest {
         log2.setOperationDescription("Updated shipment status");
         
         List<AuditLog> mockLogs = Arrays.asList(log1, log2);
-        Page<AuditLog> mockPage = new PageImpl<>(mockLogs, pageable, mockLogs.size());
-        
-        when(auditLogRepository.findAll(pageable)).thenReturn(mockPage);
+
+        when(auditLogRepository.findAll()).thenReturn(mockLogs);
 
         // When
-        Map<String, Object> recentActivities = adminService.getRecentActivities(pageable);
+        Map<String, Object> recentActivities = adminService.getRecentActivities(0, 10);
 
         // Then
         assertThat(recentActivities).isNotNull();
@@ -313,7 +311,7 @@ class AdminServiceTest {
         assertThat(recentActivities.get("totalElements")).isEqualTo(2L);
         assertThat(recentActivities.get("currentPage")).isEqualTo(0);
 
-        verify(auditLogRepository).findAll(pageable);
+        verify(auditLogRepository).findAll();
     }
 
     @Test

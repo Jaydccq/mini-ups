@@ -28,7 +28,7 @@
 package com.miniups.model.entity;
 
 import com.miniups.model.enums.DriverStatus;
-import jakarta.persistence.*;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,54 +37,40 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "drivers", indexes = {
-    @Index(name = "idx_driver_license_number", columnList = "license_number", unique = true),
-    @Index(name = "idx_driver_email", columnList = "email", unique = true),
-    @Index(name = "idx_driver_status", columnList = "status")
-})
 public class Driver extends BaseEntity {
     
     @NotBlank
     @Size(max = 100)
-    @Column(name = "name", nullable = false, length = 100)
     private String name;
     
     @NotBlank
     @Size(max = 50)
-    @Column(name = "license_number", nullable = false, unique = true, length = 50)
     private String licenseNumber;
     
     @Email
     @NotBlank
     @Size(max = 100)
-    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
     
     @NotBlank
     @Size(max = 20)
-    @Column(name = "phone", nullable = false, length = 20)
     private String phone;
     
     @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     private DriverStatus status = DriverStatus.UNASSIGNED;
     
-    @Column(name = "hire_date")
     private LocalDate hireDate;
     
-    @Column(name = "last_active")
     private LocalDateTime lastActive;
     
-    @Column(name = "total_deliveries")
     private Integer totalDeliveries = 0;
-    
-    @Column(name = "rating", columnDefinition = "DECIMAL(3,2)")
+
     private Double rating = 4.0;
     
-    // Bidirectional one-to-one relationship with Truck
-    @OneToOne(mappedBy = "driver", fetch = FetchType.LAZY)
+    // Foreign key field for truck assignment
+    private Long truckId;
+
+    // Transient field (loaded separately if needed)
     private Truck assignedTruck;
     
     // Constructors

@@ -22,11 +22,11 @@ import java.util.UUID;
  * Event Publisher Service with Transactional Outbox Pattern
  * 
  * This service implements the Transactional Outbox pattern for reliable event publishing.
- * Instead of publishing events directly to RabbitMQ (which creates dual-write problems),
+ * Instead of publishing events directly to an external broker (which creates dual-write problems),
  * events are stored in the database within the same transaction as the business operation.
  * 
  * A separate polling service (OutboxPollerService) reads from the outbox table and
- * publishes events to RabbitMQ, ensuring at-least-once delivery semantics.
+ * publishes events to the configured messaging channels (RabbitMQ, Kafka, ...), ensuring at-least-once delivery semantics.
  * 
  * Architecture Benefits:
  * - Eliminates dual-write consistency problems
@@ -52,7 +52,7 @@ public class EventPublisherService {
     
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
-    
+
     @Value("${spring.application.name:mini-ups-backend}")
     private String sourceService;
     
@@ -60,7 +60,7 @@ public class EventPublisherService {
      * Publish a shipment creation event using the Transactional Outbox pattern
      * 
      * This method stores the event in the outbox table within the current transaction.
-     * The event will be picked up by the OutboxPollerService and published to RabbitMQ
+     * The event will be picked up by the OutboxPollerService and published to the configured messaging channels
      * asynchronously, ensuring reliable delivery.
      * 
      * @param payload The shipment creation data
@@ -85,7 +85,7 @@ public class EventPublisherService {
                     correlationId
             );
 
-            outboxEventRepository.save(outboxEvent);
+            outboxEventRepository.insert(outboxEvent);
             
             log.info("Stored shipment creation event in outbox: {} for shipment: {} (correlationId: {})", 
                     event.getEventId(), payload.getAmazonShipmentId(), correlationId);
@@ -121,7 +121,7 @@ public class EventPublisherService {
                     correlationId
             );
 
-            outboxEventRepository.save(outboxEvent);
+            outboxEventRepository.insert(outboxEvent);
             
             log.debug("Stored audit log event in outbox: {} for operation: {}", 
                     event.getEventId(), payload.getOperationType());
@@ -161,7 +161,7 @@ public class EventPublisherService {
                     correlationId
             );
 
-            outboxEventRepository.save(outboxEvent);
+            outboxEventRepository.insert(outboxEvent);
             
             log.info("Stored notification event in outbox: {} for user: {} (types: {})", 
                     event.getEventId(), payload.getRecipientUserId(), payload.getNotificationTypes());
@@ -208,7 +208,7 @@ public class EventPublisherService {
                     correlationId
             );
 
-            outboxEventRepository.save(outboxEvent);
+            outboxEventRepository.insert(outboxEvent);
             
             log.info("Stored shipment status update event in outbox: {} for shipment: {} ({} -> {})", 
                     event.getEventId(), shipmentId, oldStatus, newStatus);
@@ -251,7 +251,7 @@ public class EventPublisherService {
                     correlationId
             );
 
-            outboxEventRepository.save(outboxEvent);
+            outboxEventRepository.insert(outboxEvent);
             
             log.info("Stored user registration event in outbox: {} for user: {}", 
                     event.getEventId(), userId);
@@ -294,7 +294,7 @@ public class EventPublisherService {
                     correlationId
             );
 
-            outboxEventRepository.save(outboxEvent);
+            outboxEventRepository.insert(outboxEvent);
             
             log.info("Stored truck dispatch event in outbox: {} for truck: {} with {} shipments", 
                     event.getEventId(), truckId, shipmentIds.size());
@@ -314,7 +314,7 @@ public class EventPublisherService {
      * @param aggregateId Business entity ID
      * @param aggregateType Business entity type
      * @param eventType Type of the event
-     * @param routingKey RabbitMQ routing key
+     * @param routingKey Routing key / topic name for the outbound message
      * @param eventPayload The event data
      * @param correlationId Optional correlation ID for request tracing
      */
@@ -340,7 +340,7 @@ public class EventPublisherService {
                     correlationId
             );
 
-            outboxEventRepository.save(outboxEvent);
+            outboxEventRepository.insert(outboxEvent);
             
             log.info("Stored custom event in outbox: {} for {}:{} (correlationId: {})", 
                     eventId, aggregateType, aggregateId, correlationId);
@@ -361,7 +361,7 @@ public class EventPublisherService {
      * @param aggregateId Business entity ID
      * @param aggregateType Business entity type
      * @param eventType Type of the event
-     * @param routingKey RabbitMQ routing key
+     * @param routingKey Routing key / topic name for the outbound message
      * @param eventPayload The actual event data
      * @param correlationId Distributed tracing correlation ID
      * @return Configured OutboxEvent ready for persistence
@@ -371,20 +371,20 @@ public class EventPublisherService {
                                         String correlationId) {
         try {
             String jsonPayload = objectMapper.writeValueAsString(eventPayload);
-            
-            return OutboxEvent.builder()
-                    .eventId(eventId != null ? eventId : UUID.randomUUID().toString())
-                    .aggregateId(aggregateId)
-                    .aggregateType(aggregateType)
-                    .eventType(eventType)
-                    .routingKey(routingKey)
-                    .payload(jsonPayload)
-                    .status(OutboxEvent.OutboxStatus.PENDING)
-                    .correlationId(correlationId)
-                    .sourceService(sourceService)
-                    .retryCount(0)
-                    .maxRetries(5)
-                    .build();
+
+            OutboxEvent event = new OutboxEvent();
+            event.setEventId(eventId != null ? eventId : UUID.randomUUID().toString());
+            event.setAggregateId(aggregateId);
+            event.setAggregateType(aggregateType);
+            event.setEventType(eventType);
+            event.setRoutingKey(routingKey);
+            event.setPayload(jsonPayload);
+            event.setStatus(OutboxEvent.OutboxStatus.PENDING);
+            event.setCorrelationId(correlationId);
+            event.setSourceService(sourceService);
+            event.setRetryCount(0);
+            event.setMaxRetries(5);
+            return event;
                     
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize event payload to JSON for event: {}", eventId, e);
@@ -432,10 +432,10 @@ public class EventPublisherService {
             
             // Get oldest pending event for lag monitoring
             var oldestPending = outboxEventRepository.findOldestPendingEvent();
-            if (oldestPending.isPresent()) {
-                var ageSeconds = java.time.Duration.between(oldestPending.get().getCreatedAt(), java.time.Instant.now()).toSeconds();
+            if (oldestPending != null) {
+                var ageSeconds = java.time.Duration.between(oldestPending.getCreatedAt(), java.time.Instant.now()).toSeconds();
                 stats.put("oldestPendingEventAgeSeconds", ageSeconds);
-                stats.put("oldestPendingEventId", oldestPending.get().getEventId());
+                stats.put("oldestPendingEventId", oldestPending.getEventId());
             } else {
                 stats.put("oldestPendingEventAgeSeconds", 0);
             }

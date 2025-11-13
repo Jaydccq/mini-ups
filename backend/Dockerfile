@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM --platform=linux/amd64 maven:3.9.6-eclipse-temurin-17 AS build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 # Set working directory
 WORKDIR /app
@@ -17,21 +17,21 @@ COPY src ./src
 RUN mvn clean package -DskipTests=true -Dmaven.test.skip=true -Dmaven.gitcommitid.skip=true
 
 # Runtime stage with JRE for smaller image
-FROM --platform=linux/amd64 eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 # Install curl for health checks and timezone data
-RUN apk add --no-cache curl tzdata
+RUN apt-get update && apt-get install -y curl tzdata && rm -rf /var/lib/apt/lists/*
 
 # Create app user for security
-RUN addgroup -g 1001 app && \
-    adduser -D -u 1001 -G app app
+RUN groupadd -g 1001 app && \
+    useradd -r -u 1001 -g app app
 
 # Set working directory
 WORKDIR /app
 
-# Create logs directory
-RUN mkdir -p /app/logs && \
-    chown -R app:app /app
+# Create logs directory and Sentinel CSP directory
+RUN mkdir -p /app/logs /app/logs/csp /home/app/logs /home/app/logs/csp && \
+    chown -R app:app /app /home/app
 
 # Copy jar from build stage
 COPY --from=build /app/target/*.jar app.jar

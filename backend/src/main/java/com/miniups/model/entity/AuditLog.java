@@ -1,97 +1,62 @@
 package com.miniups.model.entity;
 
-import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "audit_logs", indexes = {
-    @Index(name = "idx_audit_user_id", columnList = "user_id"),
-    @Index(name = "idx_audit_operation_type", columnList = "operation_type"),
-    @Index(name = "idx_audit_operation_timestamp", columnList = "operation_timestamp"),
-    @Index(name = "idx_audit_entity", columnList = "entity_type, entity_id"),
-    @Index(name = "idx_audit_event_id", columnList = "event_id", unique = true),
-    @Index(name = "idx_audit_correlation_id", columnList = "correlation_id"),
-    @Index(name = "idx_audit_result", columnList = "operation_result"),
-    @Index(name = "idx_audit_created_at", columnList = "created_at")
-})
+@Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class AuditLog extends BaseEntity {
 
-    @Column(name = "event_id", nullable = false, unique = true, length = 50)
     private String eventId;
 
-    @Column(name = "correlation_id", length = 50)
     private String correlationId;
 
-    @Column(name = "event_time", nullable = false)
     private Instant eventTime;
 
-    @Column(name = "source_service", length = 100)
     private String sourceService;
 
-    @Column(name = "operation_type", nullable = false, length = 100)
     private String operationType;
 
-    @Column(name = "operation_description", length = 500)
     private String operationDescription;
 
-    @Column(name = "operation_result", nullable = false, length = 50)
     private String operationResult;
 
-    @Column(name = "operation_timestamp", nullable = false)
     private Instant operationTimestamp;
 
-    @Column(name = "operation_duration_ms")
     private Long operationDurationMs;
 
-    @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "username", length = 255)
     private String username;
 
-    @Column(name = "session_id", length = 255)
     private String sessionId;
 
-    @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
-    @Column(name = "user_agent", length = 500)
     private String userAgent;
 
-    @Column(name = "endpoint", length = 255)
     private String endpoint;
 
-    @Column(name = "http_method", length = 10)
     private String httpMethod;
 
-    @Column(name = "request_size")
     private Long requestSize;
 
-    @Column(name = "response_size")
     private Long responseSize;
 
-    @Column(name = "entity_id", length = 100)
     private String entityId;
 
-    @Column(name = "entity_type", length = 100)
     private String entityType;
 
-    @Column(name = "result_code")
     private Integer resultCode;
 
-    @Column(name = "error_message", length = 1000)
     private String errorMessage;
 
-    @Column(name = "additional_data", columnDefinition = "TEXT")
     private String additionalData;
 
-    @Column(name = "audit_created_at", nullable = false)
     private Instant auditCreatedAt;
 
     public boolean isSuccessful() {
@@ -136,7 +101,6 @@ public class AuditLog extends BaseEntity {
     public void setResultCode(Integer resultCode) { this.resultCode = resultCode; }
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
 
-    @PrePersist
     protected void onCreate() {
         if (auditCreatedAt == null) {
             auditCreatedAt = Instant.now();

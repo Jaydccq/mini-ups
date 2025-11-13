@@ -67,7 +67,7 @@ class UserServiceTest {
     @DisplayName("测试根据用户名获取用户信息 - 成功")
     void testGetCurrentUserInfo_Success() {
         // Mock repository 返回
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.findByUsername("testuser")).thenReturn(testUser);
 
         UserDto result = userService.getCurrentUserInfo("testuser");
 
@@ -83,7 +83,7 @@ class UserServiceTest {
     @Test
     @DisplayName("测试根据用户名获取用户信息 - 用户不存在")
     void testGetCurrentUserInfo_UserNotFound() {
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("nonexistent")).thenReturn(null);
 
         assertThrows(UserNotFoundException.class, () -> {
             userService.getCurrentUserInfo("nonexistent");
@@ -95,7 +95,7 @@ class UserServiceTest {
     @Test
     @DisplayName("测试根据ID获取用户信息 - 成功")
     void testGetUserById_Success() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findById(1L)).thenReturn(testUser);
 
         UserDto result = userService.getUserById(1L);
 
@@ -110,7 +110,7 @@ class UserServiceTest {
     @Test
     @DisplayName("测试根据ID获取用户信息 - 用户不存在")
     void testGetUserById_UserNotFound() {
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(null);
 
         assertThrows(UserNotFoundException.class, () -> {
             userService.getUserById(999L);
@@ -160,17 +160,17 @@ class UserServiceTest {
         updateDto.setFirstName("Updated");
         updateDto.setLastName("User");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userRepository.findById(1L)).thenReturn(testUser);
+        when(userRepository.update(any(User.class))).thenReturn(1);
 
         UserDto result = userService.updateUser(1L, updateDto);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        
+
         // 验证用户信息被更新
         verify(userRepository, times(1)).findById(1L);
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userRepository, times(1)).update(any(User.class));
     }
 
     @Test
@@ -179,14 +179,14 @@ class UserServiceTest {
         UpdateUserDto updateDto = new UpdateUserDto();
         updateDto.setEmail("updated@example.com");
 
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(null);
 
         assertThrows(UserNotFoundException.class, () -> {
             userService.updateUser(999L, updateDto);
         });
 
         verify(userRepository, times(1)).findById(999L);
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).update(any(User.class));
     }
 
     @Test
@@ -195,7 +195,7 @@ class UserServiceTest {
         UpdateUserDto updateDto = new UpdateUserDto();
         updateDto.setEmail("admin@example.com"); // 已存在的邮箱
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findById(1L)).thenReturn(testUser);
         when(userRepository.existsByEmail("admin@example.com")).thenReturn(true);
 
         assertThrows(RuntimeException.class, () -> {
@@ -204,64 +204,64 @@ class UserServiceTest {
 
         verify(userRepository, times(1)).findById(1L);
         verify(userRepository, times(1)).existsByEmail("admin@example.com");
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).update(any(User.class));
     }
 
     @Test
     @DisplayName("测试禁用用户")
     void testDeleteUser_Success() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userRepository.findById(1L)).thenReturn(testUser);
+        when(userRepository.update(any(User.class))).thenReturn(1);
 
         userService.deleteUser(1L);
 
         verify(userRepository, times(1)).findById(1L);
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userRepository, times(1)).update(any(User.class));
     }
 
     @Test
     @DisplayName("测试禁用用户 - 用户不存在")
     void testDeleteUser_UserNotFound() {
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(null);
 
         assertThrows(UserNotFoundException.class, () -> {
             userService.deleteUser(999L);
         });
 
         verify(userRepository, times(1)).findById(999L);
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).update(any(User.class));
     }
 
     @Test
     @DisplayName("测试1启用用户")
     void testEnableUser_Success() {
         testUser.setEnabled(false); // 设置为禁用状态
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userRepository.findById(1L)).thenReturn(testUser);
+        when(userRepository.update(any(User.class))).thenReturn(1);
 
         userService.enableUser(1L);
 
         verify(userRepository, times(1)).findById(1L);
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userRepository, times(1)).update(any(User.class));
     }
 
     @Test
     @DisplayName("测试启用用户 - 用户不存在")
     void testEnableUser_UserNotFound() {
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(null);
 
         assertThrows(UserNotFoundException.class, () -> {
             userService.enableUser(999L);
         });
 
         verify(userRepository, times(1)).findById(999L);
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).update(any(User.class));
     }
 
     @Test
     @DisplayName("测试获取用户公开资料")
     void testGetUserPublicProfile_Success() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findById(1L)).thenReturn(testUser);
 
         UserDto result = userService.getUserPublicProfile(1L);
 
@@ -277,7 +277,7 @@ class UserServiceTest {
     @Test
     @DisplayName("测试获取用户公开资料 - 用户不存在")
     void testGetUserPublicProfile_UserNotFound() {
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(null);
 
         assertThrows(UserNotFoundException.class, () -> {
             userService.getUserPublicProfile(999L);
@@ -333,7 +333,7 @@ class UserServiceTest {
     @Test
     @DisplayName("测试用户DTO转换")
     void testUserToDto_Conversion() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.findById(1L)).thenReturn(testUser);
 
         UserDto result = userService.getUserById(1L);
 
@@ -368,19 +368,19 @@ class UserServiceTest {
     @DisplayName("测试空值处理")
     void testNullHandling() {
         // For null username, repository returns empty and service throws UserNotFoundException
-        when(userRepository.findByUsername(null)).thenReturn(Optional.empty());
+        when(userRepository.findByUsername(null)).thenReturn(null);
         assertThrows(UserNotFoundException.class, () -> {
             userService.getCurrentUserInfo(null);
         });
 
         // For empty username, repository returns empty and service throws UserNotFoundException
-        when(userRepository.findByUsername("")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("")).thenReturn(null);
         assertThrows(UserNotFoundException.class, () -> {
             userService.getCurrentUserInfo("");
         });
 
         // For null userId, repository returns empty and service throws UserNotFoundException
-        when(userRepository.findById(null)).thenReturn(Optional.empty());
+        when(userRepository.findById(null)).thenReturn(null);
         assertThrows(UserNotFoundException.class, () -> {
             userService.getUserById(null);
         });

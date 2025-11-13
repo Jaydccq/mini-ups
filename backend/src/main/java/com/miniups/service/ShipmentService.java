@@ -110,13 +110,13 @@ public class ShipmentService {
             }
             
             // 5. Save shipment
-            Shipment savedShipment = shipmentRepository.save(shipment);
-            
+            shipmentRepository.insert(shipment);
+
             // 6. Record status history
-            trackingService.updateShipmentStatus(trackingNumber, savedShipment.getStatus(), "Shipment created");
-            
+            trackingService.updateShipmentStatus(trackingNumber, shipment.getStatus(), "Shipment created");
+
             logger.info("Successfully created shipment: {}", trackingNumber);
-            return savedShipment;
+            return shipment;
             
         } catch (ShipmentCreationException e) {
             // Re-throw business exception to preserve chain
@@ -136,7 +136,8 @@ public class ShipmentService {
      */
     public Optional<Shipment> findByTrackingNumber(String trackingNumber) {
         try {
-            return shipmentRepository.findByUpsTrackingId(trackingNumber);
+            Shipment shipment = shipmentRepository.findByUpsTrackingId(trackingNumber);
+            return Optional.ofNullable(shipment);
         } catch (Exception e) {
             logger.error("Error finding shipment by tracking number {}: {}", trackingNumber, e.getMessage());
             return Optional.empty();
@@ -187,16 +188,16 @@ public class ShipmentService {
     private User getOrCreateCustomer(CreateShipmentDto dto) {
         // Try by customer ID first
         if (dto.getCustomerId() != null) {
-            Optional<User> existingUser = userRepository.findByUsername(dto.getCustomerId());
-            if (existingUser.isPresent()) {
-                return existingUser.get();
+            User existingUser = userRepository.findByUsername(dto.getCustomerId());
+            if (existingUser != null) {
+                return existingUser;
             }
         }
-        
+
         // Lookup by email
-        Optional<User> userByEmail = userRepository.findByEmail(dto.getCustomerEmail());
-        if (userByEmail.isPresent()) {
-            return userByEmail.get();
+        User userByEmail = userRepository.findByEmail(dto.getCustomerEmail());
+        if (userByEmail != null) {
+            return userByEmail;
         }
         
         // Create new user
@@ -223,13 +224,13 @@ public class ShipmentService {
             
             // Log temporary password generation (in real apps, email the user)
             // Save user first to get the ID
-            User savedUser = userRepository.save(newUser);
-            logger.info("Created new user with ID: {}", savedUser.getId());
-            logger.debug("Generated secure temporary password for user: {} (Email: {})", 
-                       savedUser.getUsername(), savedUser.getEmail());
-            logger.warn("User with ID {} must reset password on first login", savedUser.getId());
-            
-            return savedUser;
+            userRepository.insert(newUser);
+            logger.info("Created new user with ID: {}", newUser.getId());
+            logger.debug("Generated secure temporary password for user: {} (Email: {})",
+                       newUser.getUsername(), newUser.getEmail());
+            logger.warn("User with ID {} must reset password on first login", newUser.getId());
+
+            return newUser;
             
         } catch (Exception e) {
             logger.error("Failed to create new user for customer {}: {}", dto.getCustomerEmail(), e.getMessage());

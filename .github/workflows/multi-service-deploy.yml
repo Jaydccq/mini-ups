@@ -44,7 +44,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15
+        image: pgvector/pgvector:pg15
         env:
           POSTGRES_PASSWORD: abc123
           POSTGRES_USER: postgres
@@ -430,7 +430,7 @@ jobs:
             # ===== UPS Services Only =====
             # PostgreSQL数据库 (UPS)
             ups-database:
-              image: postgres:15
+              image: pgvector/pgvector:pg15
               container_name: mini-ups-postgres-test
               environment:
                 POSTGRES_DB: ups_db

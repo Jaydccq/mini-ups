@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -68,13 +67,11 @@ public class TrackingController {
                 .body(ApiResponse.error("Invalid tracking number format"));
         }
         
-        Optional<Shipment> shipmentOpt = trackingService.findByTrackingNumber(trackingNumber);
-        
-        if (shipmentOpt.isEmpty()) {
+        Shipment shipment = trackingService.findByTrackingNumber(trackingNumber);
+
+        if (shipment == null) {
             return ResponseEntity.notFound().build();
         }
-        
-        Shipment shipment = shipmentOpt.get();
         
         Map<String, Object> data = new HashMap<>();
         data.put("tracking_number", shipment.getUpsTrackingId());

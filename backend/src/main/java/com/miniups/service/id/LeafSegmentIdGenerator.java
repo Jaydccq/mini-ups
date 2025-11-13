@@ -233,14 +233,22 @@ public class LeafSegmentIdGenerator {
         long startTimeNanos = System.nanoTime(); // 重命名避免变量遮蔽
         boolean success = false;
         try {
-            TrackingSequenceRepository.SegmentInfo segmentInfo = 
+            // 先分配下一个段（原子递增）
+            int updated = sequenceRepository.allocateNextSegment(buffer.getBizTag());
+            if (updated == 0) {
+                logger.error("Failed to allocate segment for bizTag: {}", buffer.getBizTag());
+                return false;
+            }
+
+            // 然后获取段信息
+            TrackingSequenceRepository.SegmentInfo segmentInfo =
                 sequenceRepository.getNextSegment(buffer.getBizTag());
-            
+
             if (segmentInfo == null) {
                 logger.error("No sequence found for bizTag: {}", buffer.getBizTag());
                 return false;
             }
-            
+
             long end = segmentInfo.getMaxId();
             int step = segmentInfo.getStep();
             long segmentStart = end - step + 1; // 重命名避免变量遮蔽

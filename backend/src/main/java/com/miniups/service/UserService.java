@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,16 +65,15 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDto getCurrentUserInfo(String username) {
         logger.debug("Getting user information: username={}", username);
-        
-        Optional<User> userOptional = userRepository.findByUsername(username);
-        if (userOptional.isEmpty()) {
+
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
             logger.error("User not found: username={}", username);
             throw new UserNotFoundException(username);
         }
-        
-        User user = userOptional.get();
+
         UserDto userDto = UserDto.fromEntity(user);
-        
+
         logger.debug("Successfully retrieved user information: username={}, id={}", username, user.getId());
         return userDto;
     }
@@ -90,16 +88,15 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDto getUserById(Long userId) {
         logger.debug("Get user information by ID: userId={}", userId);
-        
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
+
+        User user = userRepository.findById(userId);
+        if (user == null) {
             logger.error("User not found: userId={}", userId);
             throw new UserNotFoundException("ID: " + userId);
         }
-        
-        User user = userOptional.get();
+
         UserDto userDto = UserDto.fromEntity(user);
-        
+
         logger.debug("Successfully retrieved user information: userId={}, username={}", userId, user.getUsername());
         return userDto;
     }
@@ -113,16 +110,15 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDto getUserPublicProfile(Long userId) {
         logger.debug("Getting user public profile: userId={}", userId);
-        
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
+
+        User user = userRepository.findById(userId);
+        if (user == null) {
             logger.error("User not found: userId={}", userId);
             throw new UserNotFoundException("ID: " + userId);
         }
-        
-        User user = userOptional.get();
+
         UserDto userDto = UserDto.publicProfile(user);
-        
+
         logger.debug("Successfully retrieved user public profile: userId={}, username={}", userId, user.getUsername());
         return userDto;
     }
@@ -137,15 +133,13 @@ public class UserService {
      */
     public UserDto updateUser(Long userId, UpdateUserDto updateRequest) {
         logger.info("Update user information: userId={}", userId);
-        
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
+
+        User user = userRepository.findById(userId);
+        if (user == null) {
             logger.error("User not found: userId={}", userId);
             throw new UserNotFoundException("ID: " + userId);
         }
-        
-        User user = userOptional.get();
-        
+
         try {
             // Update email (if provided and different)
             if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
@@ -155,7 +149,7 @@ public class UserService {
                 }
                 user.setEmail(updateRequest.getEmail());
             }
-            
+
             // Update basic information
             if (updateRequest.getFirstName() != null) {
                 user.setFirstName(updateRequest.getFirstName());
@@ -169,7 +163,7 @@ public class UserService {
             if (updateRequest.getAddress() != null) {
                 user.setAddress(updateRequest.getAddress());
             }
-            
+
             // Administrator-only field updates
             if (updateRequest.getRole() != null) {
                 user.setRole(updateRequest.getRole());
@@ -177,14 +171,14 @@ public class UserService {
             if (updateRequest.getEnabled() != null) {
                 user.setEnabled(updateRequest.getEnabled());
             }
-            
+
             // Save updates
-            User updatedUser = userRepository.save(user);
-            UserDto userDto = UserDto.fromEntity(updatedUser);
-            
+            userRepository.update(user);
+            UserDto userDto = UserDto.fromEntity(user);
+
             logger.info("User information updated successfully: userId={}, username={}", userId, user.getUsername());
             return userDto;
-            
+
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -219,15 +213,15 @@ public class UserService {
         try {
             // Create user entity
             User user = createUserFromCreateRequest(createRequest);
-            
+
             // Save user
-            User savedUser = userRepository.save(user);
-            UserDto userDto = UserDto.fromEntity(savedUser);
-            
-            logger.info("User created successfully: id={}, username={}, role={}", 
-                       savedUser.getId(), savedUser.getUsername(), savedUser.getRole());
+            userRepository.insert(user);
+            UserDto userDto = UserDto.fromEntity(user);
+
+            logger.info("User created successfully: id={}, username={}, role={}",
+                       user.getId(), user.getUsername(), user.getRole());
             return userDto;
-            
+
         } catch (Exception e) {
             logger.error("Exception occurred while creating user: username={}", createRequest.getUsername(), e);
             throw new RuntimeException("Failed to create user, please try again later");
@@ -241,19 +235,17 @@ public class UserService {
      */
     public void deleteUser(Long userId) {
         logger.info("Deleting user: userId={}", userId);
-        
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
+
+        User user = userRepository.findById(userId);
+        if (user == null) {
             logger.error("User not found: userId={}", userId);
             throw new UserNotFoundException("ID: " + userId);
         }
-        
-        User user = userOptional.get();
-        
+
         // Soft delete - disable account
         user.setEnabled(false);
-        userRepository.save(user);
-        
+        userRepository.update(user);
+
         logger.info("User disabled: userId={}, username={}", userId, user.getUsername());
     }
     
@@ -264,17 +256,16 @@ public class UserService {
      */
     public void enableUser(Long userId) {
         logger.info("Enabling user: userId={}", userId);
-        
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
+
+        User user = userRepository.findById(userId);
+        if (user == null) {
             logger.error("User not found: userId={}", userId);
             throw new UserNotFoundException("ID: " + userId);
         }
-        
-        User user = userOptional.get();
+
         user.setEnabled(true);
-        userRepository.save(user);
-        
+        userRepository.update(user);
+
         logger.info("User enabled: userId={}, username={}", userId, user.getUsername());
     }
     
@@ -304,13 +295,13 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public Page<UserDto> getAllUsers(Pageable pageable) {
-        logger.debug("Getting all users list with pagination: page={}, size={}", 
+        logger.debug("Getting all users list with pagination: page={}, size={}",
                     pageable.getPageNumber(), pageable.getPageSize());
-        
-        Page<User> userPage = userRepository.findAll(pageable);
+
+        Page<User> userPage = userRepository.findAllWithPage(pageable);
         Page<UserDto> userDtoPage = userPage.map(UserDto::fromEntity);
-        
-        logger.debug("Successfully retrieved user page, total {} users on page {}/{}", 
+
+        logger.debug("Successfully retrieved user page, total {} users on page {}/{}",
                     userDtoPage.getNumberOfElements(), userDtoPage.getNumber() + 1, userDtoPage.getTotalPages());
         return userDtoPage;
     }
@@ -345,13 +336,13 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public Page<UserDto> getUsersByRole(UserRole role, Pageable pageable) {
-        logger.debug("Getting users list by role with pagination: role={}, page={}, size={}", 
+        logger.debug("Getting users list by role with pagination: role={}, page={}, size={}",
                     role, pageable.getPageNumber(), pageable.getPageSize());
-        
-        Page<User> userPage = userRepository.findByRole(role, pageable);
+
+        Page<User> userPage = userRepository.findByRoleWithPage(role, pageable);
         Page<UserDto> userDtoPage = userPage.map(UserDto::fromEntity);
-        
-        logger.debug("Successfully retrieved role user page: role={}, total {} users on page {}/{}", 
+
+        logger.debug("Successfully retrieved role user page: role={}, total {} users on page {}/{}",
                     role, userDtoPage.getNumberOfElements(), userDtoPage.getNumber() + 1, userDtoPage.getTotalPages());
         return userDtoPage;
     }

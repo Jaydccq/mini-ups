@@ -74,6 +74,15 @@ spring:
         prefetch: 1
         retry:
           enabled: false # Disable retries in tests
+
+messaging:
+  rabbit:
+    outbox-enabled: ${MESSAGING_RABBIT_OUTBOX_ENABLED:true}
+    default-exchange: ${MESSAGING_RABBIT_DEFAULT_EXCHANGE:ups.events.topic}
+  kafka:
+    enabled: false
+    outbox-enabled: false
+    auto-create-topics: false
   
   jackson:
     default-property-inclusion: non_null

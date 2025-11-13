@@ -59,14 +59,18 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
         
         User user;
-        
+
         // Check if the input contains '@' to determine if it's an email
         if (usernameOrEmail.contains("@")) {
-            user = userRepository.findByEmail(usernameOrEmail)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
+            user = userRepository.findByEmail(usernameOrEmail);
+            if (user == null) {
+                throw new UsernameNotFoundException("User not found: " + usernameOrEmail);
+            }
         } else {
-            user = userRepository.findByUsername(usernameOrEmail)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
+            user = userRepository.findByUsername(usernameOrEmail);
+            if (user == null) {
+                throw new UsernameNotFoundException("User not found: " + usernameOrEmail);
+            }
         }
         
         return new CustomUserPrincipal(user);

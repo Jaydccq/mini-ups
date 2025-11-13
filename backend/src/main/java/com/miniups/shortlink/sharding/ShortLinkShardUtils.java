@@ -25,8 +25,19 @@ public final class ShortLinkShardUtils {
                 continue;
             }
             String table = kv[0].trim();
-            int weight = Integer.parseInt(kv[1].trim());
-            result.put(table, weight);
+            String rawWeight = kv[1].trim();
+            if (table.isEmpty() || rawWeight.isEmpty()) {
+                continue;
+            }
+            try {
+                int weight = Integer.parseInt(rawWeight);
+                if (weight <= 0) {
+                    continue;
+                }
+                result.put(table, weight);
+            } catch (NumberFormatException ignored) {
+                // Skip invalid weight entries
+            }
         }
         return result;
     }

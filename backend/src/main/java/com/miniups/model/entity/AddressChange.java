@@ -60,54 +60,36 @@
 package com.miniups.model.entity;
 
 import com.miniups.model.enums.AddressChangeStatus;
-import jakarta.persistence.*;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "address_changes", indexes = {
-    @Index(name = "idx_address_change_shipment", columnList = "shipment_id"),
-    @Index(name = "idx_address_change_status", columnList = "status")
-})
 public class AddressChange extends BaseEntity {
     
     @NotNull
-    @Column(name = "old_x", nullable = false)
     private Integer oldX;
     
     @NotNull
-    @Column(name = "old_y", nullable = false)
     private Integer oldY;
     
     @NotNull
-    @Column(name = "new_x", nullable = false)
     private Integer newX;
     
     @NotNull
-    @Column(name = "new_y", nullable = false)
     private Integer newY;
     
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     private AddressChangeStatus status = AddressChangeStatus.PENDING;
     
-    @Column(name = "requested_at", nullable = false)
     private LocalDateTime requestedAt;
     
-    @Column(name = "processed_at")
     private LocalDateTime processedAt;
     
-    @Column(name = "reason", length = 500)
     private String reason;
     
     // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipment_id", nullable = false)
     private Shipment shipment;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requested_by")
     private User requestedBy;
     
     // Constructors

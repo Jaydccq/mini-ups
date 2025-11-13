@@ -40,9 +40,9 @@ import java.util.Map;
 @RequestMapping("/api/admin/leaf")
 @RequiredArgsConstructor
 public class LeafIdManagementController {
-    
+
     private final LeafIdGeneratorService leafIdGeneratorService;
-    
+
     /**
      * Get comprehensive health and performance statistics
      * 

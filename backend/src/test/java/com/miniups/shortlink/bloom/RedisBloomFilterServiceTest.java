@@ -19,6 +19,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +49,7 @@ class RedisBloomFilterServiceTest {
         bloom.setHashSeeds(Arrays.asList(17, 31, 73, 127, 191));
         properties.setBloom(bloom);
 
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
 
         bloomFilterService = new RedisBloomFilterService(stringRedisTemplate, properties, meterRegistry);
     }
@@ -59,7 +61,7 @@ class RedisBloomFilterServiceTest {
         bloomFilterService.add(testValue);
 
         // Verify that setBit is called for each hash seed
-        verify(valueOperations).setBit(eq("test:bloom:codes"), anyLong(), eq(true));
+        verify(valueOperations, times(5)).setBit(eq("test:bloom:codes"), anyLong(), eq(true));
 
         // Verify metrics counter incremented
         Counter addCounter = meterRegistry.get("shortlink.bloom.additions").counter();
@@ -123,7 +125,7 @@ class RedisBloomFilterServiceTest {
         bloomFilterService.add(testValue);
 
         // Verify setBit called for all seeds on both additions
-        verify(valueOperations).setBit(eq("test:bloom:codes"), anyLong(), eq(true));
+        verify(valueOperations, times(10)).setBit(eq("test:bloom:codes"), anyLong(), eq(true));
 
         // Verify metrics counter incremented twice
         Counter addCounter = meterRegistry.get("shortlink.bloom.additions").counter();

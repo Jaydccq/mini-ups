@@ -29,59 +29,41 @@
 package com.miniups.model.entity;
 
 import com.miniups.model.enums.TruckStatus;
-import jakarta.persistence.*;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "trucks", indexes = {
-    @Index(name = "idx_truck_truck_id", columnList = "truck_id"),
-    @Index(name = "idx_truck_status", columnList = "status")
-})
 public class Truck extends BaseEntity {
     
     @NotNull
-    @Column(name = "truck_id", nullable = false, unique = true)
     private Integer truckId;
     
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     private TruckStatus status = TruckStatus.IDLE;
     
     @Min(0)
-    @Column(name = "current_x", nullable = false)
     private Integer currentX = 0;
     
     @Min(0)
-    @Column(name = "current_y", nullable = false)
     private Integer currentY = 0;
     
     @Min(1)
-    @Column(name = "capacity", nullable = false)
     private Integer capacity = 100;
     
     // Bidirectional one-to-one relationship with Driver
-    @OneToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", referencedColumnName = "id")
     private Driver driver;
     
-    @Column(name = "world_id")
     private Long worldId;
     
-    @Column(name = "license_plate")
     private String licensePlate;
     
-    @Column(name = "current_load")
     private Double currentLoad = 0.0;
     
     // Relationships
-    @OneToMany(mappedBy = "truck", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Shipment> shipments = new ArrayList<>();
     
-    @OneToMany(mappedBy = "truck", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TruckLocationHistory> locationHistory = new ArrayList<>();
     
     // Constructors
@@ -180,7 +162,6 @@ public class Truck extends BaseEntity {
     public void setCurrentLoad(Double currentLoad) {
         this.currentLoad = currentLoad;
     }
-    
     
     // Helper methods
     public boolean isAvailable() {

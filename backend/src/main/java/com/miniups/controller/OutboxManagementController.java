@@ -42,10 +42,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class OutboxManagementController {
-    
+
     private final EventPublisherService eventPublisherService;
     private final OutboxPollerService outboxPollerService;
-    
+
     /**
      * Get comprehensive outbox health information
      * 

@@ -346,7 +346,7 @@ public class WriteBehindCacheManager {
      * Background process to flush write operations to database
      */
     @Scheduled(fixedDelayString = "${write-behind.flush-interval-ms:5000}")
-    private void processWriteQueue() {
+    void processWriteQueue() {
         if (!writeBehindEnabled || writeQueue.isEmpty()) {
             return;
         }

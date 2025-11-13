@@ -36,9 +36,8 @@ import com.miniups.repository.AuditLogRepository;
 import com.miniups.service.consumer.AnalyticsConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -208,16 +207,20 @@ public class AdminService {
     
     /**
      * Get recent system activities
-     * 
-     * @param pageable Pagination parameters
+     *
+     * @param pageNum Page number (0-indexed)
+     * @param pageSize Number of items per page
      * @return Recent activities with pagination info
      */
-    public Map<String, Object> getRecentActivities(Pageable pageable) {
+    public Map<String, Object> getRecentActivities(int pageNum, int pageSize) {
         logger.debug("Fetching recent activities");
-        
-        var auditLogs = auditLogRepository.findAll(pageable);
-        
-        List<Map<String, Object>> activities = auditLogs.getContent().stream()
+
+        // Use PageHelper for pagination
+        PageHelper.startPage(pageNum + 1, pageSize); // PageHelper is 1-indexed
+        var auditLogs = auditLogRepository.findAll();
+        PageInfo<com.miniups.model.entity.AuditLog> pageInfo = new PageInfo<>(auditLogs);
+
+        List<Map<String, Object>> activities = pageInfo.getList().stream()
                 .map(log -> {
                     Map<String, Object> activity = new HashMap<>();
                     activity.put("id", log.getId());
@@ -230,14 +233,14 @@ public class AdminService {
                     return activity;
                 })
                 .collect(Collectors.toList());
-        
+
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("activities", activities);
-        responseData.put("currentPage", auditLogs.getNumber());
-        responseData.put("totalPages", auditLogs.getTotalPages());
-        responseData.put("totalElements", auditLogs.getTotalElements());
-        responseData.put("hasNext", auditLogs.hasNext());
-        
+        responseData.put("currentPage", pageInfo.getPageNum() - 1);  // Convert back to 0-indexed
+        responseData.put("totalPages", pageInfo.getPages());
+        responseData.put("totalElements", pageInfo.getTotal());
+        responseData.put("hasNext", pageInfo.isHasNextPage());
+
         return responseData;
     }
     
@@ -380,10 +383,10 @@ public class AdminService {
                 ));
         
         // Recent orders using paginated query
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
-        var recentShipmentsPage = shipmentRepository.findRecentShipments(pageable);
-        
-        List<Map<String, Object>> recentOrders = recentShipmentsPage.getContent().stream()
+        PageHelper.startPage(1, 10);
+        var recentShipments = shipmentRepository.findRecentShipments();
+
+        List<Map<String, Object>> recentOrders = recentShipments.stream()
                 .map(shipment -> {
                     Map<String, Object> orderData = new HashMap<>();
                     orderData.put("id", shipment.getId());

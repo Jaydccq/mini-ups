@@ -43,6 +43,24 @@ spring:
     virtual-host: /
     connection-timeout: 10000
     requested-heartbeat: 30
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    client-id: ${KAFKA_CLIENT_ID:mini-ups-backend}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: ${KAFKA_PRODUCER_ACKS:all}
+      linger-ms: ${KAFKA_PRODUCER_LINGER_MS:5}
+      retries: ${KAFKA_PRODUCER_RETRIES:3}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:mini-ups-backend}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: ${KAFKA_CONSUMER_OFFSET_RESET:latest}
+    listener:
+      ack-mode: MANUAL
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:3}
   
   security:
     oauth2:
@@ -101,7 +119,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
 
 # Enable debug features in Docker
 app:
@@ -120,3 +138,56 @@ springdoc:
     operations-sorter: method
     disable-swagger-default-url: true
     url: /v3/api-docs
+
+messaging:
+  rabbit:
+    outbox-enabled: ${MESSAGING_RABBIT_OUTBOX_ENABLED:true}
+    default-exchange: ${MESSAGING_RABBIT_DEFAULT_EXCHANGE:ups.events.topic}
+  kafka:
+    enabled: ${MESSAGING_KAFKA_ENABLED:false}
+    outbox-enabled: ${MESSAGING_KAFKA_OUTBOX_ENABLED:false}
+    topic-prefix: ${MESSAGING_KAFKA_TOPIC_PREFIX:}
+    default-topic: ${MESSAGING_KAFKA_DEFAULT_TOPIC:}
+    send-timeout-ms: ${MESSAGING_KAFKA_SEND_TIMEOUT_MS:5000}
+    auto-create-topics: ${MESSAGING_KAFKA_AUTO_CREATE_TOPICS:true}
+    topics: []
+
+rag:
+  enabled: ${RAG_ENABLED:true}
+  embedding:
+    provider: ${RAG_EMBEDDING_PROVIDER:openrouter}
+    model: ${RAG_EMBEDDING_MODEL:text-embedding-3-small}
+    dimensions: ${RAG_EMBEDDING_DIMENSIONS:1536}
+  llm:
+    provider: ${RAG_LLM_PROVIDER:openrouter}
+    model: ${RAG_LLM_MODEL:openai/gpt-4o-mini}
+    temperature: ${RAG_LLM_TEMPERATURE:0.2}
+    max-output-tokens: ${RAG_LLM_MAX_OUTPUT_TOKENS:800}
+  retrieval:
+    top-k: ${RAG_RETRIEVAL_TOP_K:5}
+    similarity-threshold: ${RAG_RETRIEVAL_SIMILARITY_THRESHOLD:0.7}
+    semantic-weight: ${RAG_RETRIEVAL_SEMANTIC_WEIGHT:0.7}
+    keyword-weight: ${RAG_RETRIEVAL_KEYWORD_WEIGHT:0.3}
+  rate-limit:
+    admin: ${RAG_RATE_LIMIT_ADMIN:100}
+    dispatcher: ${RAG_RATE_LIMIT_DISPATCHER:50}
+    driver: ${RAG_RATE_LIMIT_DRIVER:20}
+  storage:
+    table-name: ${RAG_STORAGE_TABLE:rag_document_chunk}
+    ivf-lists: ${RAG_STORAGE_IVF_LISTS:100}
+  providers:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_API_BASE_URL:https://api.openai.com/v1}
+    openrouter:
+      api-key: ${OPENROUTER_API_KEY:}
+      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+      site-url: ${OPENROUTER_SITE_URL:http://localhost}
+      app-name: ${OPENROUTER_APP_NAME:Mini-UPS RAG}
+  ingestion:
+    enabled: ${RAG_INGESTION_ENABLED:true}
+    root-paths: ${RAG_INGESTION_ROOT_PATHS:knowledge}
+    chunk-size: ${RAG_INGESTION_CHUNK_SIZE:1000}
+    chunk-overlap: ${RAG_INGESTION_CHUNK_OVERLAP:200}
+    schedule-enabled: ${RAG_INGESTION_SCHEDULE_ENABLED:false}
+    schedule-cron: ${RAG_INGESTION_SCHEDULE_CRON:0 30 2 * * *}

@@ -89,7 +89,7 @@ public class AuditLogConsumer {
 
             // Create and save audit log entity
             AuditLog auditLog = createAuditLogFromPayload(payload, event);
-            auditLogRepository.save(auditLog);
+            auditLogRepository.insert(auditLog);
 
             log.debug("Successfully processed audit log event: {} for operation: {}", 
                     event.getEventId(), payload.getOperationType());

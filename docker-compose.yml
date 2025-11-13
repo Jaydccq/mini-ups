@@ -87,7 +87,7 @@ services:
 
   # UPS PostgreSQL Database
   ups-database:
-    image: postgres:15
+    image: pgvector/pgvector:pg16
     container_name: mini-ups-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ups_db}
@@ -171,12 +171,19 @@ services:
       RABBITMQ_STOMP_PORT: 61613
       RABBITMQ_ENABLED: true
       JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_for_development_only}
+      RAG_ENABLED: false
+      rag.enabled: false
+      RAG_MOCK_ENABLED: true
+      rag.mock.enabled: true
+      METRICS_ENABLED: false
+      metrics.enabled: false
       WORLD_SIMULATOR_HOST: world-simulator
       WORLD_SIMULATOR_PORT: 12345
       AMAZON_API_URL: http://amazon-web:8080
       AMAZON_WEBHOOK_AUTH_ENABLED: false  # Disable webhook authentication for development
       NUM_TRUCKS: ${NUM_TRUCKS:-5}
       WORLD_ID: ${WORLD_ID:-}
+      # RAG Mock Configuration (for demo without OpenRouter API key)
     ports:
       - "8081:8081"
     depends_on:
@@ -211,7 +218,7 @@ services:
       REACT_APP_API_URL: http://localhost:8081/api
       VITE_API_BASE_URL: http://mini-ups-backend:8081
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       - ups-backend
     healthcheck:
@@ -284,12 +291,35 @@ services:
     networks:
       - projectnet
 
+  # Prometheus 监控服务
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mini-ups-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - ups-backend
+    restart: unless-stopped
+    networks:
+      - projectnet
+
 volumes:
   postgres_data:
   rabbitmq_data:
   worldsim_data:
   amazon_postgres_data:
+  prometheus_data:
 
 networks:
   projectnet:
-    external: true
+    driver: bridge

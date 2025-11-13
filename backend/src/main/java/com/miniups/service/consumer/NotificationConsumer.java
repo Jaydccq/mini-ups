@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Notification Consumer
@@ -438,8 +437,7 @@ public class NotificationConsumer {
      */
     private User getUserById(Long userId) {
         try {
-            Optional<User> userOpt = userRepository.findById(userId);
-            return userOpt.orElse(null);
+            return userRepository.findById(userId);
         } catch (Exception e) {
             log.error("Failed to get user by ID: {}", userId, e);
             return null;

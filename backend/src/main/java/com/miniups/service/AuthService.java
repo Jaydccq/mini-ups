@@ -51,10 +51,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.function.Predicate;
 
-import org.hibernate.exception.ConstraintViolationException;
+import java.sql.SQLException;
 
 @Service
 @Transactional
@@ -102,7 +101,8 @@ public class AuthService {
             User user = createUserFromRegisterRequest(registerRequest);
             
             // Save user to database - this will fail if constraints are violated
-            User savedUser = userRepository.save(user);
+            userRepository.insert(user);
+            User savedUser = user;
             logger.info("User created successfully: id={}, username={}", savedUser.getId(), savedUser.getUsername());
             
             // Generate JWT token
@@ -159,8 +159,21 @@ public class AuthService {
     private String extractConstraintName(DataIntegrityViolationException e) {
         Throwable cause = e.getCause();
         while (cause != null) {
-            if (cause instanceof ConstraintViolationException cve) {
-                return cve.getConstraintName();
+            if (cause instanceof SQLException sqlEx) {
+                // Extract constraint name from SQL exception message
+                String message = sqlEx.getMessage();
+                if (message != null) {
+                    message = message.toLowerCase();
+                    // PostgreSQL unique constraint format: ERROR: duplicate key value violates unique constraint "constraint_name"
+                    if (message.contains("unique constraint")) {
+                        int start = message.indexOf('"');
+                        int end = message.indexOf('"', start + 1);
+                        if (start > 0 && end > start) {
+                            return message.substring(start + 1, end);
+                        }
+                    }
+                }
+                return null;
             }
             cause = cause.getCause();
         }
@@ -198,8 +211,10 @@ public class AuthService {
             String username = authentication.getName();
             
             // Find user entity for full info
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException(username));
+            User user = userRepository.findByUsername(username);
+            if (user == null) {
+                throw new UserNotFoundException(username);
+            }
             
             // Check if user is disabled (UserDetailsService should have checked already)
             if (!user.getEnabled()) {
@@ -250,8 +265,10 @@ public class AuthService {
     public void sendLoginCode(String phoneNumber) {
         logger.info("Generating SMS login code: phone={}", phoneNumber);
 
-        User user = userRepository.findByPhone(phoneNumber)
-                .orElseThrow(() -> new UserNotFoundException("phone: " + phoneNumber));
+        User user = userRepository.findByPhone(phoneNumber);
+        if (user == null) {
+            throw new UserNotFoundException("phone: " + phoneNumber);
+        }
 
         if (!Boolean.TRUE.equals(user.getEnabled())) {
             throw new InvalidCredentialsException("Account is disabled, please contact the administrator");
@@ -266,8 +283,10 @@ public class AuthService {
     public AuthResponseDto loginWithSms(SmsLoginRequestDto smsLoginRequest) {
         logger.info("Processing SMS login: phone={}", smsLoginRequest.getPhone());
 
-        User user = userRepository.findByPhone(smsLoginRequest.getPhone())
-                .orElseThrow(() -> new UserNotFoundException("phone: " + smsLoginRequest.getPhone()));
+        User user = userRepository.findByPhone(smsLoginRequest.getPhone());
+        if (user == null) {
+            throw new UserNotFoundException("phone: " + smsLoginRequest.getPhone());
+        }
 
         if (!Boolean.TRUE.equals(user.getEnabled())) {
             throw new InvalidCredentialsException("Account is disabled, please contact the administrator");
@@ -294,10 +313,12 @@ public class AuthService {
      */
     public void changePassword(String username, PasswordChangeDto passwordChangeRequest) {
         logger.info("Start processing password change: username={}", username);
-        
+
         // Find user
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException(username));
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UserNotFoundException(username);
+        }
         
         // Verify current password
         if (!passwordEncoder.matches(passwordChangeRequest.getCurrentPassword(), user.getPassword())) {
@@ -317,8 +338,8 @@ public class AuthService {
             
             // Update password
             user.setPassword(encodedNewPassword);
-            userRepository.save(user);
-            
+            userRepository.update(user);
+
             logger.info("Password changed successfully: username={}", username);
             
         } catch (InvalidCredentialsException e) {
@@ -371,9 +392,9 @@ public class AuthService {
     private User findUserByUsernameOrEmail(String usernameOrEmail) {
         // Determine if input is email or username
         if (usernameOrEmail.contains("@")) {
-            return userRepository.findByEmail(usernameOrEmail).orElse(null);
+            return userRepository.findByEmail(usernameOrEmail);
         } else {
-            return userRepository.findByUsername(usernameOrEmail).orElse(null);
+            return userRepository.findByUsername(usernameOrEmail);
         }
     }
     
@@ -444,20 +465,19 @@ public class AuthService {
         
         try {
             // First, try to find user by provider and provider ID
-            Optional<User> userByProvider = userRepository.findByAuthProviderAndProviderId(AuthProvider.GOOGLE, providerId);
-            
-            if (userByProvider.isPresent()) {
+            User userByProvider = userRepository.findByAuthProviderAndProviderId(AuthProvider.GOOGLE, providerId);
+
+            if (userByProvider != null) {
                 // User already exists with this Google account
-                User user = userByProvider.get();
-                logger.info("Found existing OAuth2 user: {}", user.getUsername());
-                return user;
+                logger.info("Found existing OAuth2 user: {}", userByProvider.getUsername());
+                return userByProvider;
             }
-            
+
             // Check if user exists by email
-            Optional<User> userByEmail = userRepository.findByEmail(email);
-            
-            if (userByEmail.isPresent()) {
-                User existingUser = userByEmail.get();
+            User userByEmail = userRepository.findByEmail(email);
+
+            if (userByEmail != null) {
+                User existingUser = userByEmail;
                 if (existingUser.getAuthProvider() == AuthProvider.LOCAL) {
                     // User exists with LOCAL provider - this requires manual account linking
                     logger.warn("User exists with LOCAL provider, manual linking required: {}", email);
@@ -517,8 +537,9 @@ public class AuthService {
         
         // Password is null for OAuth2 users
         newUser.setPassword(null);
-        
-        return userRepository.save(newUser);
+
+        userRepository.insert(newUser);
+        return newUser;
     }
     
     /**
@@ -567,7 +588,7 @@ public class AuthService {
      * @return true if manual account linking is required
      */
     public boolean requiresAccountLinking(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        return user.isPresent() && user.get().getAuthProvider() == AuthProvider.LOCAL;
+        User user = userRepository.findByEmail(email);
+        return user != null && user.getAuthProvider() == AuthProvider.LOCAL;
     }
 }

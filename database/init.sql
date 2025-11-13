@@ -10,6 +10,9 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ups_db')\gexec
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Enable pgvector extension for RAG system
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- Create application user
 DO $$
 BEGIN

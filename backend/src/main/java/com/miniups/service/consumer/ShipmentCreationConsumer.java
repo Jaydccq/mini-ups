@@ -216,7 +216,7 @@ public class ShipmentCreationConsumer {
      * @return true if this shipment has already been processed
      */
     private boolean isDuplicateShipment(Long amazonShipmentId) {
-        return shipmentRepository.findByShipmentId(amazonShipmentId.toString()).isPresent();
+        return shipmentRepository.findByShipmentId(amazonShipmentId.toString()) != null;
     }
 
     /**
@@ -246,7 +246,7 @@ public class ShipmentCreationConsumer {
             Shipment shipment = createShipmentEntity(payload, user, assignedTruck);
 
             // Step 4: Save shipment to database
-            shipment = shipmentRepository.save(shipment);
+            shipmentRepository.insert(shipment);
 
             // Step 5: Integrate with world simulator
             integrateWithWorldSimulator(shipment, payload, correlationId);
@@ -270,8 +270,7 @@ public class ShipmentCreationConsumer {
      * Get user by ID with validation
      */
     private User getUserById(Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        return userOpt.orElse(null);
+        return userRepository.findById(userId);
     }
 
     /**

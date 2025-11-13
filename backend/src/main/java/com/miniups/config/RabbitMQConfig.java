@@ -1,7 +1,6 @@
 package com.miniups.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -17,11 +16,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * RabbitMQ Configuration for Enterprise Message Queue System with WebSocket STOMP Integration
  *
@@ -40,17 +37,15 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * @version 2.0
  * @since 2024-12-01
  */
-@Slf4j
 @Configuration
 @EnableRabbit
-@EnableWebSocketMessageBroker
 @ConditionalOnClass(ConnectionFactory.class)
 @Profile("!test & !rabbitmq-disabled")
-public class RabbitMQConfig implements WebSocketMessageBrokerConfigurer {
+public class RabbitMQConfig {
 
-    @Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
 
+
+    private static final Logger log = LoggerFactory.getLogger(RabbitMQConfig.class);
     // Exchange Names
     public static final String TOPIC_EXCHANGE_NAME = "ups.events.topic";
     public static final String DLX_NAME = "ups.events.dlx";
@@ -331,45 +326,4 @@ public class RabbitMQConfig implements WebSocketMessageBrokerConfigurer {
         return factory;
     }
 
-    // ==================== WEBSOCKET STOMP CONFIGURATION ====================
-
-    /**
-     * Configure message broker with RabbitMQ STOMP relay for scalable WebSocket messaging
-     * Enables real-time bidirectional communication with message persistence and routing
-     */
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Enable RabbitMQ STOMP relay for high-performance WebSocket messaging
-        registry.enableStompBrokerRelay("/topic", "/queue")
-                .setRelayHost("localhost")
-                .setRelayPort(61613) // STOMP port configured in application.yml
-                .setSystemLogin("guest")
-                .setSystemPasscode("guest")
-                .setClientLogin("guest")
-                .setClientPasscode("guest")
-                .setVirtualHost("/")
-                .setSystemHeartbeatSendInterval(20000) // 20 seconds
-                .setSystemHeartbeatReceiveInterval(20000); // 20 seconds
-
-        // Application destination prefixes for client messages
-        registry.setApplicationDestinationPrefixes("/app");
-
-        // User destination prefix for private messages
-        registry.setUserDestinationPrefix("/user");
-
-        log.info("RabbitMQ STOMP broker relay configured for WebSocket messaging");
-    }
-
-    /**
-     * Register STOMP endpoints with SockJS fallback support
-     * Provides multiple transport options for cross-browser compatibility
-     */
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins(allowedOrigins.split(","))
-                .withSockJS();
-
-        log.info("STOMP WebSocket endpoints registered with SockJS support");
-    }
 }

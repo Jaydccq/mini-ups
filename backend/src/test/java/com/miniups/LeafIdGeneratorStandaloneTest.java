@@ -27,28 +27,11 @@ public class LeafIdGeneratorStandaloneTest {
     /**
      * 模拟数据库的序列记录
      */
-    private static class MockSequenceInfo implements TrackingSequenceRepository.SegmentInfo {
-        private final Long maxId;
-        private final Integer step;
-        private final String bizTag;
-
-        public MockSequenceInfo(Long maxId, Integer step, String bizTag) {
-            this.maxId = maxId;
-            this.step = step;
-            this.bizTag = bizTag;
+    private static class MockSequenceInfo extends TrackingSequenceRepository.SegmentInfo {
+        public MockSequenceInfo(Long maxId, Integer step) {
+            setMaxId(maxId);
+            setStep(step);
         }
-
-        @Override
-        public Long getMaxId() { return maxId; }
-
-        @Override
-        public Integer getStep() { return step; }
-
-        @Override
-        public String getBizTag() { return bizTag; }
-
-        @Override
-        public String getDescription() { return "Mock sequence for testing"; }
     }
 
     /**
@@ -59,25 +42,22 @@ public class LeafIdGeneratorStandaloneTest {
         private final int step = 1000;
 
         @Override
-        public SegmentInfo getNextSegment(String bizTag) {
+        public int allocateNextSegment(String bizTag) {
             // 模拟原子更新：UPDATE tracking_sequences SET max_id = max_id + step WHERE biz_tag = ?
-            long newMaxId = currentMaxId.addAndGet(step);
-            return new MockSequenceInfo(newMaxId, step, bizTag);
+            currentMaxId.addAndGet(step);
+            return 1; // 返回更新的行数
         }
 
         @Override
-        public SegmentInfo getCurrentSegmentInfo(String bizTag) {
-            return new MockSequenceInfo(currentMaxId.get(), step, bizTag);
+        public TrackingSequenceRepository.SegmentInfo getNextSegment(String bizTag) {
+            // 返回当前的maxId和step
+            long currentMax = currentMaxId.get();
+            return new MockSequenceInfo(currentMax, step);
         }
 
         @Override
-        public int updateStep(String bizTag, int newStep) {
+        public int updateStep(String sequenceName, int newStep) {
             return 1; // 模拟成功更新
-        }
-
-        @Override
-        public boolean existsByBizTag(String bizTag) {
-            return true; // 假设已存在
         }
 
         @Override
@@ -85,37 +65,13 @@ public class LeafIdGeneratorStandaloneTest {
             return 1; // 模拟成功初始化
         }
 
-        // 其他继承的方法默认实现
-        @Override public void flush() {}
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> S saveAndFlush(S entity) { return entity; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> java.util.List<S> saveAllAndFlush(Iterable<S> entities) { return null; }
-        @Override public void deleteAllInBatch(Iterable<com.miniups.model.entity.TrackingSequence> entities) {}
-        @Override public void deleteAllByIdInBatch(Iterable<String> strings) {}
-        @Override public void deleteAllInBatch() {}
-        @Override public com.miniups.model.entity.TrackingSequence getOne(String s) { return null; }
-        @Override public com.miniups.model.entity.TrackingSequence getById(String s) { return null; }
-        @Override public com.miniups.model.entity.TrackingSequence getReferenceById(String s) { return null; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> java.util.List<S> findAll(org.springframework.data.domain.Example<S> example) { return null; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> java.util.List<S> findAll(org.springframework.data.domain.Example<S> example, org.springframework.data.domain.Sort sort) { return null; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> java.util.List<S> saveAll(Iterable<S> entities) { return null; }
-        @Override public java.util.List<com.miniups.model.entity.TrackingSequence> findAll() { return null; }
-        @Override public java.util.List<com.miniups.model.entity.TrackingSequence> findAllById(Iterable<String> strings) { return null; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> S save(S entity) { return entity; }
-        @Override public java.util.Optional<com.miniups.model.entity.TrackingSequence> findById(String s) { return java.util.Optional.empty(); }
-        @Override public boolean existsById(String s) { return false; }
+        // 其他MyBatis Mapper方法默认实现
+        @Override public int insert(com.miniups.model.entity.TrackingSequence sequence) { return 1; }
+        @Override public int update(com.miniups.model.entity.TrackingSequence sequence) { return 1; }
+        @Override public com.miniups.model.entity.TrackingSequence selectById(Long id) { return null; }
+        @Override public com.miniups.model.entity.TrackingSequence findBySequenceName(String sequenceName) { return null; }
+        @Override public int deleteById(Long id) { return 1; }
         @Override public long count() { return 0; }
-        @Override public void deleteById(String s) {}
-        @Override public void delete(com.miniups.model.entity.TrackingSequence entity) {}
-        @Override public void deleteAllById(Iterable<? extends String> strings) {}
-        @Override public void deleteAll(Iterable<? extends com.miniups.model.entity.TrackingSequence> entities) {}
-        @Override public void deleteAll() {}
-        @Override public java.util.List<com.miniups.model.entity.TrackingSequence> findAll(org.springframework.data.domain.Sort sort) { return null; }
-        @Override public org.springframework.data.domain.Page<com.miniups.model.entity.TrackingSequence> findAll(org.springframework.data.domain.Pageable pageable) { return null; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> java.util.Optional<S> findOne(org.springframework.data.domain.Example<S> example) { return java.util.Optional.empty(); }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> org.springframework.data.domain.Page<S> findAll(org.springframework.data.domain.Example<S> example, org.springframework.data.domain.Pageable pageable) { return null; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> long count(org.springframework.data.domain.Example<S> example) { return 0; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence> boolean exists(org.springframework.data.domain.Example<S> example) { return false; }
-        @Override public <S extends com.miniups.model.entity.TrackingSequence, R> R findBy(org.springframework.data.domain.Example<S> example, java.util.function.Function<org.springframework.data.repository.query.FluentQuery.FetchableFluentQuery<S>, R> queryFunction) { return null; }
     }
 
     private LeafSegmentIdGenerator idGenerator;

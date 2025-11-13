@@ -8,7 +8,7 @@
  * 
  * Tracking Number Generation Rules:
  * - Format: UPS + timestamp + random number
- * - Length: Fixed 20 digits
+ * - Length: Fixed 21 characters (3 prefix + 14 timestamp + 4 sequence)
  * - Uniqueness: Guaranteed through database constraints
  * 
  * Status Management:
@@ -37,8 +37,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Counter;
 
@@ -48,6 +48,13 @@ public class TrackingService {
     
     private static final Logger logger = LoggerFactory.getLogger(TrackingService.class);
     private static final String TRACKING_PREFIX = "UPS";
+    private static final DateTimeFormatter TRACKING_TIMESTAMP_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final int TRACKING_TIMESTAMP_LENGTH = 14;
+    private static final int TRACKING_SEQUENCE_DIGITS = 4;
+    private static final long TRACKING_SEQUENCE_MOD = (long) Math.pow(10, TRACKING_SEQUENCE_DIGITS);
+    private static final int TRACKING_NUMBER_TOTAL_LENGTH =
+            TRACKING_PREFIX.length() + TRACKING_TIMESTAMP_LENGTH + TRACKING_SEQUENCE_DIGITS;
     
     @Autowired
     private ShipmentRepository shipmentRepository;
@@ -66,35 +73,47 @@ public class TrackingService {
      * - Database queries: Reduced by 1000x (batch pre-allocation)
      * - Concurrency: Lock-free with double buffering
      * 
-     * Format: UPS + 12-digit sequence (no timestamp)
-     * Example: UPS000000123456
+     * Format: UPS + 14-digit timestamp + 4-digit sequence
+     * Example: UPS202401151030450001
      * 
      * @return Unique tracking number
      */
     public String generateTrackingNumber() {
+        String timestamp = LocalDateTime.now().format(TRACKING_TIMESTAMP_FORMATTER);
+
         try {
-            String trackingNumber = leafSegmentIdGenerator.generateTrackingNumber();
+            if (leafSegmentIdGenerator == null) {
+                throw new IllegalStateException("LeafSegmentIdGenerator not initialized");
+            }
+
+            long rawSequence = leafSegmentIdGenerator.generateId("tracking_number");
+            if (rawSequence < 0) {
+                throw new IllegalStateException("LeafSegmentIdGenerator returned invalid sequence");
+            }
+
+            long normalizedSequence = rawSequence % TRACKING_SEQUENCE_MOD;
+            String trackingNumber = buildTrackingNumber(timestamp, normalizedSequence);
             logger.debug("Generated tracking number: {}", trackingNumber);
             return trackingNumber;
         } catch (Exception e) {
             logger.error("Failed to generate tracking number using Leaf-Segment, falling back to legacy method", e);
-            // Fallback to simple timestamp-based generation in extreme cases
-            return generateFallbackTrackingNumber();
+            // Fallback to timestamp + random sequence generation in extreme cases
+            return generateFallbackTrackingNumber(timestamp);
         }
     }
     
     /**
      * Query package information by tracking number
-     * 
+     *
      * @param trackingNumber UPS tracking number
      * @return Package shipment information
      */
     @Transactional(readOnly = true)
-    public Optional<Shipment> findByTrackingNumber(String trackingNumber) {
+    public Shipment findByTrackingNumber(String trackingNumber) {
         if (trackingNumber == null || trackingNumber.trim().isEmpty()) {
-            return Optional.empty();
+            return null;
         }
-        
+
         return shipmentRepository.findByUpsTrackingId(trackingNumber.trim());
     }
     
@@ -117,47 +136,46 @@ public class TrackingService {
     
     private boolean doUpdateShipmentStatus(String trackingNumber, ShipmentStatus newStatus, String comment) {
         try {
-            Optional<Shipment> shipmentOpt = findByTrackingNumber(trackingNumber);
-            
-            if (shipmentOpt.isEmpty()) {
+            Shipment shipment = findByTrackingNumber(trackingNumber);
+
+            if (shipment == null) {
                 logger.warn("Shipment not found for tracking number: {}", trackingNumber);
                 return false;
             }
-            
-            Shipment shipment = shipmentOpt.get();
+
             ShipmentStatus oldStatus = shipment.getStatus();
-            
+
             // Validate status transition
             if (!isValidStatusTransition(oldStatus, newStatus)) {
-                logger.warn("Invalid status transition from {} to {} for tracking number: {}", 
+                logger.warn("Invalid status transition from {} to {} for tracking number: {}",
                            oldStatus, newStatus, trackingNumber);
                 return false;
             }
-            
+
             // Update status
             shipment.setStatus(newStatus);
-            
+
             // Add status history entry with comment
             ShipmentStatusHistory history = new ShipmentStatusHistory();
             history.setShipment(shipment);
             history.setStatus(newStatus);
             history.setTimestamp(LocalDateTime.now());
             history.setNotes(comment);
-            
+
             shipment.getStatusHistory().add(history);
-            
+
             // Update delivery time if delivered
             if (newStatus == ShipmentStatus.DELIVERED) {
                 shipment.setActualDelivery(LocalDateTime.now());
             }
-            
-            shipmentRepository.save(shipment);
-            
-            logger.info("Updated shipment {} status from {} to {}", 
+
+            shipmentRepository.update(shipment);
+
+            logger.info("Updated shipment {} status from {} to {}",
                        trackingNumber, oldStatus, newStatus);
-            
+
             return true;
-            
+
         } catch (OptimisticLockingFailureException e) {
             logger.debug("Optimistic locking failure for tracking number: {}, will retry", trackingNumber);
             throw e; // Re-throw to trigger retry
@@ -169,18 +187,18 @@ public class TrackingService {
     
     /**
      * Get package status history
-     * 
+     *
      * @param trackingNumber UPS tracking number
      * @return Status history list
      */
     @Transactional(readOnly = true)
     public List<ShipmentStatusHistory> getStatusHistory(String trackingNumber) {
-        Optional<Shipment> shipmentOpt = findByTrackingNumber(trackingNumber);
-        
-        if (shipmentOpt.isPresent()) {
-            return shipmentOpt.get().getStatusHistory();
+        Shipment shipment = findByTrackingNumber(trackingNumber);
+
+        if (shipment != null) {
+            return shipment.getStatusHistory();
         }
-        
+
         return List.of();
     }
     
@@ -202,14 +220,15 @@ public class TrackingService {
             return false;
         }
         
-        // Check exact length: UPS + 12 digits = 15 chars
-        if (trimmed.length() != (TRACKING_PREFIX.length() + 12)) {
+        // Check exact length: UPS + timestamp + sequence
+        if (trimmed.length() != TRACKING_NUMBER_TOTAL_LENGTH) {
             return false;
         }
-        
+
         // Check that part after prefix contains only digits
         String numberPart = trimmed.substring(TRACKING_PREFIX.length());
-        return numberPart.matches("\\d{12}");
+        int expectedDigits = TRACKING_TIMESTAMP_LENGTH + TRACKING_SEQUENCE_DIGITS;
+        return numberPart.matches("\\d{" + expectedDigits + "}");
     }
     
     /**
@@ -226,13 +245,13 @@ public class TrackingService {
     /**
      * Fallback tracking number generation
      * Only used when Leaf-Segment generator fails (extremely rare)
-     * 
-     * @return UPS + 12-digit sequence
+     *
+     * @param timestamp pre-generated timestamp string to keep monotonic ordering
+     * @return Tracking number in the same 21-character format
      */
-    private String generateFallbackTrackingNumber() {
-        long n = Math.abs(System.nanoTime());
-        long seq = n % 1_000_000_000_000L; // 12 digits
-        String fallbackNumber = TRACKING_PREFIX + String.format("%012d", seq);
+    private String generateFallbackTrackingNumber(String timestamp) {
+        long seq = generateFallbackSequence();
+        String fallbackNumber = buildTrackingNumber(timestamp, seq);
         logger.warn("Generated fallback tracking number: {}", fallbackNumber);
         try {
             if (meterRegistry != null) {
@@ -243,6 +262,15 @@ public class TrackingService {
             }
         } catch (Exception ignore) { }
         return fallbackNumber;
+    }
+
+    private long generateFallbackSequence() {
+        return Math.abs(System.nanoTime()) % TRACKING_SEQUENCE_MOD;
+    }
+
+    private String buildTrackingNumber(String timestamp, long sequenceValue) {
+        return TRACKING_PREFIX + timestamp + String.format("%0" + TRACKING_SEQUENCE_DIGITS + "d",
+                sequenceValue % TRACKING_SEQUENCE_MOD);
     }
     
     // Private helper methods removed - now using Leaf-Segment generator

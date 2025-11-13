@@ -1,103 +1,89 @@
-/**
- * Driver Repository Interface
- * 
- * Description:
- * - Data access layer for Driver entity operations
- * - Provides custom query methods for driver management
- * - Supports filtering by status and availability
- * 
- * Custom Query Methods:
- * - findByStatus: Get drivers by status (UNASSIGNED, ASSIGNED, etc.)
- * - findByLicenseNumber: Find driver by license number (unique)
- * - findByEmail: Find driver by email address (unique)
- * - findAvailableDrivers: Get drivers available for assignment
- * - countByStatus: Count drivers by status for statistics
- * 
- * Performance Considerations:
- * - License number and email have unique indexes for fast lookup
- * - Status field has index for efficient filtering
- * - Uses JPA derived queries for simple operations
- * 
- */
 package com.miniups.repository;
 
 import com.miniups.model.entity.Driver;
 import com.miniups.model.enums.DriverStatus;
+import org.apache.ibatis.annotations.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
-@Repository
-public interface DriverRepository extends JpaRepository<Driver, Long> {
-    
-    /**
-     * Find drivers by status
-     */
-    List<Driver> findByStatus(DriverStatus status);
-    
-    /**
-     * Find drivers by status with pagination
-     */
-    Page<Driver> findByStatus(DriverStatus status, Pageable pageable);
-    
-    /**
-     * Find driver by license number (unique)
-     */
-    Optional<Driver> findByLicenseNumber(String licenseNumber);
-    
-    /**
-     * Find driver by email (unique)
-     */
-    Optional<Driver> findByEmail(String email);
-    
-    /**
-     * Check if license number exists (for validation)
-     */
-    boolean existsByLicenseNumber(String licenseNumber);
-    
-    /**
-     * Check if email exists (for validation)
-     */
-    boolean existsByEmail(String email);
-    
-    /**
-     * Find available drivers (UNASSIGNED status and no assigned truck)
-     */
-    @Query("SELECT d FROM Driver d WHERE d.status = :status AND d.assignedTruck IS NULL")
+@Mapper
+public interface DriverRepository {
+
+    @Insert("INSERT INTO drivers (driver_number, name, phone, status, truck_id, created_at, updated_at, version) " +
+            "VALUES (#{driverNumber}, #{name}, #{phone}, #{status}, #{truckId}, NOW(), NOW(), 0)")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    int insert(Driver driver);
+
+    @Update("UPDATE drivers SET driver_number = #{driverNumber}, name = #{name}, phone = #{phone}, " +
+            "status = #{status}, truck_id = #{truckId}, updated_at = NOW(), version = version + 1 " +
+            "WHERE id = #{id} AND version = #{version}")
+    int update(Driver driver);
+
+    @Select("SELECT * FROM drivers WHERE id = #{id}")
+    Driver selectById(Long id);
+
+    @Select("SELECT * FROM drivers")
+    List<Driver> selectAll();
+
+    @Delete("DELETE FROM drivers WHERE id = #{id}")
+    int deleteById(Long id);
+
+    @Select("SELECT * FROM drivers WHERE driver_number = #{driverNumber}")
+    Driver findByDriverNumber(String driverNumber);
+
+    @Select("SELECT * FROM drivers WHERE status = #{status}")
+    List<Driver> findByStatus(@Param("status") DriverStatus status);
+
+    @Select("SELECT * FROM drivers WHERE truck_id = #{truckId}")
+    Driver findByTruckId(Long truckId);
+
+    @Select("SELECT COUNT(*) > 0 FROM drivers WHERE driver_number = #{driverNumber}")
+    boolean existsByDriverNumber(String driverNumber);
+
+    @Select("SELECT COUNT(*) FROM drivers")
+    long count();
+
+    // Additional methods for service layer compatibility
+    @Select("SELECT * FROM drivers")
+    List<Driver> findAll();
+
+    @Select("SELECT * FROM drivers WHERE id = #{id}")
+    Driver findById(Long id);
+
+    // Pageable methods - unique names to avoid MyBatis conflicts
+    @Select("SELECT * FROM drivers WHERE status = #{status}")
+    Page<Driver> findByStatusWithPage(@Param("status") DriverStatus status, Pageable pageable);
+
+    @Select("SELECT * FROM drivers")
+    Page<Driver> findAllWithPage(Pageable pageable);
+
+    // Additional query methods
+    @Select("SELECT * FROM drivers WHERE status = #{status}")
     List<Driver> findAvailableDrivers(@Param("status") DriverStatus status);
-    
-    /**
-     * Count drivers by status for statistics
-     */
-    long countByStatus(DriverStatus status);
-    
-    /**
-     * Find drivers by name (case insensitive search)
-     */
-    @Query("SELECT d FROM Driver d WHERE LOWER(d.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+
+    @Select("SELECT * FROM drivers WHERE LOWER(name) LIKE LOWER(CONCAT('%', #{name}, '%'))")
     List<Driver> findByNameContainingIgnoreCase(@Param("name") String name);
-    
-    /**
-     * Find top performing drivers by rating
-     */
-    @Query("SELECT d FROM Driver d WHERE d.status != :excludeStatus ORDER BY d.rating DESC, d.totalDeliveries DESC")
-    List<Driver> findTopPerformingDrivers(@Param("excludeStatus") DriverStatus excludeStatus, Pageable pageable);
-    
-    /**
-     * Get driver statistics
-     */
-    @Query("SELECT " +
-           "COUNT(d) as totalDrivers, " +
-           "COUNT(CASE WHEN d.status = 'UNASSIGNED' THEN 1 END) as unassigned, " +
-           "COUNT(CASE WHEN d.status = 'ASSIGNED' THEN 1 END) as assigned, " +
-           "COUNT(CASE WHEN d.status = 'ON_DUTY' THEN 1 END) as onDuty, " +
-           "AVG(d.rating) as averageRating " +
-           "FROM Driver d WHERE d.status != 'INACTIVE'")
-    Object[] getDriverStatistics();
+
+    @Select("SELECT COUNT(*) FROM drivers WHERE status = #{status}")
+    long countByStatus(@Param("status") DriverStatus status);
+
+    @Select("SELECT COUNT(*) > 0 FROM drivers WHERE email = #{email}")
+    boolean existsByEmail(@Param("email") String email);
+
+    @Select("SELECT * FROM drivers WHERE email = #{email}")
+    Driver findByEmail(@Param("email") String email);
+
+    @Select("SELECT COUNT(*) > 0 FROM drivers WHERE license_number = #{licenseNumber}")
+    boolean existsByLicenseNumber(@Param("licenseNumber") String licenseNumber);
+
+    @Select("SELECT * FROM drivers WHERE license_number = #{licenseNumber}")
+    Driver findByLicenseNumber(@Param("licenseNumber") String licenseNumber);
+
+    // Statistics - returns map with status as key and count as value
+    // This method would need custom implementation or SQL
+    @Select("SELECT status, COUNT(*) as count FROM drivers GROUP BY status")
+    @MapKey("status")
+    java.util.Map<String, Object> getDriverStatistics();
 }

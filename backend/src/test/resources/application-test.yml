@@ -1,4 +1,8 @@
 spring:
+  liquibase:
+    enabled: false
+  flyway:
+    enabled: false
   
   # Database Configuration for Tests
   # Uses H2 for fast unit tests with explicit configuration to avoid PostgreSQL conflicts
@@ -129,3 +133,38 @@ http:
     max-default-per-route: 5
     connect-timeout-ms: 5000
     socket-timeout-ms: 10000
+
+# RAG Configuration for Tests
+rag:
+  enabled: true
+  embedding:
+    provider: openai
+    model: text-embedding-3-small
+    dimensions: 1536
+  llm:
+    provider: openai
+    model: gpt-4o-mini
+    temperature: 0.2
+    max-output-tokens: 800
+  retrieval:
+    top-k: 5
+    similarity-threshold: 0.7
+    semantic-weight: 0.7
+    keyword-weight: 0.3
+  rate-limit:
+    admin: 100
+    dispatcher: 50
+    driver: 20
+  storage:
+    table-name: rag_document_chunk
+    ivf-lists: 100
+  providers:
+    openai:
+      api-key: test-api-key
+      base-url: https://api.openai.com/v1
+  ingestion:
+    enabled: false  # Disable auto-ingestion in tests
+    root-paths:
+      - knowledge
+    chunk-size: 1000
+    chunk-overlap: 200

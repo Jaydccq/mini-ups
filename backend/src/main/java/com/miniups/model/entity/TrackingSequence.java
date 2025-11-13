@@ -1,6 +1,5 @@
 package com.miniups.model.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
@@ -13,48 +12,39 @@ import java.time.LocalDateTime;
  * 
  * @author Mini-UPS Team
  */
-@Entity
-@Table(name = "tracking_sequences")
 public class TrackingSequence {
     
     /**
      * 业务标识，主键
      * 用于区分不同业务的ID生成需求
      */
-    @Id
-    @Column(name = "biz_tag", length = 128, nullable = false)
     private String bizTag;
     
     /**
      * 当前已分配出去的最大ID
      * 每次分配新段时，这个值会增加step
      */
-    @Column(name = "max_id", nullable = false)
     private Long maxId = 0L;
     
     /**
      * 每次分配的步长
      * 决定每次批量分配多少个ID
      */
-    @Column(name = "step", nullable = false)
     private Integer step = 1000;
     
     /**
      * 业务描述
      */
-    @Column(name = "description")
     private String description;
     
     /**
      * 创建时间
      */
-    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
     /**
      * 更新时间
      */
-    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
     /**
@@ -78,7 +68,6 @@ public class TrackingSequence {
     /**
      * 更新前置处理
      */
-    @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
@@ -86,7 +75,6 @@ public class TrackingSequence {
     /**
      * 创建前置处理
      */
-    @PrePersist  
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
         if (createdAt == null) {

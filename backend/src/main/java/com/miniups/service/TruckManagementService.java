@@ -105,19 +105,18 @@ public class TruckManagementService {
     private Truck doAssignOptimalTruckAtomic(Integer originX, Integer originY, Integer priority) {
         try {
             // Step 1: Find nearest available truck with SKIP LOCKED
-            Optional<Truck> truckOpt = truckRepository.findNearestAvailableTruckForAssignment(originX, originY);
-            
-            if (truckOpt.isPresent()) {
+            Truck truck = truckRepository.findNearestAvailableTruckForAssignment(originX, originY);
+
+            if (truck != null) {
                 // Step 2: Update the truck status in same transaction
-                Truck truck = truckOpt.get();
                 truck.setStatus(TruckStatus.EN_ROUTE);
-                truck = truckRepository.save(truck);
-                
-                logger.info("Atomically assigned truck {} to pickup at ({}, {})", 
+                truckRepository.update(truck);
+
+                logger.info("Atomically assigned truck {} to pickup at ({}, {})",
                            truck.getTruckId(), originX, originY);
                 return truck;
             }
-            
+
             logger.debug("No available trucks for atomic assignment at ({}, {})", originX, originY);
             return null;
         } catch (Exception e) {
@@ -147,9 +146,9 @@ public class TruckManagementService {
         if (bestTruck != null) {
             // Update truck status to busy
             bestTruck.setStatus(TruckStatus.EN_ROUTE);
-            bestTruck = truckRepository.save(bestTruck);
-            
-            logger.info("Assigned truck {} to pickup at ({}, {})", 
+            truckRepository.update(bestTruck);
+
+            logger.info("Assigned truck {} to pickup at ({}, {})",
                        bestTruck.getTruckId(), originX, originY);
             return bestTruck;
         }
@@ -166,17 +165,16 @@ public class TruckManagementService {
     @Transactional
     public Truck assignAnyAvailableTruck() {
         // Use existing method to find and lock one available truck
-        Optional<Truck> truckOpt = truckRepository.findAndLockOneAvailableTruck();
-        
-        if (truckOpt.isPresent()) {
-            Truck truck = truckOpt.get();
+        Truck truck = truckRepository.findAndLockOneAvailableTruck();
+
+        if (truck != null) {
             truck.setStatus(TruckStatus.EN_ROUTE);
-            truck = truckRepository.save(truck);
-            
+            truckRepository.update(truck);
+
             logger.info("Assigned any available truck {}", truck.getTruckId());
             return truck;
         }
-        
+
         logger.warn("No available trucks for assignment");
         return null;
     }
@@ -229,28 +227,27 @@ public class TruckManagementService {
      */
     public boolean updateTruckStatus(Integer truckId, Integer x, Integer y, String status) {
         try {
-            Optional<Truck> truckOpt = truckRepository.findByTruckId(truckId);
-            if (truckOpt.isEmpty()) {
+            Truck truck = truckRepository.findByTruckId(truckId);
+            if (truck == null) {
                 logger.warn("Truck {} not found for status update", truckId);
                 return false;
             }
-            
-            Truck truck = truckOpt.get();
+
             truck.updateLocation(x, y);
-            
+
             // Convert status string to enum
             TruckStatus newStatus = convertWorldStatusToTruckStatus(status);
             if (newStatus != null) {
                 truck.setStatus(newStatus);
             }
-            
-            truckRepository.save(truck);
-            
-            logger.debug("Updated truck {} to position ({}, {}) with status: {}", 
+
+            truckRepository.update(truck);
+
+            logger.debug("Updated truck {} to position ({}, {}) with status: {}",
                         truckId, x, y, status);
-            
+
             return true;
-            
+
         } catch (Exception e) {
             logger.error("Error updating truck status for truck {}", truckId, e);
             return false;
@@ -302,19 +299,18 @@ public class TruckManagementService {
      */
     public boolean releaseTruck(Integer truckId) {
         try {
-            Optional<Truck> truckOpt = truckRepository.findByTruckId(truckId);
-            if (truckOpt.isEmpty()) {
+            Truck truck = truckRepository.findByTruckId(truckId);
+            if (truck == null) {
                 logger.warn("Truck {} not found for release", truckId);
                 return false;
             }
-            
-            Truck truck = truckOpt.get();
+
             truck.setStatus(TruckStatus.IDLE);
-            truckRepository.save(truck);
-            
+            truckRepository.update(truck);
+
             logger.info("Released truck {} back to idle status", truckId);
             return true;
-            
+
         } catch (Exception e) {
             logger.error("Error releasing truck", e);
             return false;
@@ -417,34 +413,38 @@ public class TruckManagementService {
      */
     public Truck assignDriverToTruck(Long truckId, Long driverId) {
         logger.info("Assigning driver {} to truck {}", driverId, truckId);
-        
+
         // Get truck
-        Truck truck = truckRepository.findById(truckId)
-                .orElseThrow(() -> new com.miniups.exception.ResourceNotFoundException("Truck", truckId));
-        
+        Truck truck = truckRepository.findById(truckId);
+        if (truck == null) {
+            throw new com.miniups.exception.ResourceNotFoundException("Truck", truckId);
+        }
+
         // Get driver
-        com.miniups.model.entity.Driver driver = driverRepository.findById(driverId)
-                .orElseThrow(() -> new com.miniups.exception.ResourceNotFoundException("Driver", driverId));
-        
+        com.miniups.model.entity.Driver driver = driverRepository.findById(driverId);
+        if (driver == null) {
+            throw new com.miniups.exception.ResourceNotFoundException("Driver", driverId);
+        }
+
         // Validate truck can accept driver
         if (truck.hasDriver()) {
             throw new com.miniups.exception.BusinessValidationException("TRUCK_ASSIGNMENT", "Truck already has a driver assigned");
         }
-        
+
         // Validate driver is available
         if (!driver.isAvailableForAssignment()) {
             throw new com.miniups.exception.BusinessValidationException("DRIVER_ASSIGNMENT", "Driver is not available for assignment");
         }
-        
+
         // Perform assignment (this will update both entities)
         truck.assignDriver(driver);
-        
+
         // Save both entities
-        driverRepository.save(driver);
-        Truck savedTruck = truckRepository.save(truck);
-        
+        driverRepository.update(driver);
+        truckRepository.update(truck);
+
         logger.info("Successfully assigned driver {} to truck {}", driverId, truckId);
-        return savedTruck;
+        return truck;
     }
     
     /**
@@ -455,16 +455,19 @@ public class TruckManagementService {
      */
     public Truck unassignDriverFromTruck(Long truckId) {
         logger.info("Unassigning driver from truck {}", truckId);
-        
-        Truck truck = truckRepository.findById(truckId)
-                .orElseThrow(() -> new com.miniups.exception.ResourceNotFoundException("Truck", truckId));
-        
+
+        Truck truck = truckRepository.findById(truckId);
+        if (truck == null) {
+            throw new com.miniups.exception.ResourceNotFoundException("Truck", truckId);
+        }
+
         if (!truck.hasDriver()) {
             throw new com.miniups.exception.BusinessValidationException("TRUCK_ASSIGNMENT", "Truck has no driver to unassign");
         }
-        
+
         truck.unassignDriver();
-        
-        return truckRepository.save(truck);
+
+        truckRepository.update(truck);
+        return truck;
     }
 }

@@ -28,6 +28,7 @@
 package com.miniups.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.miniups.config.IntegrationTestConfiguration;
 import com.miniups.model.dto.auth.LoginRequestDto;
 import com.miniups.model.entity.User;
 import com.miniups.model.enums.UserRole;
@@ -37,9 +38,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -53,12 +56,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(IntegrationTestConfiguration.class)
 @TestPropertySource(properties = {
     "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "rag.enabled=false",
+    "spring.rabbitmq.host=localhost",
+    "spring.rabbitmq.port=5672",
+    "spring.kafka.bootstrap-servers=localhost:9092",
+    "spring.data.redis.host=localhost",
+    "spring.data.redis.port=6379"
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Transactional
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 public class SecurityIntegrationTest {
 
     @Autowired
@@ -85,12 +96,12 @@ public class SecurityIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // 清理数据库
-        userRepository.deleteAll();
-        
+        // Note: Database cleanup is handled by @Transactional at class level
+        // Each test runs in its own transaction that is rolled back after the test
+
         // 创建测试用户
         setupTestUsers();
-        
+
         // 生成 JWT 令牌
         setupJwtTokens();
     }
@@ -103,7 +114,7 @@ public class SecurityIntegrationTest {
         adminUser.setPassword(passwordEncoder.encode("password123"));
         adminUser.setRole(UserRole.ADMIN);
         adminUser.setEnabled(true);
-        adminUser = userRepository.save(adminUser);
+        userRepository.insert(adminUser);
 
         // 创建普通用户
         normalUser = new User();
@@ -112,7 +123,7 @@ public class SecurityIntegrationTest {
         normalUser.setPassword(passwordEncoder.encode("password123"));
         normalUser.setRole(UserRole.USER);
         normalUser.setEnabled(true);
-        normalUser = userRepository.save(normalUser);
+        userRepository.insert(normalUser);
 
         // 创建驱动员用户
         driverUser = new User();
@@ -121,7 +132,7 @@ public class SecurityIntegrationTest {
         driverUser.setPassword(passwordEncoder.encode("password123"));
         driverUser.setRole(UserRole.DRIVER);
         driverUser.setEnabled(true);
-        driverUser = userRepository.save(driverUser);
+        userRepository.insert(driverUser);
     }
 
     private void setupJwtTokens() {

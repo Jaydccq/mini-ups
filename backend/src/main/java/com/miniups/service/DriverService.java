@@ -83,18 +83,18 @@ public class DriverService {
     @Transactional(readOnly = true)
     public Page<DriverDto> getDriversWithPagination(DriverStatus status, Pageable pageable) {
         logger.info("Getting drivers page {} with status filter: {}", pageable.getPageNumber(), status);
-        
+
         Page<Driver> driverPage;
         if (status != null) {
-            driverPage = driverRepository.findByStatus(status, pageable);
+            driverPage = driverRepository.findByStatusWithPage(status, pageable);
         } else {
-            driverPage = driverRepository.findAll(pageable);
+            driverPage = driverRepository.findAllWithPage(pageable);
         }
-        
+
         List<DriverDto> driverDtos = driverPage.getContent().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-        
+
         return new PageImpl<>(driverDtos, pageable, driverPage.getTotalElements());
     }
     
@@ -104,10 +104,12 @@ public class DriverService {
     @Transactional(readOnly = true)
     public DriverDto getDriverById(Long driverId) {
         logger.info("Getting driver by ID: {}", driverId);
-        
-        Driver driver = driverRepository.findById(driverId)
-                .orElseThrow(() -> new ResourceNotFoundException("Driver", driverId));
-        
+
+        Driver driver = driverRepository.findById(driverId);
+        if (driver == null) {
+            throw new ResourceNotFoundException("Driver", driverId);
+        }
+
         return convertToDto(driver);
     }
     
@@ -116,10 +118,10 @@ public class DriverService {
      */
     public DriverDto createDriver(CreateDriverDto createDriverDto) {
         logger.info("Creating new driver: {}", createDriverDto.getName());
-        
+
         // Validate uniqueness
         validateDriverUniqueness(createDriverDto.getEmail(), createDriverDto.getLicenseNumber(), null);
-        
+
         // Create driver entity
         Driver driver = new Driver(
             createDriverDto.getName(),
@@ -127,11 +129,11 @@ public class DriverService {
             createDriverDto.getEmail(),
             createDriverDto.getPhone()
         );
-        
-        Driver savedDriver = driverRepository.save(driver);
-        logger.info("Successfully created driver with ID: {}", savedDriver.getId());
-        
-        return convertToDto(savedDriver);
+
+        driverRepository.insert(driver);
+        logger.info("Successfully created driver with ID: {}", driver.getId());
+
+        return convertToDto(driver);
     }
     
     /**
@@ -139,10 +141,12 @@ public class DriverService {
      */
     public DriverDto updateDriver(Long driverId, UpdateDriverDto updateDriverDto) {
         logger.info("Updating driver ID: {}", driverId);
-        
-        Driver driver = driverRepository.findById(driverId)
-                .orElseThrow(() -> new ResourceNotFoundException("Driver", driverId));
-        
+
+        Driver driver = driverRepository.findById(driverId);
+        if (driver == null) {
+            throw new ResourceNotFoundException("Driver", driverId);
+        }
+
         // Validate uniqueness if email or license number is being updated
         if (updateDriverDto.hasEmail() || updateDriverDto.hasLicenseNumber()) {
             validateDriverUniqueness(
@@ -151,7 +155,7 @@ public class DriverService {
                 driverId
             );
         }
-        
+
         // Update fields
         if (updateDriverDto.hasName()) {
             driver.setName(updateDriverDto.getName());
@@ -165,11 +169,11 @@ public class DriverService {
         if (updateDriverDto.hasLicenseNumber()) {
             driver.setLicenseNumber(updateDriverDto.getLicenseNumber());
         }
-        
-        Driver updatedDriver = driverRepository.save(driver);
+
+        driverRepository.update(driver);
         logger.info("Successfully updated driver ID: {}", driverId);
-        
-        return convertToDto(updatedDriver);
+
+        return convertToDto(driver);
     }
     
     /**
@@ -177,20 +181,22 @@ public class DriverService {
      */
     public DriverDto updateDriverStatus(Long driverId, DriverStatus newStatus) {
         logger.info("Updating driver {} status to: {}", driverId, newStatus);
-        
-        Driver driver = driverRepository.findById(driverId)
-                .orElseThrow(() -> new ResourceNotFoundException("Driver", driverId));
-        
+
+        Driver driver = driverRepository.findById(driverId);
+        if (driver == null) {
+            throw new ResourceNotFoundException("Driver", driverId);
+        }
+
         // Validate status transition
         validateStatusTransition(driver.getStatus(), newStatus, driver.getAssignedTruck() != null);
-        
+
         driver.setStatus(newStatus);
         driver.updateLastActive();
-        
-        Driver updatedDriver = driverRepository.save(driver);
+
+        driverRepository.update(driver);
         logger.info("Successfully updated driver {} status to: {}", driverId, newStatus);
-        
-        return convertToDto(updatedDriver);
+
+        return convertToDto(driver);
     }
     
     /**
@@ -198,21 +204,23 @@ public class DriverService {
      */
     public void deleteDriver(Long driverId) {
         logger.info("Deleting driver ID: {}", driverId);
-        
-        Driver driver = driverRepository.findById(driverId)
-                .orElseThrow(() -> new ResourceNotFoundException("Driver", driverId));
-        
+
+        Driver driver = driverRepository.findById(driverId);
+        if (driver == null) {
+            throw new ResourceNotFoundException("Driver", driverId);
+        }
+
         // Cannot delete driver with active assignment
         if (driver.getAssignedTruck() != null) {
             throw new BusinessValidationException("DRIVER_DELETE", "Cannot delete driver with active truck assignment");
         }
-        
+
         // Cannot delete driver who is currently working
         if (driver.getStatus() == DriverStatus.ON_DUTY) {
             throw new BusinessValidationException("DRIVER_DELETE", "Cannot delete driver who is currently on duty");
         }
-        
-        driverRepository.delete(driver);
+
+        driverRepository.deleteById(driverId);
         logger.info("Successfully deleted driver ID: {}", driverId);
     }
     
@@ -251,14 +259,16 @@ public class DriverService {
     public Map<String, Object> getDriverStatistics() {
         logger.info("Getting driver statistics");
         
-        Object[] stats = driverRepository.getDriverStatistics();
-        
-        Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalDrivers", stats[0]);
-        statistics.put("unassigned", stats[1]);
-        statistics.put("assigned", stats[2]);
-        statistics.put("onDuty", stats[3]);
-        statistics.put("averageRating", stats[4]);
+        Map<String, Object> statistics = driverRepository.getDriverStatistics();
+
+        if (statistics == null) {
+            statistics = new HashMap<>();
+            statistics.put("totalDrivers", 0);
+            statistics.put("unassigned", 0);
+            statistics.put("assigned", 0);
+            statistics.put("onDuty", 0);
+            statistics.put("averageRating", 0.0);
+        }
         
         // Add status distribution
         Map<String, Long> statusDistribution = new HashMap<>();
@@ -275,16 +285,16 @@ public class DriverService {
     private void validateDriverUniqueness(String email, String licenseNumber, Long excludeDriverId) {
         if (email != null && driverRepository.existsByEmail(email)) {
             // Check if it's the same driver being updated
-            if (excludeDriverId == null || !driverRepository.findByEmail(email)
-                    .map(Driver::getId).equals(excludeDriverId)) {
+            Driver existingDriver = driverRepository.findByEmail(email);
+            if (excludeDriverId == null || !existingDriver.getId().equals(excludeDriverId)) {
                 throw new DuplicateResourceException("Driver", email, "Email address already exists: " + email);
             }
         }
-        
+
         if (licenseNumber != null && driverRepository.existsByLicenseNumber(licenseNumber)) {
             // Check if it's the same driver being updated
-            if (excludeDriverId == null || !driverRepository.findByLicenseNumber(licenseNumber)
-                    .map(Driver::getId).equals(excludeDriverId)) {
+            Driver existingDriver = driverRepository.findByLicenseNumber(licenseNumber);
+            if (excludeDriverId == null || !existingDriver.getId().equals(excludeDriverId)) {
                 throw new DuplicateResourceException("Driver", licenseNumber, "License number already exists: " + licenseNumber);
             }
         }

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.miniups.repository.UserRepository">
+
+    <!-- Result Map for User -->
+    <resultMap id="UserResultMap" type="com.miniups.model.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="email" column="email"/>
+        <result property="password" column="password"/>
+        <result property="firstName" column="first_name"/>
+        <result property="lastName" column="last_name"/>
+        <result property="phone" column="phone"/>
+        <result property="address" column="address"/>
+        <result property="role" column="role" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="enabled" column="enabled"/>
+        <result property="authProvider" column="auth_provider" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="providerId" column="provider_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="version" column="version"/>
+    </resultMap>
+
+    <!-- Complex query example with pagination support -->
+    <select id="findByRoleWithPagination" resultMap="UserResultMap">
+        SELECT * FROM users
+        WHERE role = #{role}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- Search users with dynamic conditions -->
+    <select id="searchUsers" resultMap="UserResultMap">
+        SELECT * FROM users
+        <where>
+            <if test="username != null and username != ''">
+                AND username LIKE CONCAT('%', #{username}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND email LIKE CONCAT('%', #{email}, '%')
+            </if>
+            <if test="role != null">
+                AND role = #{role}
+            </if>
+            <if test="enabled != null">
+                AND enabled = #{enabled}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- Batch insert users -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO users (username, email, password, first_name, last_name, phone, address, role, enabled, auth_provider, provider_id, created_at, updated_at, version)
+        VALUES
+        <foreach collection="list" item="user" separator=",">
+            (#{user.username}, #{user.email}, #{user.password}, #{user.firstName}, #{user.lastName},
+             #{user.phone}, #{user.address}, #{user.role}, #{user.enabled}, #{user.authProvider},
+             #{user.providerId}, NOW(), NOW(), 0)
+        </foreach>
+    </insert>
+
+    <!-- Update user with selective fields -->
+    <update id="updateSelective">
+        UPDATE users
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="firstName != null">first_name = #{firstName},</if>
+            <if test="lastName != null">last_name = #{lastName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            updated_at = NOW(),
+            version = version + 1
+        </set>
+        WHERE id = #{id} AND version = #{version}
+    </update>
+
+    <!-- Join query example: Find user with shipment count -->
+    <select id="findUserWithShipmentCount" resultType="java.util.Map">
+        SELECT
+            u.id,
+            u.username,
+            u.email,
+            u.role,
+            COUNT(s.id) as shipment_count
+        FROM users u
+        LEFT JOIN shipments s ON u.id = s.user_id
+        WHERE u.id = #{userId}
+        GROUP BY u.id, u.username, u.email, u.role
+    </select>
+
+</mapper>

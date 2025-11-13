@@ -1,11 +1,9 @@
 package com.miniups.model.entity;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -39,19 +37,12 @@ import java.time.Instant;
  * @author Mini-UPS Development Team
  * @version 1.0
  */
-@Entity
-@Table(name = "leaf_alloc", indexes = {
-    @Index(name = "idx_leaf_alloc_biz_tag", columnList = "biz_tag", unique = true),
-    @Index(name = "idx_leaf_alloc_update_time", columnList = "update_time")
-})
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LeafAlloc {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     /**
@@ -59,14 +50,12 @@ public class LeafAlloc {
      * Examples: "shipment", "user", "truck", "order", "tracking_number"
      * Each business type maintains its own independent ID sequence
      */
-    @Column(name = "biz_tag", nullable = false, unique = true, length = 128)
     private String bizTag;
     
     /**
      * Maximum ID allocated so far for this business type
      * This represents the upper bound of all segments allocated to date
      */
-    @Column(name = "max_id", nullable = false)
     private Long maxId;
     
     /**
@@ -78,7 +67,6 @@ public class LeafAlloc {
      * - Medium traffic: 10,000 - 100,000  
      * - High traffic: 100,000 - 1,000,000
      */
-    @Column(name = "step", nullable = false)
     private Integer step;
     
     /**
@@ -86,30 +74,24 @@ public class LeafAlloc {
      * Prevents race conditions when multiple instances try to allocate segments
      * simultaneously for the same business type
      */
-    @Version
-    @Column(name = "version", nullable = false)
     private Long version;
     
     /**
      * Descriptive name for this ID sequence
      * Used for monitoring and administrative purposes
      */
-    @Column(name = "description", length = 256)
     private String description;
     
     /**
      * Last update timestamp (automatically managed)
      * Used for monitoring allocation frequency and debugging
      */
-    @UpdateTimestamp
-    @Column(name = "update_time", nullable = false)
     private Instant updateTime;
     
     /**
      * Whether this allocation entry is currently active
      * Allows for temporary disabling of ID generation for specific business types
      */
-    @Column(name = "active", nullable = false)
     @Builder.Default
     private Boolean active = true;
     
@@ -117,28 +99,24 @@ public class LeafAlloc {
      * Optional minimum segment size
      * Prevents step from being reduced below this threshold during auto-tuning
      */
-    @Column(name = "min_step")
     private Integer minStep;
     
     /**
      * Optional maximum segment size
      * Prevents step from growing too large and consuming excessive memory
      */
-    @Column(name = "max_step")
     private Integer maxStep;
     
     /**
      * Average allocation rate (IDs per second)
      * Used for intelligent segment size adjustment and monitoring
      */
-    @Column(name = "avg_rate")
     private Double avgRate;
     
     /**
      * Last allocation timestamp
      * Tracks when segments were last requested for this business type
      */
-    @Column(name = "last_alloc_time")
     private Instant lastAllocTime;
     
     /**
@@ -210,22 +188,30 @@ public class LeafAlloc {
         return true;
     }
     
+    // Manual getters (Lombok @Data not generating them properly)
+    public String getBizTag() { return bizTag; }
+    public Long getMaxId() { return maxId; }
+    public Integer getStep() { return step; }
+    public Long getVersion() { return version; }
+    public Boolean getActive() { return active; }
+
     /**
      * Segment representing a range of IDs allocated to an instance
      */
     @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class Segment {
         /**
          * Start ID (inclusive)
          */
         private long startId;
-        
+
         /**
-         * End ID (inclusive) 
+         * End ID (inclusive)
          */
         private long endId;
-        
+
         /**
          * Check if this segment contains the given ID
          */
@@ -271,5 +257,13 @@ public class LeafAlloc {
             long total = endId - startId + 1;
             return remaining() < (total * 0.1);
         }
+
+        // Manual getters (Lombok @Data not generating them properly)
+        public long getStartId() { return startId; }
+        public long getEndId() { return endId; }
+
+        // Manual setters
+        public void setStartId(long startId) { this.startId = startId; }
+        public void setEndId(long endId) { this.endId = endId; }
     }
 }
