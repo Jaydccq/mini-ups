@@ -202,7 +202,12 @@ shortlink:
   bloom:
     redis-key: ${SHORTLINK_BLOOM_REDIS_KEY:shortlink:bloom:codes}
     bit-size: ${SHORTLINK_BLOOM_BIT_SIZE:1048576}
-    hash-seeds: ${SHORTLINK_BLOOM_SEEDS:17,31,73,127,191}
+    hash-seeds:
+      - 17
+      - 31
+      - 73
+      - 127
+      - 191
   stream:
     key: ${SHORTLINK_STREAM_KEY:stream:shortlink:monitor}
     group: ${SHORTLINK_STREAM_GROUP:shortlink-monitor}
@@ -294,6 +299,7 @@ rag:
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
   type-aliases-package: com.miniups.model.entity
+  type-handlers-package: com.miniups.config
   configuration:
     map-underscore-to-camel-case: true
     use-generated-keys: true
