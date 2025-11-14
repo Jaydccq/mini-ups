@@ -18,7 +18,8 @@
       "Bash(mvn:*)",
       "Bash(export CI=true:*)",
       "Bash(echo:*)",
-      "Bash(/usr/libexec/java_home:*)"
+      "Bash(/usr/libexec/java_home:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
