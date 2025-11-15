@@ -19,7 +19,9 @@
       "Bash(export CI=true:*)",
       "Bash(echo:*)",
       "Bash(/usr/libexec/java_home:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(.github/workflows/ci-cd.yml)",
+      "Bash(.github/workflows/multi-service-deploy.yml)"
     ],
     "deny": [],
     "ask": []
