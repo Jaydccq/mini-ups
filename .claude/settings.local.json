@@ -21,7 +21,8 @@
       "Bash(/usr/libexec/java_home:*)",
       "Bash(rm:*)",
       "Bash(.github/workflows/ci-cd.yml)",
-      "Bash(.github/workflows/multi-service-deploy.yml)"
+      "Bash(.github/workflows/multi-service-deploy.yml)",
+      "Bash(xargs basename:*)"
     ],
     "deny": [],
     "ask": []
