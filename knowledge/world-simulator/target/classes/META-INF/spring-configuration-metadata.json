@@ -1,0 +1,114 @@
+{
+  "groups": [
+    {
+      "name": "world-sim",
+      "type": "com.miniups.worldsim.config.WorldSimProperties",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties"
+    },
+    {
+      "name": "world-sim.network",
+      "type": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties",
+      "sourceMethod": "public WorldSimProperties.@Valid Network network() "
+    },
+    {
+      "name": "world-sim.performance",
+      "type": "com.miniups.worldsim.config.WorldSimProperties$Performance",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties",
+      "sourceMethod": "public WorldSimProperties.@Valid Performance performance() "
+    },
+    {
+      "name": "world-sim.simulation",
+      "type": "com.miniups.worldsim.config.WorldSimProperties$Simulation",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties",
+      "sourceMethod": "public WorldSimProperties.@Valid Simulation simulation() "
+    }
+  ],
+  "properties": [
+    {
+      "name": "world-sim.network.ack-timeout-ms",
+      "type": "java.lang.Long",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.network.amazon-port",
+      "type": "java.lang.Integer",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.network.connection-idle-timeout-ms",
+      "type": "java.lang.Long",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.network.flakiness",
+      "type": "java.lang.Integer",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.network.max-connections",
+      "type": "java.lang.Integer",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.network.max-retries",
+      "type": "java.lang.Integer",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.network.ups-port",
+      "type": "java.lang.Integer",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Network",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.performance.cache-ttl-seconds",
+      "type": "java.lang.Long",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Performance",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.performance.database-batch-size",
+      "type": "java.lang.Integer",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Performance",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.performance.metrics-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Performance",
+      "defaultValue": false
+    },
+    {
+      "name": "world-sim.simulation.tick-interval-ms",
+      "type": "java.lang.Long",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Simulation",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.simulation.truck-speed-units-per-sec",
+      "type": "java.lang.Integer",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Simulation",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.simulation.update-broadcast-interval-ms",
+      "type": "java.lang.Long",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Simulation",
+      "defaultValue": 0
+    },
+    {
+      "name": "world-sim.simulation.warehouse-loading-time-ms",
+      "type": "java.lang.Long",
+      "sourceType": "com.miniups.worldsim.config.WorldSimProperties$Simulation",
+      "defaultValue": 0
+    }
+  ],
+  "hints": []
+}

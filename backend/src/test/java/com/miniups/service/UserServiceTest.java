@@ -342,7 +342,7 @@ class UserServiceTest {
         assertEquals(testUser.getUsername(), result.getUsername());
         assertEquals(testUser.getEmail(), result.getEmail());
         assertEquals(testUser.getRole(), result.getRole());
-        assertEquals(testUser.isEnabled(), result.isEnabled());
+        assertEquals(testUser.getEnabled(), result.isEnabled());
         // 验证密码不被包含在DTO中
         assertNull(result.getPassword());
 

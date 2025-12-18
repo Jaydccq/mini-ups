@@ -10,6 +10,7 @@ import com.miniups.shortlink.service.ShortLinkService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping({"/api/short-links", "/short-links"})
 @Validated
 @Tag(name = "Short Links", description = "CRUD operations for short link management with RBAC controls")
+@ConditionalOnProperty(name = "shortlink.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class ShortLinkController {
 
     private final ShortLinkService shortLinkService;

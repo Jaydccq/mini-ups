@@ -1,0 +1,47 @@
+# Test profile configuration
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    defer-datasource-initialization: true
+    
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 1
+      
+  flyway:
+    enabled: false
+    
+logging:
+  level:
+    com.miniups.worldsim: DEBUG
+    org.springframework.boot: WARN
+    io.netty: WARN
+    
+world-sim:
+  network:
+    ups-port: 0  # Random port for testing
+    amazon-port: 0  # Random port for testing
+    flakiness: 0
+    ack-timeout-ms: 1000
+    max-retries: 2
+    max-connections: 50
+    
+  simulation:
+    tick-interval-ms: 10
+    truck-speed-units-per-sec: 100
+    update-broadcast-interval-ms: 100
+    
+  performance:
+    database-batch-size: 10
+    cache-ttl-seconds: 10
+    metrics-enabled: false

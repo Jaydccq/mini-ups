@@ -1,0 +1,71 @@
+services:
+  # UPS PostgreSQL Database (with pgvector support)
+  ups-database:
+    image: pgvector/pgvector:pg16
+    container_name: mini-ups-postgres-local
+    environment:
+      POSTGRES_DB: ups_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: abc123
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - localnet
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: mini-ups-redis-local
+    command: redis-server --requirepass test123
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "test123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - localnet
+
+  # RabbitMQ Message Queue with STOMP support
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: mini-ups-rabbitmq-local
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbit log_levels [{connection,error},{default,error}]
+    ports:
+      - "5672:5672"     # AMQP port
+      - "15672:15672"   # Management UI
+      - "61613:61613"   # STOMP port
+    volumes:
+      - rabbitmq_local_data:/var/lib/rabbitmq/
+      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - localnet
+
+volumes:
+  postgres_local_data:
+  rabbitmq_local_data:
+
+networks:
+  localnet:
+    driver: bridge

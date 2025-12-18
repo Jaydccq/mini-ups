@@ -11,6 +11,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(RabbitTemplate.class)
 public class WebSocketRabbitMQService {
 
 

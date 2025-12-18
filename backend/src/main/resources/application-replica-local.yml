@@ -1,0 +1,87 @@
+# ==========================================================
+# 本地开发读写分离测试配置
+# ==========================================================
+# 使用方式：
+#   java -jar app.jar --spring.profiles.active=dev,replica-local
+#
+# 说明：
+#   此配置用于本地开发测试读写分离功能。
+#   由于本地只有一个PostgreSQL实例，所有副本都指向同一个数据库。
+#   这样可以验证代码逻辑，但不能测试实际的负载均衡效果。
+# ==========================================================
+
+app:
+  datasource:
+    read-write-split:
+      enabled: true
+      health-check-interval-seconds: 30
+      validation-timeout-seconds: 5
+      fallback-to-primary: true
+      log-routing: true  # 本地开启路由日志方便调试
+
+    # 主库（本地PostgreSQL）
+    primary:
+      name: local-primary
+      jdbc-url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ups_db}
+      username: ${DATABASE_USERNAME:postgres}
+      password: ${DATABASE_PASSWORD:postgres}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        pool-name: HikariPool-LocalPrimary
+        maximum-pool-size: 10
+        minimum-idle: 2
+        idle-timeout: 300000
+        connection-timeout: 20000
+        max-lifetime: 1800000
+        connection-test-query: SELECT 1
+
+    # 读副本（本地模拟 - 都指向同一个数据库）
+    replicas:
+      - name: local-replica-1
+        jdbc-url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ups_db}
+        username: ${DATABASE_USERNAME:postgres}
+        password: ${DATABASE_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          pool-name: HikariPool-LocalReplica1
+          maximum-pool-size: 10
+          minimum-idle: 2
+          idle-timeout: 300000
+          connection-timeout: 20000
+          max-lifetime: 1800000
+          read-only: true
+          connection-test-query: SELECT 1
+
+      - name: local-replica-2
+        jdbc-url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ups_db}
+        username: ${DATABASE_USERNAME:postgres}
+        password: ${DATABASE_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          pool-name: HikariPool-LocalReplica2
+          maximum-pool-size: 10
+          minimum-idle: 2
+          idle-timeout: 300000
+          connection-timeout: 20000
+          max-lifetime: 1800000
+          read-only: true
+          connection-test-query: SELECT 1
+
+# ==========================================================
+# 本地测试步骤
+# ==========================================================
+#
+# 1. 启动应用：
+#    mvn spring-boot:run -Dspring-boot.run.profiles=dev,replica-local
+#
+# 2. 查看数据源状态：
+#    curl http://localhost:8081/actuator/datasource
+#
+# 3. 观察日志中的路由信息：
+#    Routing to REPLICA for method: UserService.getUserById
+#    Routing to PRIMARY for method: UserService.updateUser
+#
+# 4. 测试强制路由注解：
+#    在Service方法上添加 @UsePrimaryDataSource 或 @UseReplicaDataSource
+#
+# ==========================================================

@@ -1,0 +1,124 @@
+spring:
+  application:
+    name: world-simulator
+    
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+    
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:worldSim}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:abc123}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 30000
+      leak-detection-threshold: 60000
+      
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      timeout: 2000ms
+      database: 0
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 8
+          min-idle: 2
+          
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    
+# World Simulator Configuration
+world-sim:
+  network:
+    ups-port: ${WORLD_SIM_UPS_PORT:12345}
+    amazon-port: ${WORLD_SIM_AMAZON_PORT:23456}
+    flakiness: ${WORLD_SIM_FLAKINESS:0}
+    ack-timeout-ms: ${WORLD_SIM_ACK_TIMEOUT:5000}
+    max-retries: ${WORLD_SIM_MAX_RETRIES:3}
+    max-connections: ${WORLD_SIM_MAX_CONNECTIONS:1000}
+    connection-idle-timeout-ms: ${WORLD_SIM_CONNECTION_TIMEOUT:300000}
+    
+  simulation:
+    tick-interval-ms: ${WORLD_SIM_TICK_INTERVAL:100}
+    truck-speed-units-per-sec: ${WORLD_SIM_TRUCK_SPEED:50}
+    update-broadcast-interval-ms: ${WORLD_SIM_UPDATE_INTERVAL:1000}
+    warehouse-loading-time-ms: ${WORLD_SIM_LOADING_TIME:5000}
+    
+  performance:
+    database-batch-size: ${WORLD_SIM_BATCH_SIZE:100}
+    cache-ttl-seconds: ${WORLD_SIM_CACHE_TTL:300}
+    metrics-enabled: ${WORLD_SIM_METRICS_ENABLED:true}
+    
+# Logging Configuration    
+logging:
+  level:
+    com.miniups.worldsim: INFO
+    io.netty: WARN
+    org.springframework.boot: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/world-simulator.log
+    max-size: 10MB
+    max-history: 30
+    
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      
+# Server Configuration (for management endpoints)
+server:
+  port: ${MANAGEMENT_PORT:8082}
+  servlet:
+    context-path: /
+  tomcat:
+    threads:
+      max: 20
+      min-spare: 5

@@ -155,7 +155,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,datasource
   endpoint:
     health:
       show-details: when_authorized
@@ -231,6 +231,15 @@ rate-limiting:
 
 # Application-specific Configuration
 app:
+  # 读写分离配置（默认禁用，启用replica profile激活）
+  datasource:
+    read-write-split:
+      enabled: false  # 通过 --spring.profiles.active=dev,replica 启用
+      health-check-interval-seconds: 30
+      validation-timeout-seconds: 5
+      fallback-to-primary: true
+      log-routing: false
+
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
   oauth2:

@@ -1,39 +1,49 @@
+# Local Development Profile
+# Use with: SPRING_PROFILES_ACTIVE=local or ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+
 spring:
   application:
-    name: mini-ups
+    name: mini-ups-local
 
-# Enable World Simulator debugging in local development
-app:
-  debug:
-    world-simulator:
-      enabled: true
-  
+  # Database Configuration (PostgreSQL from docker-compose.local.yml)
   datasource:
     url: jdbc:postgresql://localhost:5432/ups_db
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:abc123}
     driver-class-name: org.postgresql.Driver
-  
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-  
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  # Disable schema initialization (use init.sql from Docker)
+  sql:
+    init:
+      mode: never
+
+  # Redis Configuration
   data:
     redis:
       host: localhost
-      port: 6380
-      password: ${REDIS_PASSWORD:}
+      port: 6379
+      password: test123
       timeout: 60000ms
       lettuce:
         pool:
           max-active: 8
           max-idle: 8
           min-idle: 0
-  
+
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    stomp:
+      port: 61613
+
   # Enable hot reload for development
   devtools:
     restart:
@@ -49,45 +59,44 @@ logging:
   level:
     com.miniups: DEBUG
     org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.mybatis: DEBUG
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET} # REQUIRED: Must be set as environment variable (minimum 32 characters)
-  expiration: 86400000 # 24 hours in milliseconds
+  secret: ${JWT_SECRET:your-very-long-secret-key-for-jwt-signing-should-be-at-least-256-bits-long-for-local-dev}
+  expiration: 86400000
 
-# World Simulator Configuration
+# World Simulator Configuration (disabled for local dev)
 world:
   simulator:
     host: localhost
     port: 12345
     enabled: false
-    client:
-      type: netty  # Options: socket (default), netty
-    netty:
-      worker-threads: 2
-      connection-timeout-ms: 10000
-      keep-alive: true
-      tcp-no-delay: true
-      reconnection:
-        enabled: true
-        max-attempts: 10
-        initial-delay-ms: 1000
-        max-delay-ms: 30000
-        backoff-multiplier: 2.0
-      message:
-        response-timeout-ms: 30000
-        max-pending-responses: 1000
-    
-# Amazon Integration Configuration  
+
+# Amazon Integration Configuration (disabled for local dev)
 amazon:
   integration:
     base-url: http://localhost:8080
     api-key: ${AMAZON_API_KEY:dev-api-key}
+    enabled: false
+
+# Enable World Simulator debugging
+app:
+  debug:
+    world-simulator:
+      enabled: true
+  rabbitmq:
     enabled: true
+    test:
+      enabled: false
+  notifications:
+    enabled: false
+
+# RAG disabled for local development
+rag:
+  enabled: false
 
 # Management endpoints for monitoring
 management:

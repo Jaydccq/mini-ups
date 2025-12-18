@@ -5,7 +5,7 @@ import com.miniups.service.OutboxPollerService;
 import com.miniups.service.WebSocketRabbitMQService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,14 +42,22 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/metrics")
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "metrics.enabled", havingValue = "true", matchIfMissing = false)
 public class MetricsController {
 
     private final MetricsConfig metricsConfig;
     private final MeterRegistry meterRegistry;
-    private final OutboxPollerService outboxPollerService;
-    private final WebSocketRabbitMQService webSocketRabbitMQService;
+    
+    @Autowired(required = false)
+    private OutboxPollerService outboxPollerService;
+    
+    @Autowired(required = false)
+    private WebSocketRabbitMQService webSocketRabbitMQService;
+    
+    public MetricsController(MetricsConfig metricsConfig, MeterRegistry meterRegistry) {
+        this.metricsConfig = metricsConfig;
+        this.meterRegistry = meterRegistry;
+    }
 
     /**
      * Get comprehensive performance dashboard metrics
@@ -298,7 +306,16 @@ public class MetricsController {
 
     private double getTimerPercentile(String meterName, double percentile) {
         try {
-            return meterRegistry.get(meterName).timer().percentile(percentile, java.util.concurrent.TimeUnit.MILLISECONDS);
+            var timer = meterRegistry.get(meterName).timer();
+            var snapshot = timer.takeSnapshot();
+            var percentileValues = snapshot.percentileValues();
+            for (var pv : percentileValues) {
+                if (Math.abs(pv.percentile() - percentile) < 0.001) {
+                    return pv.value(java.util.concurrent.TimeUnit.MILLISECONDS);
+                }
+            }
+            // Fallback: use mean if specific percentile not found
+            return timer.mean(java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             return 0.0;
         }

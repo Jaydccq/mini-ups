@@ -5,6 +5,7 @@ import com.miniups.shortlink.model.ShortLinkAccessLogRecord;
 import com.miniups.shortlink.repository.ShortLinkAccessLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@ConditionalOnProperty(name = "shortlink.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class ShortLinkStreamConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(ShortLinkStreamConsumer.class);
@@ -64,6 +66,7 @@ public class ShortLinkStreamConsumer {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Scheduled(fixedDelayString = "${shortlink.stream.poll-delay-millis:5000}")
     public void consume() {
         ShortLinkProperties.Stream stream = properties.getStream();

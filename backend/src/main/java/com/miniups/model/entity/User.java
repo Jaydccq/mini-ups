@@ -147,14 +147,6 @@ public class User extends BaseEntity {
         return username;
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-    
-    public boolean isActive() {
-        return enabled;
-    }
-    
     public AuthProvider getAuthProvider() {
         return authProvider;
     }

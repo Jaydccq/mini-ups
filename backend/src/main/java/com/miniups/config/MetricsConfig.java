@@ -2,15 +2,19 @@ package com.miniups.config;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -59,13 +63,52 @@ public class MetricsConfig {
     private final AtomicLong totalShipmentsProcessed = new AtomicLong(0);
     private final AtomicLong totalTrackingUpdates = new AtomicLong(0);
 
-    // Performance tracking
-    private final ConcurrentHashMap<String, AtomicLong> endpointCounters = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Timer> endpointTimers = new ConcurrentHashMap<>();
+    // SLO Configuration Constants
+    private static final Duration SLO_50MS = Duration.ofMillis(50);
+    private static final Duration SLO_100MS = Duration.ofMillis(100);
+    private static final Duration SLO_200MS = Duration.ofMillis(200);
+    private static final Duration SLO_500MS = Duration.ofMillis(500);
+    private static final Duration SLO_1S = Duration.ofSeconds(1);
 
     public MetricsConfig(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         initializeCustomMetrics();
+    }
+
+    /**
+     * Configure histogram buckets and percentiles for all Mini-UPS Timer metrics.
+     * This enables proper P50/P95/P99 percentile tracking and SLO-based monitoring.
+     *
+     * Histogram buckets are configured at:
+     * - 50ms: Fast operations (cache hits, simple queries)
+     * - 100ms: Normal operations
+     * - 200ms: SLO target for API responses
+     * - 500ms: Slow operations warning threshold
+     * - 1s: Critical latency threshold
+     */
+    @Bean
+    public MeterRegistryCustomizer<MeterRegistry> metricsHistogramCustomizer() {
+        return registry -> registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                if (id.getName().startsWith("miniups.") && id.getType() == Meter.Type.TIMER) {
+                    return DistributionStatisticConfig.builder()
+                            .percentiles(0.5, 0.75, 0.95, 0.99) // P50, P75, P95, P99
+                            .percentilesHistogram(true)
+                            .serviceLevelObjectives(
+                                    SLO_50MS.toNanos(),
+                                    SLO_100MS.toNanos(),
+                                    SLO_200MS.toNanos(),
+                                    SLO_500MS.toNanos(),
+                                    SLO_1S.toNanos()
+                            )
+                            .expiry(java.time.Duration.ofMinutes(5))
+                            .build()
+                            .merge(config);
+                }
+                return config;
+            }
+        });
     }
 
     /**

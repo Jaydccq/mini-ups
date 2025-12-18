@@ -10,6 +10,7 @@ import com.miniups.rag.embedding.RagEmbeddingClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miniups.rag.generation.RagChatClient;
+import com.miniups.rag.model.OrderSummary;
 import com.miniups.rag.model.RagQueryLog;
 import com.miniups.rag.repository.RagQueryLogRepository;
 import com.miniups.rag.retrieval.RagRetriever;
@@ -45,10 +46,23 @@ public class RagQueryService {
 
 
     private static final Logger log = LoggerFactory.getLogger(RagQueryService.class);
-    private static final String SYSTEM_PROMPT = "You are Mini-UPS operations assistant. " +
-        "Provide concise, actionable answers grounded in the provided context. " +
-        "Cite sources in-line using [n] markers matching the returned references. " +
-        "If information is missing, state that explicitly and suggest next steps.";
+    private static final String SYSTEM_PROMPT = """
+        你是 Mini-UPS 智能物流助手。你的职责是帮助用户解决订单和物流相关问题。
+        
+        回答原则：
+        1. 如果用户询问具体订单，优先使用【用户订单信息】部分的数据
+        2. 结合知识库内容给出完整的解决方案
+        3. 回答要具体、可操作，包含明确的下一步行动
+        4. 引用知识库来源时使用 [n] 标记
+        
+        回答格式：
+        - 先简要回应用户问题
+        - 给出具体解决步骤或建议
+        - 如有相关订单，引用具体信息（追踪号、状态等）
+        - 结尾可提供进一步帮助的建议
+        
+        如果信息不足以回答，明确说明并建议联系客服。
+        """;
 
     private final RagProperties properties;
     private final RagEmbeddingClient embeddingClient;
@@ -58,6 +72,7 @@ public class RagQueryService {
     private final RagQueryLogRepository queryLogRepository;
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
+    private final OrderContextProvider orderContextProvider;
 
     public RagQueryResponse handleQuery(RagQueryRequest request, Authentication authentication) {
         Timer.Sample sample = Timer.start(meterRegistry);
@@ -79,6 +94,19 @@ public class RagQueryService {
             int topK = Math.max(1, properties.getRetrieval().getTopK());
             double threshold = properties.getRetrieval().getSimilarityThreshold();
             List<RagSearchResult> searchResults = retriever.hybridSearch(query, queryVector, topK, threshold);
+
+            // Fetch order context if query is order-related
+            String orderContext = "";
+            if (orderContextProvider.isOrderRelatedQuery(query)) {
+                try {
+                    Long userId = Long.parseLong(userContext.userId());
+                    List<OrderSummary> orders = orderContextProvider.getUserOrderContext(userId, 5);
+                    orderContext = orderContextProvider.formatOrderContext(orders);
+                    log.debug("Injected order context for user {}: {} orders", userId, orders.size());
+                } catch (NumberFormatException e) {
+                    log.debug("Could not parse userId for order context: {}", userContext.userId());
+                }
+            }
 
             if (searchResults.isEmpty()) {
                 meterRegistry.counter(
@@ -102,7 +130,7 @@ public class RagQueryService {
                 );
             }
 
-            String prompt = buildUserPrompt(query, searchResults, userContext);
+            String prompt = buildUserPrompt(query, searchResults, userContext, orderContext);
             String answer = chatClient.generate(
                 SYSTEM_PROMPT,
                 prompt,
@@ -191,19 +219,30 @@ public class RagQueryService {
         return UserRole.USER;
     }
 
-    private String buildUserPrompt(String query, List<RagSearchResult> results, RagUserContext context) {
+    private String buildUserPrompt(String query, List<RagSearchResult> results, 
+                                     RagUserContext context, String orderContext) {
         StringBuilder builder = new StringBuilder();
-        builder.append("问题:\n").append(query.trim()).append("\n\n");
-        builder.append("用户角色: ").append(context.role().name().toLowerCase(Locale.ROOT)).append("\n");
-        builder.append("上下文片段:\n");
-        int index = 1;
-        for (RagSearchResult result : results) {
-            builder.append("[片段 ").append(index).append("] 来源: ")
-                .append(result.source()).append("\n")
-                .append(result.content()).append("\n\n");
-            index++;
+        
+        // Add order context if available
+        if (StringUtils.hasText(orderContext)) {
+            builder.append("【用户订单信息】\n").append(orderContext).append("\n");
         }
-        builder.append("请基于以上内容回答用户问题，并在答案中插入对应的引用标记 (例如 [1])。");
+        
+        builder.append("【用户问题】\n").append(query.trim()).append("\n\n");
+        builder.append("用户角色: ").append(context.role().name().toLowerCase(Locale.ROOT)).append("\n\n");
+        
+        if (!results.isEmpty()) {
+            builder.append("【知识库参考内容】\n");
+            int index = 1;
+            for (RagSearchResult result : results) {
+                builder.append("[片段 ").append(index).append("] 来源: ")
+                    .append(result.source()).append("\n")
+                    .append(result.content()).append("\n\n");
+                index++;
+            }
+        }
+        
+        builder.append("请基于以上信息回答用户问题。如有订单数据请引用，如有知识库内容请使用 [n] 标记引用。");
         return builder.toString();
     }
 

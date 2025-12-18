@@ -4,6 +4,7 @@ import com.miniups.shortlink.service.ShortLinkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.net.URI;
 
 @RestController
 @Tag(name = "Short Link Redirect", description = "Public redirect endpoint with Redis stream monitoring")
+@ConditionalOnProperty(name = "shortlink.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class ShortLinkRedirectController {
 
     private final ShortLinkService shortLinkService;

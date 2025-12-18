@@ -1,0 +1,122 @@
+# ==========================================================
+# PostgreSQL 读写分离配置
+# ==========================================================
+# 激活此profile启用读写分离：
+#   spring.profiles.active: dev,replica
+#
+# 或通过环境变量：
+#   SPRING_PROFILES_ACTIVE=dev,replica
+# ==========================================================
+
+app:
+  datasource:
+    # 读写分离总开关
+    read-write-split:
+      enabled: true
+      # 健康检查间隔（秒）
+      health-check-interval-seconds: ${RW_HEALTH_CHECK_INTERVAL:30}
+      # 连接验证超时（秒）
+      validation-timeout-seconds: ${RW_VALIDATION_TIMEOUT:5}
+      # 所有副本不可用时回退到主库
+      fallback-to-primary: true
+      # 是否记录路由日志（调试用）
+      log-routing: ${RW_LOG_ROUTING:false}
+
+    # 主库配置（写操作）
+    primary:
+      name: primary-master
+      jdbc-url: ${DATABASE_PRIMARY_URL:jdbc:postgresql://master.db.internal:5432/ups_db}
+      username: ${DATABASE_PRIMARY_USERNAME:postgres}
+      password: ${DATABASE_PRIMARY_PASSWORD:postgres}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        pool-name: HikariPool-Primary
+        maximum-pool-size: ${DATABASE_PRIMARY_POOL_SIZE:20}
+        minimum-idle: ${DATABASE_PRIMARY_MIN_IDLE:5}
+        idle-timeout: 300000
+        connection-timeout: 20000
+        max-lifetime: 1800000
+        connection-test-query: SELECT 1
+
+    # 读副本配置（读操作，负载均衡）
+    replicas:
+      # 读副本1
+      - name: replica-1
+        jdbc-url: ${DATABASE_REPLICA1_URL:jdbc:postgresql://replica1.db.internal:5432/ups_db}
+        username: ${DATABASE_REPLICA_USERNAME:postgres}
+        password: ${DATABASE_REPLICA_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          pool-name: HikariPool-Replica1
+          maximum-pool-size: ${DATABASE_REPLICA_POOL_SIZE:30}
+          minimum-idle: ${DATABASE_REPLICA_MIN_IDLE:10}
+          idle-timeout: 300000
+          connection-timeout: 20000
+          max-lifetime: 1800000
+          read-only: true
+          connection-test-query: SELECT 1
+
+      # 读副本2
+      - name: replica-2
+        jdbc-url: ${DATABASE_REPLICA2_URL:jdbc:postgresql://replica2.db.internal:5432/ups_db}
+        username: ${DATABASE_REPLICA_USERNAME:postgres}
+        password: ${DATABASE_REPLICA_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          pool-name: HikariPool-Replica2
+          maximum-pool-size: ${DATABASE_REPLICA_POOL_SIZE:30}
+          minimum-idle: ${DATABASE_REPLICA_MIN_IDLE:10}
+          idle-timeout: 300000
+          connection-timeout: 20000
+          max-lifetime: 1800000
+          read-only: true
+          connection-test-query: SELECT 1
+
+      # 读副本3
+      - name: replica-3
+        jdbc-url: ${DATABASE_REPLICA3_URL:jdbc:postgresql://replica3.db.internal:5432/ups_db}
+        username: ${DATABASE_REPLICA_USERNAME:postgres}
+        password: ${DATABASE_REPLICA_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          pool-name: HikariPool-Replica3
+          maximum-pool-size: ${DATABASE_REPLICA_POOL_SIZE:30}
+          minimum-idle: ${DATABASE_REPLICA_MIN_IDLE:10}
+          idle-timeout: 300000
+          connection-timeout: 20000
+          max-lifetime: 1800000
+          read-only: true
+          connection-test-query: SELECT 1
+
+# ==========================================================
+# 使用说明
+# ==========================================================
+#
+# 1. 启用读写分离：
+#    java -jar app.jar --spring.profiles.active=dev,replica
+#
+# 2. 环境变量配置示例（Docker/K8s）：
+#    DATABASE_PRIMARY_URL=jdbc:postgresql://master:5432/ups_db
+#    DATABASE_REPLICA1_URL=jdbc:postgresql://replica1:5432/ups_db
+#    DATABASE_REPLICA2_URL=jdbc:postgresql://replica2:5432/ups_db
+#    DATABASE_REPLICA3_URL=jdbc:postgresql://replica3:5432/ups_db
+#    DATABASE_PRIMARY_USERNAME=postgres
+#    DATABASE_PRIMARY_PASSWORD=secret
+#    DATABASE_REPLICA_USERNAME=postgres
+#    DATABASE_REPLICA_PASSWORD=secret
+#
+# 3. 连接池调优建议：
+#    - 主库连接池：根据写入QPS调整，通常20-50
+#    - 读副本连接池：可以更大，通常30-100
+#    - 公式：连接数 = ((core_count * 2) + effective_spindle_count)
+#
+# 4. 监控端点：
+#    GET /actuator/datasource - 查看数据源状态
+#    POST /actuator/datasource - 强制刷新健康检查
+#
+# 5. 代码中强制路由：
+#    @UsePrimaryDataSource - 强制使用主库（强一致性读）
+#    @UseReplicaDataSource - 强制使用读副本（报表等）
+#    @Transactional(readOnly = true) - 自动路由到读副本
+#
+# ==========================================================

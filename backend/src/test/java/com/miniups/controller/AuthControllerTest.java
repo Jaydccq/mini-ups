@@ -38,11 +38,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration,org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration"
+    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration," +
+        "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration," +
+        "org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration," +
+        "org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration," +
+        "org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration",
+    "spring.security.oauth2.client.registration.google.client-id=dummy-client-id",
+    "spring.security.oauth2.client.registration.google.client-secret=dummy-client-secret"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(AuthControllerTest.TestConfig.class)
+@Import({AuthControllerTest.TestConfig.class, com.miniups.config.TestRedissonConfig.class})
 @DisplayName("AuthController 认证API测试")
 @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 class AuthControllerTest {

@@ -74,7 +74,7 @@ public class ObservabilityController {
     
     private static final Logger logger = LoggerFactory.getLogger(ObservabilityController.class);
     
-    @Autowired
+    @Autowired(required = false)
     private WriteBehindCacheManager cacheManager;
     
     /**

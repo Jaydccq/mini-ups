@@ -5,12 +5,14 @@ import com.google.common.hash.Hashing;
 import com.miniups.shortlink.config.ShortLinkProperties;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 
 @Component
+@ConditionalOnProperty(name = "shortlink.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class RedisBloomFilterService {
 
     private final StringRedisTemplate stringRedisTemplate;

@@ -2,6 +2,7 @@ package com.miniups.shortlink.stream;
 
 import com.miniups.shortlink.config.ShortLinkProperties;
 import com.miniups.shortlink.model.ShortLinkRecord;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@ConditionalOnProperty(name = "shortlink.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class ShortLinkStreamPublisher {
 
     private final StringRedisTemplate stringRedisTemplate;

@@ -348,7 +348,7 @@ public class AdminService {
                     driverData.put("name", driver.getFullName());
                     driverData.put("email", driver.getEmail());
                     driverData.put("phone", driver.getPhone());
-                    driverData.put("status", driver.isActive() ? "ACTIVE" : "INACTIVE"); // Corrected from isEnabled()
+                    driverData.put("status", Boolean.TRUE.equals(driver.getEnabled()) ? "ACTIVE" : "INACTIVE");
                     driverData.put("lastActive", driver.getUpdatedAt());
                     // Add truck assignment info when available
                     driverData.put("assignedTruck", null);

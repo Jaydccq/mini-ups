@@ -1,9 +1,19 @@
 spring:
+  # Exclude auto-configurations that require external services
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+  # Disable Redisson (not a Spring Boot auto-configuration, uses own property)
+  redisson:
+    enabled: false
   liquibase:
     enabled: false
   flyway:
     enabled: false
-  
   # Database Configuration for Tests
   # Uses H2 for fast unit tests with explicit configuration to avoid PostgreSQL conflicts
   datasource:
@@ -36,11 +46,12 @@ spring:
     defer-datasource-initialization: true
     generate-ddl: true
   
-  # Redis Configuration for Testing
+  # Redis Configuration for Testing - DISABLED for unit tests
   data:
     redis:
+      enabled: false  # Disable Redis auto-configuration for tests
       host: ${TEST_REDIS_HOST:localhost}
-      port: ${TEST_REDIS_PORT:6379}  # Aligned with standard Redis and CI service port
+      port: ${TEST_REDIS_PORT:6379}
       database: 1
       timeout: 2000ms
       lettuce:
@@ -50,6 +61,11 @@ spring:
           min-idle: 0
       repositories:
         enabled: false
+
+# Disable Redis-dependent components for testing
+shortlink:
+  redis:
+    enabled: false  # Disable RedissonClient, BloomFilter, Stream components
   
   # RabbitMQ Configuration (Disabled for Testing)
   rabbitmq:
@@ -134,9 +150,9 @@ http:
     connect-timeout-ms: 5000
     socket-timeout-ms: 10000
 
-# RAG Configuration for Tests
+# RAG Configuration for Tests - DISABLED because H2 doesn't support pgvector
 rag:
-  enabled: true
+  enabled: false  # Disable RAG components for H2 test database
   embedding:
     provider: openai
     model: text-embedding-3-small

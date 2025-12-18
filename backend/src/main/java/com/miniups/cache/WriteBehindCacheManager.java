@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 /**
  * Write-Behind Cache Manager for High-Performance Data Operations
  *
@@ -126,6 +128,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 1.0.0
  */
 @Service
+@ConditionalOnProperty(name = "spring.data.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class WriteBehindCacheManager {
     
     private static final Logger logger = LoggerFactory.getLogger(WriteBehindCacheManager.class);

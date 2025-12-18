@@ -1,6 +1,7 @@
 package com.miniups.rag.retrieval;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miniups.rag.config.RagProperties;
 import com.pgvector.PGvector;
@@ -139,16 +140,18 @@ public class RagRetriever {
         }
     }
 
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
+
     private Map<String, Object> parseMetadata(Object raw) {
         if (raw == null) {
             return Map.of();
         }
         try {
             if (raw instanceof PGobject pgObject) {
-                return objectMapper.readValue(pgObject.getValue(), Map.class);
+                return objectMapper.readValue(pgObject.getValue(), MAP_TYPE_REF);
             }
             if (raw instanceof String str) {
-                return objectMapper.readValue(str, Map.class);
+                return objectMapper.readValue(str, MAP_TYPE_REF);
             }
         } catch (JsonProcessingException ex) {
             log.warn("Failed to parse RAG metadata", ex);

@@ -1,0 +1,9 @@
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/WorldSimulatorApplication.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/config/WorldSimProperties.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/model/entity/BaseEntity.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/model/entity/Truck.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/model/entity/Warehouse.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/model/enums/PackageStatus.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/model/enums/TruckStatus.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/src/main/java/com/miniups/worldsim/model/enums/WarehouseStatus.java
+/Users/hongxichen/Desktop/mini-ups/knowledge/world-simulator/target/generated-sources/protobuf/java/com/miniups/proto/WorldUpsProto.java

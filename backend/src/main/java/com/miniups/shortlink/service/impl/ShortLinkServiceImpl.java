@@ -40,8 +40,11 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 @Service
 @Transactional
+@ConditionalOnProperty(name = "shortlink.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class ShortLinkServiceImpl implements ShortLinkService {
 
     private static final Logger log = LoggerFactory.getLogger(ShortLinkServiceImpl.class);

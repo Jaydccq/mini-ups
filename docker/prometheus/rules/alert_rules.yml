@@ -1,0 +1,191 @@
+# Mini-UPS Alerting Rules
+# These rules define alert conditions for the Mini-UPS monitoring system
+
+groups:
+  # Application Health Alerts
+  - name: mini-ups-application
+    interval: 30s
+    rules:
+      # Application is down
+      - alert: MiniUPSBackendDown
+        expr: up{job="mini-ups-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: mini-ups
+        annotations:
+          summary: "Mini-UPS Backend is down"
+          description: "Mini-UPS Backend has been unreachable for more than 1 minute."
+
+      # High error rate (> 1% for 5 minutes)
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) 
+            / 
+            sum(rate(http_server_requests_seconds_count[5m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: mini-ups
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} which exceeds 1% threshold."
+
+      # High P99 latency (> 200ms for 5 minutes)
+      - alert: HighP99Latency
+        expr: |
+          histogram_quantile(0.99, 
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le)
+          ) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "High P99 latency detected"
+          description: "P99 latency is {{ $value | humanizeDuration }} which exceeds 200ms threshold."
+
+      # High P95 latency (> 100ms for 5 minutes)
+      - alert: HighP95Latency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le)
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "High P95 latency detected"
+          description: "P95 latency is {{ $value | humanizeDuration }} which exceeds 100ms threshold."
+
+  # Resource Utilization Alerts
+  - name: mini-ups-resources
+    interval: 60s
+    rules:
+      # High JVM heap usage (> 85%)
+      - alert: HighHeapUsage
+        expr: |
+          (
+            sum(jvm_memory_used_bytes{area="heap"}) 
+            / 
+            sum(jvm_memory_max_bytes{area="heap"})
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "High JVM heap memory usage"
+          description: "JVM heap usage is {{ $value | humanizePercentage }}, exceeds 85% threshold."
+
+      # High thread count (> 200 threads)
+      - alert: HighThreadCount
+        expr: jvm_threads_live_threads > 200
+        for: 5m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "High thread count detected"
+          description: "Current thread count is {{ $value }}, exceeds 200 threshold."
+
+  # Business Metrics Alerts
+  - name: mini-ups-business
+    interval: 60s
+    rules:
+      # No shipments created in last 10 minutes (during business hours)
+      - alert: NoShipmentsCreated
+        expr: increase(miniups_shipments_created_total[10m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "No shipments created"
+          description: "No new shipments have been created in the last 10 minutes."
+
+      # WebSocket connections dropped significantly
+      - alert: WebSocketConnectionsDrop
+        expr: |
+          (
+            miniups_websocket_connections_active 
+            - 
+            miniups_websocket_connections_active offset 5m
+          ) / miniups_websocket_connections_active offset 5m < -0.5
+        for: 2m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "Significant WebSocket connection drop"
+          description: "WebSocket connections dropped by more than 50% in the last 5 minutes."
+
+      # RabbitMQ message failures increasing
+      - alert: RabbitMQMessageFailures
+        expr: increase(miniups_rabbitmq_messages_failed_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "RabbitMQ message failures detected"
+          description: "{{ $value }} RabbitMQ message failures in the last 5 minutes."
+
+  # SLO Alerts
+  - name: mini-ups-slo
+    interval: 30s
+    rules:
+      # SLO violations detected
+      - alert: SLOViolationsDetected
+        expr: increase(miniups_slo_violations_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "SLO violations detected"
+          description: "{{ $value }} SLO violations detected in the last 5 minutes."
+
+      # Availability below target
+      - alert: AvailabilityBelowTarget
+        expr: miniups_slo_availability < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          service: mini-ups
+        annotations:
+          summary: "Availability below SLO target"
+          description: "Current availability is {{ $value | humanizePercentage }}, below 99.9% target."
+
+  # Database Alerts
+  - name: mini-ups-database
+    interval: 60s
+    rules:
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          hikaricp_connections_active / hikaricp_connections_max > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          service: mini-ups
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "HikariCP connection pool is {{ $value | humanizePercentage }} utilized."
+
+      # Slow database queries
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.99, 
+            sum(rate(miniups_database_query_duration_seconds_bucket[5m])) by (le, operation)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: mini-ups
+        annotations:
+          summary: "Slow database queries detected"
+          description: "P99 database query time is {{ $value | humanizeDuration }}."

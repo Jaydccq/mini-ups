@@ -2,14 +2,54 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+# Rule files for alerting
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+# Alertmanager configuration (uncomment when alertmanager is available)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
 scrape_configs:
+  # Mini-UPS Backend
   - job_name: 'mini-ups-backend'
     static_configs:
       - targets: ['ups-backend:8081']
     metrics_path: '/actuator/prometheus'
-    scrape_interval: 15s
-    scrape_timeout: 10s
+    scrape_interval: 10s
+    scrape_timeout: 8s
+    # Honor labels from application
+    honor_labels: true
+    # Metric relabeling to reduce cardinality
+    metric_relabel_configs:
+      # Drop verbose GC metrics to reduce storage
+      - source_labels: [__name__]
+        regex: 'jvm_gc_pause_seconds.*'
+        action: drop
+      # Normalize HTTP metrics path
+      - source_labels: [uri]
+        regex: '/api/users/\d+.*'
+        target_label: uri
+        replacement: '/api/users/{id}'
+      - source_labels: [uri]
+        regex: '/api/shipments/\d+.*'
+        target_label: uri
+        replacement: '/api/shipments/{id}'
+      - source_labels: [uri]
+        regex: '/api/tracking/\d+.*'
+        target_label: uri
+        replacement: '/api/tracking/{id}'
 
+  # Prometheus self-monitoring
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  # Node exporter for system metrics (optional - uncomment if node-exporter is deployed)
+  # - job_name: 'node-exporter'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #   scrape_interval: 15s

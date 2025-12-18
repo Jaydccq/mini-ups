@@ -60,6 +60,9 @@ class RagQueryServiceTest {
     @Mock
     private RagQueryLogRepository queryLogRepository;
 
+    @Mock
+    private OrderContextProvider orderContextProvider;
+
     private RagProperties properties;
     private MeterRegistry meterRegistry;
     private RagQueryService queryService;
@@ -82,6 +85,7 @@ class RagQueryServiceTest {
             }
             return 1; // MyBatis insert returns int (number of rows affected)
         });
+        when(orderContextProvider.isOrderRelatedQuery(anyString())).thenReturn(false);
 
         queryService = new RagQueryService(
             properties,
@@ -91,7 +95,8 @@ class RagQueryServiceTest {
             rateLimiter,
             queryLogRepository,
             new ObjectMapper(),
-            meterRegistry
+            meterRegistry,
+            orderContextProvider
         );
     }
 
